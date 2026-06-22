@@ -451,37 +451,14 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    return Container(
-      color: colorScheme.surface,
-      child: InteractiveViewer(
-        minScale: 0.5,
-        maxScale: 2.0,
-        boundaryMargin: const EdgeInsets.all(100),
-        child: CustomPaint(
-          painter: _GridPainter(colorScheme),
-          child: Stack(
-            children: [
-              // Entity nodes - interactive and draggable
-              ...module.entities.map((entity) {
-                return Positioned(
-                  // Default positions - can be stored in entity later
-                  left: 50.0 + (module.entities.indexOf(entity) % 3) * 250,
-                  top: 50.0 + (module.entities.indexOf(entity) / 3).floor() * 200,
-                  child: _EntityNode(
-                    entity: entity,
-                    module: module,
-                    theme: theme,
-                    colorScheme: colorScheme,
-                    onTap: () => _openEntityInTab(module, entity),
-                    onEdit: () => _showEditEntityDialog(module, entity),
-                    onDelete: () => _confirmDeleteEntity(module, entity),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
+    return _ERDiagramCanvas(
+      module: module,
+      theme: theme,
+      colorScheme: colorScheme,
+      onEntityTap: (entity) => _openEntityInTab(module, entity),
+      onEntityDoubleTap: (entity) => _openEntityInTab(module, entity),
+      onEntityDelete: (entity) => _confirmDeleteEntity(module, entity),
+      onAddEntity: () => _showAddEntityDialog(module),
     );
   }
 
