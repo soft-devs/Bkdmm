@@ -23,12 +23,46 @@ class NodePainter {
   /// Padding inside the node
   static const double padding = 12.0;
 
+  /// Anchor point size for edge creation
+  static const double anchorSize = 8.0;
+
+  /// Anchor point positions (relative to node rect)
+  static List<Offset> getAnchorPositions(Rect rect) {
+    return [
+      Offset(rect.left + rect.width / 2, rect.top), // Top center
+      Offset(rect.right, rect.top + rect.height / 2), // Right center
+      Offset(rect.left + rect.width / 2, rect.bottom), // Bottom center
+      Offset(rect.left, rect.top + rect.height / 2), // Left center
+    ];
+  }
+
+  /// Check if a point hits an anchor
+  static String? hitTestAnchor(ERGraphNode node, Offset point, InteractionMode mode) {
+    if (mode != InteractionMode.edit) return null;
+
+    final rect = getNodeRect(node);
+    final anchors = getAnchorPositions(rect);
+
+    for (var i = 0; i < anchors.length; i++) {
+      final anchorRect = Rect.fromCenter(
+        center: anchors[i],
+        width: anchorSize * 2,
+        height: anchorSize * 2,
+      );
+      if (anchorRect.contains(point)) {
+        return node.id; // Return node ID if hit anchor
+      }
+    }
+    return null;
+  }
+
   /// Paint the node
   static void paint({
     required Canvas canvas,
     required ERGraphNode node,
     required double scale,
     required bool isDarkMode,
+    bool showAnchors = false,
   }) {
     final entity = node.entity;
     if (entity == null) return;
@@ -57,6 +91,11 @@ class NodePainter {
     // Draw hover highlight
     if (node.isHighlighted) {
       _drawHighlightBorder(canvas, rect);
+    }
+
+    // Draw anchors in edit mode
+    if (showAnchors) {
+      _drawAnchors(canvas, rect, isDarkMode);
     }
   }
 
@@ -310,5 +349,43 @@ class NodePainter {
       type += ')';
     }
     return type;
+  }
+
+  /// Draw anchor points for edge creation
+  static void _drawAnchors(Canvas canvas, Rect rect, bool isDarkMode) {
+    final anchors = getAnchorPositions(rect);
+    final anchorColor = isDarkMode ? Colors.blue.shade300 : Colors.blue.shade500;
+
+    for (final anchor in anchors) {
+      // Anchor background
+      final anchorPaint = Paint()
+        ..color = anchorColor.withValues(alpha: 0.3)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(anchor, anchorSize, anchorPaint);
+
+      // Anchor border
+      final borderPaint = Paint()
+        ..color = anchorColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      canvas.drawCircle(anchor, anchorSize, borderPaint);
+
+      // Plus icon in center
+      final plusPaint = Paint()
+        ..color = anchorColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(
+        Offset(anchor.dx - 3, anchor.dy),
+        Offset(anchor.dx + 3, anchor.dy),
+        plusPaint,
+      );
+      canvas.drawLine(
+        Offset(anchor.dx, anchor.dy - 3),
+        Offset(anchor.dx, anchor.dy + 3),
+        plusPaint,
+      );
+    }
   }
 }

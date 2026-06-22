@@ -1,7 +1,16 @@
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/providers/providers.dart';
+
+/// ER 图交互模式
+enum InteractionMode {
+  /// 移动模式 - 平移/缩放画布，仅查看节点
+  move,
+  /// 编辑模式 - 拖拽节点、创建连线、编辑属性
+  edit,
+}
 
 /// Graph node UI state - extends GraphNode with UI-specific properties
 class ERGraphNode {
@@ -82,6 +91,18 @@ class ERGraphState {
   /// The module ID this graph represents
   final String moduleId;
 
+  /// Current interaction mode
+  final InteractionMode interactionMode;
+
+  /// Whether we're creating a new edge
+  final bool isCreatingEdge;
+
+  /// The source node ID when creating an edge
+  final String? edgeStartNodeId;
+
+  /// The current end position for edge preview
+  final Offset edgePreviewEnd;
+
   /// All nodes in the graph
   final List<ERGraphNode> nodes;
 
@@ -111,6 +132,10 @@ class ERGraphState {
 
   const ERGraphState({
     required this.moduleId,
+    this.interactionMode = InteractionMode.move, // 默认移动模式
+    this.isCreatingEdge = false,
+    this.edgeStartNodeId,
+    this.edgePreviewEnd = Offset.zero,
     this.nodes = const [],
     this.edges = const [],
     this.selectedNodeIds = const {},
@@ -124,6 +149,10 @@ class ERGraphState {
 
   ERGraphState copyWith({
     String? moduleId,
+    InteractionMode? interactionMode,
+    bool? isCreatingEdge,
+    String? edgeStartNodeId,
+    Offset? edgePreviewEnd,
     List<ERGraphNode>? nodes,
     List<ERGraphEdge>? edges,
     Set<String>? selectedNodeIds,
@@ -136,6 +165,10 @@ class ERGraphState {
   }) {
     return ERGraphState(
       moduleId: moduleId ?? this.moduleId,
+      interactionMode: interactionMode ?? this.interactionMode,
+      isCreatingEdge: isCreatingEdge ?? this.isCreatingEdge,
+      edgeStartNodeId: edgeStartNodeId ?? this.edgeStartNodeId,
+      edgePreviewEnd: edgePreviewEnd ?? this.edgePreviewEnd,
       nodes: nodes ?? this.nodes,
       edges: edges ?? this.edges,
       selectedNodeIds: selectedNodeIds ?? this.selectedNodeIds,
@@ -375,6 +408,71 @@ class ERGraphNotifier extends StateNotifier<ERGraphState> {
   /// Set layouting state
   void setLayouting(bool isLayouting) {
     state = state.copyWith(isLayouting: isLayouting);
+  }
+
+  // ============ Interaction Mode Methods ============
+
+  /// Set interaction mode
+  void setInteractionMode(InteractionMode mode) {
+    state = state.copyWith(interactionMode: mode);
+  }
+
+  /// Toggle between move and edit modes
+  void toggleInteractionMode() {
+    final newMode = state.interactionMode == InteractionMode.move
+        ? InteractionMode.edit
+        : InteractionMode.move;
+    setInteractionMode(newMode);
+  }
+
+  // ============ Edge Creation Methods ============
+
+  /// Start creating a new edge from a node
+  void startEdgeCreation(String nodeId) {
+    state = state.copyWith(
+      isCreatingEdge: true,
+      edgeStartNodeId: nodeId,
+    );
+  }
+
+  /// Update the edge preview end position
+  void updateEdgePreview(Offset position) {
+    if (state.isCreatingEdge) {
+      state = state.copyWith(edgePreviewEnd: position);
+    }
+  }
+
+  /// Cancel edge creation
+  void cancelEdgeCreation() {
+    state = state.copyWith(
+      isCreatingEdge: false,
+      edgeStartNodeId: null,
+      edgePreviewEnd: Offset.zero,
+    );
+  }
+
+  /// Complete edge creation by connecting to target node
+  void completeEdgeCreation(String targetNodeId) {
+    if (!state.isCreatingEdge || state.edgeStartNodeId == null) {
+      return;
+    }
+
+    // Don't create edge to self
+    if (state.edgeStartNodeId == targetNodeId) {
+      cancelEdgeCreation();
+      return;
+    }
+
+    // Check if edge already exists
+    final existingEdge = state.edges.any((e) =>
+        (e.source == state.edgeStartNodeId && e.target == targetNodeId) ||
+        (e.source == targetNodeId && e.target == state.edgeStartNodeId));
+
+    if (!existingEdge) {
+      addEdge(state.edgeStartNodeId!, targetNodeId);
+    }
+
+    cancelEdgeCreation();
   }
 
   /// Apply auto-layout positions
