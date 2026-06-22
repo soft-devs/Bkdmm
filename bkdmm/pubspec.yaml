@@ -1,0 +1,77 @@
+name: bkdmm
+description: "BK Datasource Model Manager - 数据库模型建模工具"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI 基础
+  cupertino_icons: ^1.0.8
+  material_design_icons_flutter: ^7.0.0
+
+  # 状态管理 - Riverpod
+  flutter_riverpod: ^2.4.0
+  riverpod_annotation: ^2.3.0
+
+  # 本地存储 - Hive 高性能 NoSQL
+  hive_flutter: ^1.1.0
+
+  # 文件操作
+  file_picker: ^8.0.0
+  path_provider: ^2.1.0
+  path: ^1.9.0
+
+  # 数据表格 - Syncfusion 商业级组件
+  syncfusion_flutter_datagrid: ^24.1.0
+
+  # 模板引擎 - mustache
+  mustache_template: ^2.0.0
+
+  # JSON 序列化
+  json_annotation: ^4.8.0
+
+  # UUID 生成
+  uuid: ^4.0.0
+
+  # 国际化
+  intl: ^0.19.0
+
+  # 路由管理
+  go_router: ^14.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Lint 规则
+  flutter_lints: ^5.0.0
+
+  # 代码生成
+  build_runner: ^2.4.0
+  json_serializable: ^6.7.0
+  hive_generator: ^2.0.0
+  riverpod_generator: ^2.3.0
+  custom_lint: ^0.6.0
+  riverpod_lint: ^2.3.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/templates/ddl/
+    - assets/templates/code/
+    - assets/datatypes/
+
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: fonts/Roboto-Regular.ttf
+  #       - asset: fonts/Roboto-Bold.ttf
+  #         weight: 700
