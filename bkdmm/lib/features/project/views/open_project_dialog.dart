@@ -310,10 +310,6 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     }
   }
 
-  void _selectProject(String path) {
-    setState(() => _selectedPath = path);
-  }
-
   Future<void> _removeRecent(String path) async {
     // This would typically call a service to remove from history
     // For now, just deselect if it was selected

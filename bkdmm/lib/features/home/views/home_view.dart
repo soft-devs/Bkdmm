@@ -6,6 +6,7 @@ import '../../../shared/models/models.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../project/views/create_project_dialog.dart';
 import '../../project/views/open_project_dialog.dart';
+import '../../workspace/views/workspace_view.dart';
 import '../widgets/history_list_tile.dart';
 
 /// Home view displaying project history and quick actions.
@@ -371,15 +372,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ref.read(historyNotifierProvider.notifier).refresh();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Project "${result.name}" created successfully'),
-              action: SnackBarAction(
-                label: 'Open',
-                onPressed: () {
-                  // TODO: Navigate to editor
-                },
-              ),
+          // Navigate to workspace
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const WorkspaceView(),
             ),
           );
         }
@@ -422,8 +418,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
       ref.read(historyNotifierProvider.notifier).refresh();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Project opened successfully')),
+        // Navigate to workspace
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const WorkspaceView(),
+          ),
         );
       }
     } catch (e) {

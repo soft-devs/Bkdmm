@@ -42,7 +42,6 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
     return AppScaffold(
       title: project.name,
-      subtitle: projectState.isDirty ? 'Unsaved changes' : null,
       isLoading: projectState.isLoading,
       actions: [
         // Save button
@@ -105,8 +104,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addModule,
-        child: const Icon(Icons.add),
         tooltip: 'Add Module',
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -229,7 +228,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: _addModule,
-            icon: const Icon(Icons.add, size:
+            icon: const Icon(Icons.add, size: 18),
             label: const Text('Add Module'),
           ),
         ],
@@ -370,6 +369,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
   Widget _buildPropertiesPanel(
     dynamic project,
+    ThemeData theme,
     ColorScheme colorScheme,
   ) {
     return Container(
@@ -570,15 +570,12 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       builder: (context) => _AddModuleDialog(),
     );
 
-    if (moduleName != null && moduleName.isNotEmpty) {
-      final notifier = ref.read(projectProvider.notifier);
+    if (moduleName != null && moduleName.isNotEmpty && mounted) {
       // Create a new module with the given name
       final project = ref.read(projectProvider).project;
       if (project != null) {
-        final modules = [...project.modules];
         // Create a basic module - actual implementation would use proper Module class
         // This is a placeholder that would be replaced with proper module creation
-        // through
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Module "$moduleName" would be added')),
         );
@@ -705,8 +702,6 @@ class _AddModuleDialogState extends State<_AddModuleDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AlertDialog(
       title: const Text('Add Module'),
       content: TextField(
