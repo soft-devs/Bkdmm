@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as path;
 
 /// Create project dialog - Dialog for creating new projects
 ///
@@ -229,16 +230,28 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   }
 
   Future<void> _pickSaveLocation() async {
+    final projectName = _nameController.text.isNotEmpty
+        ? _nameController.text
+        : 'project';
+
+    // Sanitize project name for filename
+    final sanitized = projectName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+
     final result = await FilePicker.platform.saveFile(
       type: FileType.custom,
       allowedExtensions: ['bkdmm.json'],
       dialogTitle: 'Choose Save Location',
-      fileName: '${_nameController.text.isNotEmpty ? _nameController.text : 'project'}.bkdmm.json',
+      fileName: '$sanitized.bkdmm.json',
     );
 
     if (result != null) {
+      // Ensure file ends with .bkdmm.json
+      String finalPath = result;
+      if (!finalPath.endsWith('.bkdmm.json')) {
+        finalPath = '$finalPath.bkdmm.json';
+      }
       setState(() {
-        _pathController.text = result;
+        _pathController.text = finalPath;
       });
     }
   }

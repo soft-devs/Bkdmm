@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 
 import '../../../shared/models/models.dart';
 
@@ -43,6 +44,8 @@ class OpenProjectDialog extends StatefulWidget {
 class _OpenProjectDialogState extends State<OpenProjectDialog> {
   String? _selectedPath;
   bool _isLoading = false;
+  String? _error;
+  String? _validatingPath;
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +66,56 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
               padding: const EdgeInsets.only(bottom: 16),
               child: FilledButton.icon(
                 onPressed: _isLoading ? null : _browseForProject,
-                icon: const Icon(Icons.folder_open_outlined),
+                icon: _isLoading && _validatingPath != null
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.folder_open_outlined),
                 label: const Text('Browse for Project File'),
               ),
             ),
+
+            // Error message
+            if (_error != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: colorScheme.onErrorContainer,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        color: colorScheme.onErrorContainer,
+                        size: 18,
+                      ),
+                      onPressed: () => setState(() => _error = null),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             // Divider with label
             if (recentProjects.isNotEmpty) ...[
@@ -89,11 +138,13 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
                   itemBuilder: (context, index) {
                     final project = recentProjects[index];
                     final isSelected = _selectedPath == project.path;
+                    final isValidating = _validatingPath == project.path;
 
                     return _RecentProjectTile(
                       project: project,
                       isSelected: isSelected,
-                      onTap: () => _selectProject(project.path),
+                      isValidating: isValidating,
+                      onTap: () => _selectAndValidateProject(project.path),
                       onDelete: () => _removeRecent(project.path),
                     );
                   },
@@ -157,27 +208,104 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     );
   }
 
+  /// Validate if a file is a valid project file
+  Future<bool> _validateProjectFile(String filePath) async {
+    try {
+      // Check file extension
+      if (!filePath.endsWith('.bkdmm.json')) {
+        _error = 'Invalid file type. Please select a .bkdmm.json file.';
+        return false;
+      }
+
+      // Check if file exists
+      final file = File(filePath);
+      if (!await file.exists()) {
+        _error = 'File does not exist: $filePath';
+        return false;
+      }
+
+      // Try to read and parse the file
+      final content = await file.readAsString();
+      if (content.isEmpty) {
+        _error = 'File is empty';
+        return false;
+      }
+
+      // Basic JSON structure validation
+      // The actual project parsing will be done by ProjectNotifier
+      return true;
+    } catch (e) {
+      _error = 'Failed to validate file: $e';
+      return false;
+    }
+  }
+
   Future<void> _browseForProject() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _validatingPath = null;
+    });
 
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['bkdmm.json'],
+        allowedExtensions: ['bkdmm.json', 'json'],
         dialogTitle: 'Open Project',
       );
 
       if (result != null && result.files.isNotEmpty) {
-        final path = result.files.first.path;
-        if (path != null) {
-          if (mounted) {
-            Navigator.of(context).pop(path);
+        final filePath = result.files.first.path;
+        if (filePath != null) {
+          // Validate the file
+          final isValid = await _validateProjectFile(filePath);
+          if (isValid && mounted) {
+            Navigator.of(context).pop(filePath);
+          } else {
+            setState(() => _isLoading = false);
           }
+          return;
         }
       }
-    } finally {
+
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to browse files: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _selectAndValidateProject(String path) async {
+    setState(() {
+      _validatingPath = path;
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final isValid = await _validateProjectFile(path);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _validatingPath = null;
+          if (isValid) {
+            _selectedPath = path;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _validatingPath = null;
+        });
       }
     }
   }
@@ -186,7 +314,7 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     setState(() => _selectedPath = path);
   }
 
-  void _removeRecent(String path) {
+  Future<void> _removeRecent(String path) async {
     // This would typically call a service to remove from history
     // For now, just deselect if it was selected
     if (_selectedPath == path) {
@@ -206,12 +334,14 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
 class _RecentProjectTile extends StatelessWidget {
   final ProjectHistory project;
   final bool isSelected;
+  final bool isValidating;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const _RecentProjectTile({
     required this.project,
     required this.isSelected,
+    this.isValidating = false,
     required this.onTap,
     required this.onDelete,
   });
@@ -234,12 +364,22 @@ class _RecentProjectTile extends StatelessWidget {
                 : colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            Icons.description_outlined,
-            color: isSelected
-                ? colorScheme.primaryContainer
-                : colorScheme.primary,
-          ),
+          child: isValidating
+              ? Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: isSelected
+                        ? colorScheme.primaryContainer
+                        : colorScheme.primary,
+                  ),
+                )
+              : Icon(
+                  Icons.description_outlined,
+                  color: isSelected
+                      ? colorScheme.primaryContainer
+                      : colorScheme.primary,
+                ),
         ),
         title: Text(
           project.name,
@@ -279,7 +419,7 @@ class _RecentProjectTile extends StatelessWidget {
           onPressed: onDelete,
           tooltip: 'Remove from list',
         ),
-        onTap: onTap,
+        onTap: isValidating ? null : onTap,
       ),
     );
   }
