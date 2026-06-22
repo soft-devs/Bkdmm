@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/providers/providers.dart';

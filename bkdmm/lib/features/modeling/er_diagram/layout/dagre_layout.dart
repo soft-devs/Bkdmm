@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'package:flutter/foundation.dart';
+import 'dart:ui';
 
 /// Simplified Dagre-like layout algorithm for hierarchical graph layout
 ///
@@ -125,7 +125,6 @@ class DagreLayout {
     Size Function(String) nodeSize,
   ) {
     final positions = <String, Offset>{};
-    final maxRank = orderedRanks.keys.reduce(math.max);
 
     for (final entry in orderedRanks.entries) {
       final rank = entry.key;

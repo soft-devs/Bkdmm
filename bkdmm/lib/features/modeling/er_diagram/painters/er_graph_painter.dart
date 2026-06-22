@@ -54,8 +54,8 @@ class ERGraphPainter extends CustomPainter {
     const gridSize = 20.0;
     final gridPaint = Paint()
       ..color = isDarkMode
-          ? Colors.white.withOpacity(0.03)
-          : Colors.black.withOpacity(0.03)
+          ? Colors.white.withValues(alpha: 0.03)
+          : Colors.black.withValues(alpha: 0.03)
       ..strokeWidth = 0.5;
 
     // Calculate visible area based on pan and zoom

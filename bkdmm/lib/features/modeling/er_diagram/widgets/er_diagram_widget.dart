@@ -429,10 +429,6 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     if (!_isDragging || _draggedNodeId == null) return;
 
     final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-    final graphState = ref.read(erGraphProvider(widget.moduleId));
-
-    // Get current transform scale
-    final scale = _transformController.value.getMaxScaleOnAxis();
 
     // Calculate new position
     final graphPos = _transformController.toScene(details.localPosition);
@@ -464,17 +460,11 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
   void _saveViewport() {
     final matrix = _transformController.value;
     final scale = matrix.getMaxScaleOnAxis();
-    final offsetX = matrix.getTranslation().x;
-    final offsetY = matrix.getTranslation().y;
 
     // Update the graph notifier with viewport info
     // This will be saved to the project
     final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-
-    // Update zoom in state
-    if ((graphNotifier.state.zoom - scale).abs() > 0.01) {
-      graphNotifier.setZoom(scale);
-    }
+    graphNotifier.setZoom(scale);
   }
 
   // Toolbar actions
@@ -505,10 +495,11 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
     graphNotifier.fitToView(viewportSize);
 
-    // Update transform controller
+    // Update transform controller after fitToView updates the state
+    final newState = ref.read(erGraphProvider(widget.moduleId));
     _transformController.value = Matrix4.identity()
-      ..translate(graphNotifier.state.panOffset.dx, graphNotifier.state.panOffset.dy)
-      ..scale(graphNotifier.state.zoom);
+      ..translate(newState.panOffset.dx, newState.panOffset.dy)
+      ..scale(newState.zoom);
   }
 
   void _showSearchDialog(ERGraphState graphState) {
@@ -560,7 +551,8 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
 
       // Fit to screen after layout
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _fitToScreen(graphNotifier.state);
+        final newState = ref.read(erGraphProvider(widget.moduleId));
+        _fitToScreen(newState);
       });
     } finally {
       graphNotifier.setLayouting(false);

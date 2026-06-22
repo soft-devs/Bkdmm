@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -116,7 +117,7 @@ class ERDiagramExporter {
         return ExportResult.error('Could not find render object');
       }
 
-      final image = await boundary.toImage(pixelRatio: pixelRatio);
+      final image = await boundary.toImage(pixelRatio: pixelRatio.toDouble());
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) {
         return ExportResult.error('Failed to generate image data');
