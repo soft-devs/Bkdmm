@@ -211,7 +211,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 decoration: InputDecoration(
                   labelText: 'Java Type',
                   hintText: 'e.g., String, Integer, BigDecimal',
-                  prefixIcon: const Icon(Icons.code_blocks),
+                  prefixIcon: const Icon(Icons.code),
                   helperText: 'Java type mapping for code generation',
                 ),
               ),

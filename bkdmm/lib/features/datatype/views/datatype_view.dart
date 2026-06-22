@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/constants/default_data_types.dart';
 import '../../../shared/providers/providers.dart';
-import '../../../utils/id_generator.dart';
 import '../providers/datatype_provider.dart';
 import 'datatype_edit_dialog.dart';
 

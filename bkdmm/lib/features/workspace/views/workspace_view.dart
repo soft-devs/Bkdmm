@@ -8,6 +8,7 @@ import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
 import '../widgets/tab_bar.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
+import '../../datatype/views/datatype_view.dart';
 
 /// Workspace view - Main project editing interface with tab management
 ///
@@ -248,6 +249,14 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
+              const PopupMenuItem(
+                value: 'datatype',
+                child: ListTile(
+                  leading: Icon(Icons.data_object),
+                  title: Text('Data Types'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
             ],
           ),
         ],
@@ -276,6 +285,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         return _buildRelationView(activeTab, project, theme, colorScheme);
       case TabType.settings:
         return _buildSettingsView(theme, colorScheme);
+      case TabType.datatype:
+        return const DataTypeView();
     }
   }
 
@@ -717,6 +728,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         return _buildModuleProperties(tab, project, theme, colorScheme);
       case TabType.relation:
       case TabType.settings:
+      case TabType.datatype:
         return _buildProjectProperties(project, theme, colorScheme);
     }
   }
@@ -987,6 +999,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         break;
       case 'settings':
         ref.read(tabProvider.notifier).openSettings();
+        break;
+      case 'datatype':
+        ref.read(tabProvider.notifier).openDatatype();
         break;
     }
   }

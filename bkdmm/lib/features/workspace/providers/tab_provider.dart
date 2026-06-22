@@ -303,6 +303,13 @@ class TabNotifier extends StateNotifier<TabState> {
     openTab(tab);
   }
 
+  /// Open data types tab
+  void openDatatype() {
+    const tabId = 'datatype';
+    final tab = WorkspaceTab.datatype(id: tabId);
+    openTab(tab);
+  }
+
   /// Close a tab by ID
   void closeTab(String tabId) {
     final tabIndex = state.tabs.indexWhere((t) => t.id == tabId);
