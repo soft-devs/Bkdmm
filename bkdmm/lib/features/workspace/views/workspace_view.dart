@@ -84,7 +84,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   SizedBox(
                     width: _sidebarWidth,
                     child: ModuleTree(
-                      project: currentProject,
+                      project: project,
                       onAddModule: () => _showAddModuleDialog(),
                       onAddEntity: (module) => _showAddEntityDialog(module),
                       onSelectModule: (module) => _onSelectModule(module),
@@ -104,7 +104,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
                         // Tab content area
                         Expanded(
-                          child: _buildTabContent(currentProject, theme, colorScheme),
+                          child: _buildTabContent(project, theme, colorScheme),
                         ),
                       ],
                     ),
@@ -114,14 +114,14 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   if (_showPropertiesPanel)
                     SizedBox(
                       width: _propertiesPanelWidth,
-                      child: _buildPropertiesPanel(currentProject, theme, colorScheme),
+                      child: _buildPropertiesPanel(project, theme, colorScheme),
                     ),
                 ],
               ),
             ),
 
             // Status bar
-            _buildStatusBar(currentProject, projectState, theme, colorScheme),
+            _buildStatusBar(project, projectState, theme, colorScheme),
           ],
         ),
         // Remove FAB - functionality is available from menu and module tree
