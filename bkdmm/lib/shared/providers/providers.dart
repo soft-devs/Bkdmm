@@ -1,5 +1,4 @@
-/// Provider 导出文件
-library providers;
+// Provider 导出文件
 
 export 'project_provider.dart';
 export 'history_provider.dart';
