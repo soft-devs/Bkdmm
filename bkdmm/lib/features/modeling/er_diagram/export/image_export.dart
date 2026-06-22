@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -52,7 +53,7 @@ class ERDiagramExporter {
       // Prompt for save location if not provided
       String? targetPath = outputPath;
       if (targetPath == null) {
-        targetPath = await _promptSavePath(context);
+        targetPath = await _promptSavePath();
         if (targetPath == null) {
           return ExportResult.cancelled();
         }
@@ -106,7 +107,6 @@ class ERDiagramExporter {
   /// Export from a RepaintBoundary widget
   static Future<ExportResult> exportFromWidget({
     required GlobalKey repaintKey,
-    required BuildContext context,
     String? outputPath,
     int pixelRatio = 2,
   }) async {
@@ -125,7 +125,7 @@ class ERDiagramExporter {
       // Prompt for save location if not provided
       String? targetPath = outputPath;
       if (targetPath == null) {
-        targetPath = await _promptSavePath(context);
+        targetPath = await _promptSavePath();
         if (targetPath == null) {
           return ExportResult.cancelled();
         }
@@ -179,7 +179,9 @@ class ERDiagramExporter {
     Size bounds,
     bool isDarkMode,
   ) {
-    // Calculate offset to center content
+    if (graphState.nodes.isEmpty) return;
+
+    // Calculate min values
     double minX = double.infinity;
     double minY = double.infinity;
 
@@ -187,9 +189,6 @@ class ERDiagramExporter {
       minX = math.min(minX, node.x);
       minY = math.min(minY, node.y);
     }
-
-    final offsetX = bounds.width / 2 - minX / 2;
-    final offsetY = bounds.height / 2 - minY / 2;
 
     for (final node in graphState.nodes) {
       final adjustedNode = node.copyWith(
@@ -212,7 +211,9 @@ class ERDiagramExporter {
     Size bounds,
     bool isDarkMode,
   ) {
-    // Calculate offset to center content
+    if (graphState.nodes.isEmpty) return;
+
+    // Calculate min values
     double minX = double.infinity;
     double minY = double.infinity;
 
@@ -309,7 +310,7 @@ class ERDiagramExporter {
   }
 
   /// Prompt user for save location
-  static Future<String?> _promptSavePath(BuildContext context) async {
+  static Future<String?> _promptSavePath() async {
     final result = await FilePicker.platform.saveFile(
       type: FileType.custom,
       allowedExtensions: ['png'],
