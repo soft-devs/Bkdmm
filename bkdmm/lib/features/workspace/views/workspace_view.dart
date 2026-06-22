@@ -33,8 +33,8 @@ class WorkspaceView extends ConsumerStatefulWidget {
 
 class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   bool _showPropertiesPanel = true;
-  double _sidebarWidth = 240;
-  double _propertiesPanelWidth = 280;
+  final double _sidebarWidth = 240;
+  final double _propertiesPanelWidth = 280;
 
   @override
   void initState() {
@@ -799,10 +799,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   ) {
     // Find the entity
     Entity? entity;
-    Module? parentModule;
     for (final module in project.modules) {
       if (module.id == tab.moduleId) {
-        parentModule = module;
         entity = module.entities.firstWhere(
           (e) => e.id == tab.entityId,
           orElse: () => throw StateError('Entity not found'),
@@ -1267,12 +1265,10 @@ class _PropertySection extends StatelessWidget {
 class _PropertyField extends StatelessWidget {
   final String label;
   final String value;
-  final int maxLines;
 
   const _PropertyField({
     required this.label,
     required this.value,
-    this.maxLines = 1,
   });
 
   @override
@@ -1295,7 +1291,6 @@ class _PropertyField extends StatelessWidget {
           Text(
             value,
             style: theme.textTheme.bodyMedium,
-            maxLines: maxLines,
             overflow: TextOverflow.ellipsis,
           ),
         ],
