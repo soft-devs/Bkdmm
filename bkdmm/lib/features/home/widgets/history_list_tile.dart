@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../shared/models/models.dart';
+import '../../../shared/models/models.dart';
 
 /// A list tile widget for displaying project history items.
 ///

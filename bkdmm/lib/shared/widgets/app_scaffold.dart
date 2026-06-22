@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'loading_overlay.dart';
 
 /// A common scaffold widget that provides consistent structure across screens.
 ///
@@ -82,8 +83,8 @@ class _AppScaffoldState extends State<AppScaffold> {
               onDestinationSelected: widget.onNavigationChanged,
               destinations: widget.navigationItems
                   .map((item) => NavigationDestination(
-                        icon: item.icon,
-                        selectedIcon: item.selectedIcon ?? item.icon,
+                        icon: Icon(item.icon),
+                        selectedIcon: Icon(item.selectedIcon ?? item.icon),
                         label: item.label,
                       ))
                   .toList(),

@@ -183,7 +183,8 @@ Return JSON:
     required: ['file', 'success'],
   },
 })
-  );
+  )
+);
 
   // Log fix results
   const successful = fixResults.filter(r => r?.success).length;

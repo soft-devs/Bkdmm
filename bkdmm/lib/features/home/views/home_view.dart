@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../shared/providers/providers.dart';
-import '../../shared/models/models.dart';
-import '../../shared/widgets/loading_overlay.dart';
-import '../../shared/widgets/app_scaffold.dart';
+import '../../../shared/providers/providers.dart';
+import '../../../shared/models/models.dart';
+import '../../../shared/widgets/app_scaffold.dart';
 
 /// Home view displaying project history and quick actions.
 class HomeView extends ConsumerStatefulWidget {
