@@ -44,7 +44,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ),
       ],
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isCreating ? null : () => _showCreateProjectDialog(context),
+        onPressed: _isCreating ? null : _showCreateProjectDialog,
         icon: const Icon(Icons.add),
         label: const Text('New Project'),
       ),
@@ -173,7 +173,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       icon: Icons.add,
                       label: 'New Project',
                       description: 'Create a new project',
-                      onTap: _isCreating ? null : () => _showCreateProjectDialog(context),
+                      onTap: _isCreating ? null : _showCreateProjectDialog,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -182,7 +182,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       icon: Icons.folder_open_outlined,
                       label: 'Open Project',
                       description: 'Open an existing project',
-                      onTap: () => _showOpenProjectDialog(context),
+                      onTap: _showOpenProjectDialog,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -214,13 +214,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   icon: Icons.add,
                   label: 'New Project',
                   description: 'Create a new project',
-                  onTap: _isCreating ? null : () => _showCreateProjectDialog(context),
+                  onTap: _isCreating ? null : _showCreateProjectDialog,
                 ),
                 _QuickActionCard(
                   icon: Icons.folder_open_outlined,
                   label: 'Open Project',
                   description: 'Open an existing project',
-                  onTap: () => _showOpenProjectDialog(context),
+                  onTap: _showOpenProjectDialog,
                 ),
                 _QuickActionCard(
                   icon: Icons.download_outlined,
@@ -263,7 +263,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
             ),
             if (historyList.isNotEmpty)
               TextButton.icon(
-                onPressed: () => _showAllHistory(context, historyList),
+                onPressed: () => _showAllHistory(historyList),
                 icon: const Icon(Icons.history, size: 18),
                 label: const Text('View All'),
               ),
@@ -316,7 +316,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: _isCreating ? null : () => _showCreateProjectDialog(context),
+            onPressed: _isCreating ? null : _showCreateProjectDialog,
             icon: const Icon(Icons.add),
             label: const Text('Create New Project'),
           ),
@@ -340,7 +340,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           padding: const EdgeInsets.only(bottom: 8),
           child: HistoryListTile(
             history: history,
-            onTap: () => _openFromHistory(context, history),
+            onTap: () => _openFromHistory(history),
             onDelete: () => _deleteHistory(history.path),
             onFavorite: () {
               // TODO: Implement favorite
@@ -354,7 +354,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     );
   }
 
-  Future<void> _showCreateProjectDialog(BuildContext context) async {
+  Future<void> _showCreateProjectDialog() async {
     final result = await CreateProjectDialog.show(context);
 
     if (result != null && mounted) {
@@ -371,8 +371,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ref.read(historyNotifierProvider.notifier).refresh();
 
         if (mounted) {
-          final messenger = ScaffoldMessenger.of(context);
-          messenger.showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Project "${result.name}" created successfully'),
               action: SnackBarAction(
@@ -386,12 +385,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
         }
       } catch (e) {
         if (mounted) {
-          final messenger = ScaffoldMessenger.of(context);
-          final errorColor = Theme.of(context).colorScheme.error;
-          messenger.showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to create project: $e'),
-              backgroundColor: errorColor,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }
@@ -403,7 +400,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     }
   }
 
-  Future<void> _showOpenProjectDialog(BuildContext context) async {
+  Future<void> _showOpenProjectDialog() async {
     final historyList = ref.read(historyNotifierProvider);
     final result = await OpenProjectDialog.show(
       context,
@@ -411,11 +408,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
     );
 
     if (result != null && mounted) {
-      await _openProjectAtPath(context, result);
+      await _openProjectAtPath(result);
     }
   }
 
-  Future<void> _openProjectAtPath(BuildContext context, String path) async {
+  Future<void> _openProjectAtPath(String path) async {
     setState(() => _isCreating = true);
 
     try {
@@ -425,19 +422,16 @@ class _HomeViewState extends ConsumerState<HomeView> {
       ref.read(historyNotifierProvider.notifier).refresh();
 
       if (mounted) {
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Project opened successfully')),
         );
       }
     } catch (e) {
       if (mounted) {
-        final messenger = ScaffoldMessenger.of(context);
-        final errorColor = Theme.of(context).colorScheme.error;
-        messenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to open project: $e'),
-            backgroundColor: errorColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -448,8 +442,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
     }
   }
 
-  Future<void> _openFromHistory(BuildContext context, ProjectHistory history) async {
-    await _openProjectAtPath(context, history.path);
+  Future<void> _openFromHistory(ProjectHistory history) async {
+    await _openProjectAtPath(history.path);
   }
 
   Future<void> _deleteHistory(String path) async {
@@ -473,10 +467,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
     }
   }
 
-  void _showAllHistory(BuildContext context, List<ProjectHistory> historyList) {
+  void _showAllHistory(List<ProjectHistory> historyList) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('All Recent Projects'),
         content: SizedBox(
           width: 500,
@@ -488,13 +482,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
               return HistoryListTile(
                 history: history,
                 onTap: () {
-                  Navigator.of(context).pop();
-                  _openFromHistory(this.context, history);
+                  Navigator.of(dialogContext).pop();
+                  _openFromHistory(history);
                 },
                 onDelete: () {
                   _deleteHistory(history.path);
-                  Navigator.of(context).pop();
-                  _showAllHistory(this.context, ref.read(historyNotifierProvider));
+                  Navigator.of(dialogContext).pop();
+                  _showAllHistory(ref.read(historyNotifierProvider));
                 },
               );
             },
@@ -502,7 +496,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Close'),
           ),
         ],
