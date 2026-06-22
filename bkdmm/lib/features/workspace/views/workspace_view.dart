@@ -126,11 +126,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             _buildStatusBar(project, projectState, theme, colorScheme),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _showAddModuleDialog(),
-          tooltip: 'Add Module',
-          child: const Icon(Icons.add),
-        ),
+        // Remove FAB - functionality is available from menu and module tree
       ),
     );
   }
@@ -1043,9 +1039,14 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       }
     }
 
-    // Close project and navigate back
+    // Clear all tabs first
+    ref.read(tabProvider.notifier).closeAllTabs();
+
+    // Close project and navigate back to home
     ref.read(projectProvider.notifier).closeProject();
+
     if (mounted) {
+      // Pop to return to home view
       Navigator.of(context).pop();
     }
   }

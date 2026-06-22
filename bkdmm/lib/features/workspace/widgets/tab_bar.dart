@@ -68,80 +68,89 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        border: Border(
-          bottom: BorderSide(
-            color: colorScheme.outlineVariant,
-            width: 1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate available width for tabs
+        final availableWidth = constraints.maxWidth;
+        final hasOverflow = tabState.tabs.length > 5; // Estimate if tabs might overflow
+
+        return Container(
+          height: 40,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            border: Border(
+              bottom: BorderSide(
+                color: colorScheme.outlineVariant,
+                width: 1,
+              ),
+            ),
           ),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Left scroll button
-          if (widget.showScrollButtons && _showLeftScroll)
-            IconButton(
-              icon: const Icon(Icons.chevron_left, size: 20),
-              onPressed: _scrollLeft,
-              tooltip: 'Scroll left',
-              visualDensity: VisualDensity.compact,
-            ),
+          child: Row(
+            children: [
+              // Left scroll button
+              if (widget.showScrollButtons && _showLeftScroll && hasOverflow)
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, size: 20),
+                  onPressed: _scrollLeft,
+                  tooltip: 'Scroll left',
+                  visualDensity: VisualDensity.compact,
+                ),
 
-          // Tab list
-          Expanded(
-            child: tabState.hasTabs
-                ? ListView.builder(
-                    controller: _scrollController,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: tabState.tabs.length,
-                    itemBuilder: (context, index) {
-                      final tab = tabState.tabs[index];
-                      final isActive = tab.id == tabState.activeTabId;
-                      return _TabItem(
-                        tab: tab,
-                        isActive: isActive,
-                        onTap: () => ref
-                            .read(tabProvider.notifier)
-                            .setActiveTab(tab.id),
-                        onClose: () =>
-                            ref.read(tabProvider.notifier).closeTab(tab.id),
-                        onCloseOthers: () =>
-                            ref.read(tabProvider.notifier).closeOtherTabs(),
-                        onCloseToRight: () =>
-                            ref.read(tabProvider.notifier).closeTabsToRight(),
-                        onCloseToLeft: () =>
-                            ref.read(tabProvider.notifier).closeTabsToLeft(),
-                      );
-                    },
-                  )
-                : _buildEmptyState(theme, colorScheme),
+              // Tab list
+              Expanded(
+                child: tabState.hasTabs
+                    ? ListView.builder(
+                        controller: _scrollController,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: tabState.tabs.length,
+                        itemBuilder: (context, index) {
+                          final tab = tabState.tabs[index];
+                          final isActive = tab.id == tabState.activeTabId;
+                          return _TabItem(
+                            tab: tab,
+                            isActive: isActive,
+                            maxWidth: availableWidth / 3, // Max 1/3 of available width per tab
+                            onTap: () => ref
+                                .read(tabProvider.notifier)
+                                .setActiveTab(tab.id),
+                            onClose: () =>
+                                ref.read(tabProvider.notifier).closeTab(tab.id),
+                            onCloseOthers: () =>
+                                ref.read(tabProvider.notifier).closeOtherTabs(),
+                            onCloseToRight: () =>
+                                ref.read(tabProvider.notifier).closeTabsToRight(),
+                            onCloseToLeft: () =>
+                                ref.read(tabProvider.notifier).closeTabsToLeft(),
+                          );
+                        },
+                      )
+                    : _buildEmptyState(theme, colorScheme),
+              ),
+
+              // Right scroll button
+              if (widget.showScrollButtons && _showRightScroll && hasOverflow)
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, size: 20),
+                  onPressed: _scrollRight,
+                  tooltip: 'Scroll right',
+                  visualDensity: VisualDensity.compact,
+                ),
+
+              // Actions
+              if (widget.onNewTab != null)
+                IconButton(
+                  icon: const Icon(Icons.add, size: 20),
+                  onPressed: widget.onNewTab,
+                  tooltip: 'New tab',
+                  visualDensity: VisualDensity.compact,
+                ),
+
+              // Overflow menu
+              if (tabState.hasTabs) _buildOverflowMenu(tabState, theme, colorScheme),
+            ],
           ),
-
-          // Right scroll button
-          if (widget.showScrollButtons && _showRightScroll)
-            IconButton(
-              icon: const Icon(Icons.chevron_right, size: 20),
-              onPressed: _scrollRight,
-              tooltip: 'Scroll right',
-              visualDensity: VisualDensity.compact,
-            ),
-
-          // Actions
-          if (widget.onNewTab != null)
-            IconButton(
-              icon: const Icon(Icons.add, size: 20),
-              onPressed: widget.onNewTab,
-              tooltip: 'New tab',
-              visualDensity: VisualDensity.compact,
-            ),
-
-          // Overflow menu
-          if (tabState.hasTabs) _buildOverflowMenu(tabState, theme, colorScheme),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -225,6 +234,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
 class _TabItem extends StatelessWidget {
   final WorkspaceTab tab;
   final bool isActive;
+  final double maxWidth;
   final VoidCallback onTap;
   final VoidCallback onClose;
   final VoidCallback onCloseOthers;
@@ -234,6 +244,7 @@ class _TabItem extends StatelessWidget {
   const _TabItem({
     required this.tab,
     required this.isActive,
+    required this.maxWidth,
     required this.onTap,
     required this.onClose,
     required this.onCloseOthers,
