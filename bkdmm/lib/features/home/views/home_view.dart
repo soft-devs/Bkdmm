@@ -44,11 +44,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           tooltip: 'Profile',
         ),
       ],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isCreating ? null : _showCreateProjectDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('New Project'),
-      ),
+      // Remove FAB - quick actions are available in the body
       body: _buildBody(context, historyList),
     );
   }

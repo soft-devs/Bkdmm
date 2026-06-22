@@ -37,6 +37,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   bool _showPropertiesPanel = true;
   final double _sidebarWidth = 240;
   final double _propertiesPanelWidth = 280;
+  bool _isClosing = false; // Track if we're actively closing
 
   @override
   void initState() {
@@ -55,11 +56,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     final projectState = ref.watch(projectProvider);
     final project = projectState.project;
 
-    if (project == null) {
-      // No project loaded, return to home
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pop();
-      });
+    // If no project and not actively closing, show loading
+    // (the close operation should have already navigated back)
+    if (project == null && !_isClosing) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
