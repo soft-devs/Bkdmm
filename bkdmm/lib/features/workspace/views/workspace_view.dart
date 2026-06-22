@@ -466,11 +466,6 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     ref.read(tabProvider.notifier).openEntity(entity, module.id);
   }
 
-  void _showEditEntityDialog(Module module, Entity entity) {
-    // For now, just open in tab for editing
-    _openEntityInTab(module, entity);
-  }
-
   void _confirmDeleteEntity(Module module, Entity entity) {
     showDialog(
       context: context,
@@ -1316,8 +1311,478 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-/// Entity node widget for ER diagram - interactive
-class _EntityNode extends StatefulWidget {
+/// ER Diagram Canvas with infinite scrolling and draggable nodes
+class _ERDiagramCanvas extends StatefulWidget {
+  final Module module;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final Function(Entity) onEntityTap;
+  final Function(Entity) onEntityDoubleTap;
+  final Function(Entity) onEntityDelete;
+  final VoidCallback onAddEntity;
+
+  const _ERDiagramCanvas({
+    required this.module,
+    required this.theme,
+    required this.colorScheme,
+    required this.onEntityTap,
+    required this.onEntityDoubleTap,
+    required this.onEntityDelete,
+    required this.onAddEntity,
+  });
+
+  @override
+  State<_ERDiagramCanvas> createState() => _ERDiagramCanvasState();
+}
+
+class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
+  // Store entity positions
+  final Map<String, Offset> _entityPositions = {};
+  Offset _canvasOffset = Offset.zero;
+  double _scale = 1.0;
+
+  // For dragging
+  String? _draggingEntityId;
+  Offset _dragStartPosition = Offset.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize default positions for entities
+    for (int i = 0; i < widget.module.entities.length; i++) {
+      final entity = widget.module.entities[i];
+      _entityPositions[entity.id] = Offset(
+        50.0 + (i % 3) * 250,
+        50.0 + (i / 3).floor() * 200,
+      );
+    }
+  }
+
+  @override
+  void didUpdateWidget(_ERDiagramCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update positions when entities change
+    for (int i = 0; i < widget.module.entities.length; i++) {
+      final entity = widget.module.entities[i];
+      if (!_entityPositions.containsKey(entity.id)) {
+        _entityPositions[entity.id] = Offset(
+          50.0 + (i % 3) * 250,
+          50.0 + (i / 3).floor() * 200,
+        );
+      }
+    }
+    // Remove positions for deleted entities
+    final entityIds = widget.module.entities.map((e) => e.id).toSet();
+    _entityPositions.keys.where((id) => !entityIds.contains(id)).toList().forEach(
+      (id) => _entityPositions.remove(id),
+    );
+  }
+
+  void _onCanvasPanStart(DragStartDetails details) {
+    // Starting canvas drag
+  }
+
+  void _onCanvasPanUpdate(DragUpdateDetails details) {
+    if (_draggingEntityId != null) return;
+
+    setState(() {
+      _canvasOffset += details.delta;
+    });
+  }
+
+  void _onEntityPanStart(String entityId, DragStartDetails details) {
+    setState(() {
+      _draggingEntityId = entityId;
+      _dragStartPosition = _entityPositions[entityId] ?? Offset.zero;
+    });
+  }
+
+  void _onEntityPanUpdate(DragUpdateDetails details) {
+    if (_draggingEntityId == null) return;
+
+    setState(() {
+      _entityPositions[_draggingEntityId!] = _dragStartPosition + details.delta;
+    });
+  }
+
+  void _onEntityPanEnd(DragEndDetails details) {
+    setState(() {
+      _draggingEntityId = null;
+    });
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails details) {
+    setState(() {
+      _scale = details.scale.clamp(0.5, 2.0);
+    });
+  }
+
+  void _resetView() {
+    setState(() {
+      _canvasOffset = Offset.zero;
+      _scale = 1.0;
+    });
+  }
+
+  void _autoLayout() {
+    setState(() {
+      for (int i = 0; i < widget.module.entities.length; i++) {
+        final entity = widget.module.entities[i];
+        _entityPositions[entity.id] = Offset(
+          50.0 + (i % 3) * 250,
+          50.0 + (i / 3).floor() * 200,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Canvas with gestures
+        GestureDetector(
+          onPanStart: _onCanvasPanStart,
+          onPanUpdate: _onCanvasPanUpdate,
+          onScaleUpdate: _onScaleUpdate,
+          child: Container(
+            color: widget.colorScheme.surface,
+            child: CustomPaint(
+              painter: _GridPainter(widget.colorScheme, offset: _canvasOffset, scale: _scale),
+              size: Size.infinite,
+            ),
+          ),
+        ),
+
+        // Entity nodes (transformed with canvas offset and scale)
+        ...widget.module.entities.map((entity) {
+          final position = (_entityPositions[entity.id] ?? Offset(50, 50)) + _canvasOffset;
+          return Positioned(
+            left: position.dx * _scale,
+            top: position.dy * _scale,
+            child: Transform.scale(
+              scale: _scale,
+              child: _DraggableEntityNode(
+                entity: entity,
+                theme: widget.theme,
+                colorScheme: widget.colorScheme,
+                onTap: () => widget.onEntityTap(entity),
+                onDoubleTap: () => widget.onEntityDoubleTap(entity),
+                onDelete: () => widget.onEntityDelete(entity),
+                onPanStart: (details) => _onEntityPanStart(entity.id, details),
+                onPanUpdate: _onEntityPanUpdate,
+                onPanEnd: _onEntityPanEnd,
+                isDragging: _draggingEntityId == entity.id,
+              ),
+            ),
+          );
+        }),
+
+        // Toolbar overlay
+        Positioned(
+          right: 16,
+          top: 16,
+          child: _buildToolbar(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.zoom_in),
+              onPressed: () => setState(() => _scale = (_scale + 0.1).clamp(0.5, 2.0)),
+              tooltip: 'Zoom In',
+              iconSize: 20,
+            ),
+            IconButton(
+              icon: const Icon(Icons.zoom_out),
+              onPressed: () => setState(() => _scale = (_scale - 0.1).clamp(0.5, 2.0)),
+              tooltip: 'Zoom Out',
+              iconSize: 20,
+            ),
+            IconButton(
+              icon: const Icon(Icons.fit_screen),
+              onPressed: _resetView,
+              tooltip: 'Reset View',
+              iconSize: 20,
+            ),
+            IconButton(
+              icon: const Icon(Icons.auto_fix_high),
+              onPressed: _autoLayout,
+              tooltip: 'Auto Layout',
+              iconSize: 20,
+            ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: widget.onAddEntity,
+              tooltip: 'Add Entity',
+              iconSize: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Draggable entity node for ER diagram
+class _DraggableEntityNode extends StatelessWidget {
+  final Entity entity;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final VoidCallback onTap;
+  final VoidCallback onDoubleTap;
+  final VoidCallback onDelete;
+  final Function(DragStartDetails) onPanStart;
+  final Function(DragUpdateDetails) onPanUpdate;
+  final Function(DragEndDetails) onPanEnd;
+  final bool isDragging;
+
+  const _DraggableEntityNode({
+    required this.entity,
+    required this.theme,
+    required this.colorScheme,
+    required this.onTap,
+    required this.onDoubleTap,
+    required this.onDelete,
+    required this.onPanStart,
+    required this.onPanUpdate,
+    required this.onPanEnd,
+    required this.isDragging,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      onDoubleTap: onDoubleTap,
+      onPanStart: onPanStart,
+      onPanUpdate: onPanUpdate,
+      onPanEnd: onPanEnd,
+      child: MouseRegion(
+        cursor: isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 200,
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDragging ? colorScheme.primary : colorScheme.outline,
+              width: isDragging ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: isDragging ? 0.3 : 0.1),
+                blurRadius: isDragging ? 16 : 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(7),
+                    topRight: Radius.circular(7),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.table_chart,
+                      size: 16,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        entity.title,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.more_vert,
+                        size: 14,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      onPressed: () => _showContextMenu(context),
+                      tooltip: 'Actions',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Chinese name
+              if (entity.chnname.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  child: Text(
+                    entity.chnname,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
+              // Fields preview
+              if (entity.fields.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: entity.fields.take(5).map((field) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Row(
+                          children: [
+                            if (field.pk)
+                              Icon(Icons.key, size: 12, color: colorScheme.primary)
+                            else
+                              const SizedBox(width: 12),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                field.name,
+                                style: theme.textTheme.labelSmall,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              field.type,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+              // More fields indicator
+              if (entity.fields.length > 5)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
+                  child: Text(
+                    '+${entity.fields.length - 5} more',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+
+              // Footer with stats
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLow,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(7),
+                    bottomRight: Radius.circular(7),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.list_alt, size: 12, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text('${entity.fields.length}', style: theme.textTheme.labelSmall),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.sort, size: 12, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text('${entity.indexes.length}', style: theme.textTheme.labelSmall),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showContextMenu(BuildContext context) {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final RenderBox button = context.findRenderObject()! as RenderBox;
+    final Offset position = button.localToGlobal(Offset.zero, ancestor: overlay);
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy + button.size.height,
+        position.dx + button.size.width,
+        position.dy,
+      ),
+      items: [
+        const PopupMenuItem(
+          value: 'edit',
+          child: ListTile(
+            leading: Icon(Icons.edit, size: 18),
+            title: Text('Edit'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'fields',
+          child: ListTile(
+            leading: Icon(Icons.list_alt, size: 18),
+            title: Text('Edit Fields'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'delete',
+          child: ListTile(
+            leading: Icon(Icons.delete, size: 18, color: Colors.red),
+            title: Text('Delete', style: TextStyle(color: Colors.red)),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == 'edit' || value == 'fields') {
+        onDoubleTap();
+      } else if (value == 'delete') {
+        onDelete();
+      }
+    });
+  }
+}
+
+/// Entity node widget - simple non-draggable version for static display
+class _EntityNode extends StatelessWidget {
   final Entity entity;
   final Module module;
   final ThemeData theme;
@@ -1337,242 +1802,129 @@ class _EntityNode extends StatefulWidget {
   });
 
   @override
-  State<_EntityNode> createState() => _EntityNodeState();
-}
-
-class _EntityNodeState extends State<_EntityNode> {
-  bool _isHovered = false;
-  bool _isSelected = false;
-
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          setState(() => _isSelected = !_isSelected);
-          widget.onTap();
-        },
-        onDoubleTap: widget.onEdit,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 200,
-          decoration: BoxDecoration(
-            color: widget.colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _isSelected
-                  ? widget.colorScheme.primary
-                  : (_isHovered
-                      ? widget.colorScheme.primary.withValues(alpha: 0.5)
-                      : widget.colorScheme.outline),
-              width: _isSelected ? 2 : 1,
+    return GestureDetector(
+      onTap: onTap,
+      onDoubleTap: onEdit,
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colorScheme.outline),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.colorScheme.shadow.withValues(alpha: _isHovered ? 0.2 : 0.1),
-                blurRadius: _isHovered ? 12 : 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: widget.colorScheme.primaryContainer,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.table_chart,
-                      size: 16,
-                      color: widget.colorScheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        widget.entity.title,
-                        style: widget.theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: widget.colorScheme.onPrimaryContainer,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    // Context menu button
-                    if (_isHovered)
-                      PopupMenuButton<String>(
-                        icon: Icon(
-                          Icons.more_vert,
-                          size: 14,
-                          color: widget.colorScheme.onPrimaryContainer,
-                        ),
-                        tooltip: 'Actions',
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: ListTile(
-                              leading: Icon(Icons.edit, size: 18),
-                              title: Text('Edit'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'fields',
-                            child: ListTile(
-                              leading: Icon(Icons.list_alt, size: 18),
-                              title: Text('Edit Fields'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: ListTile(
-                              leading: Icon(Icons.delete, size: 18),
-                              title: Text('Delete'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ],
-                        onSelected: (value) {
-                          switch (value) {
-                            case 'edit':
-                              widget.onEdit();
-                              break;
-                            case 'fields':
-                              widget.onEdit();
-                              break;
-                            case 'delete':
-                              widget.onDelete();
-                              break;
-                          }
-                        },
-                      ),
-                  ],
-                ),
-              ),
-
-              // Chinese name
-              if (widget.entity.chnname.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Text(
-                    widget.entity.chnname,
-                    style: widget.theme.textTheme.labelSmall?.copyWith(
-                      color: widget.colorScheme.onSurfaceVariant,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-
-              // Fields
-              if (widget.entity.fields.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: widget.entity.fields.take(5).map((field) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Row(
-                          children: [
-                            if (field.pk)
-                              Icon(
-                                Icons.key,
-                                size: 12,
-                                color: widget.colorScheme.primary,
-                              )
-                            else
-                              const SizedBox(width: 12),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                field.name,
-                                style: widget.theme.textTheme.labelSmall,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              field.type,
-                              style: widget.theme.textTheme.labelSmall?.copyWith(
-                                color: widget.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-
-              // More fields indicator
-              if (widget.entity.fields.length > 5)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
-                  child: Text(
-                    '+${widget.entity.fields.length - 5} more fields',
-                    style: widget.theme.textTheme.labelSmall?.copyWith(
-                      color: widget.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-
-              // Statistics footer
-              if (_isHovered)
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: widget.colorScheme.surfaceContainerLow,
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.list_alt, size: 12, color: widget.colorScheme.onSurfaceVariant),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${widget.entity.fields.length}',
-                            style: widget.theme.textTheme.labelSmall?.copyWith(
-                              color: widget.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Icon(Icons.sort, size: 12, color: widget.colorScheme.onSurfaceVariant),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${widget.entity.indexes.length}',
-                            style: widget.theme.textTheme.labelSmall?.copyWith(
-                              color: widget.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.table_chart, size: 16, color: colorScheme.onPrimaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      entity.title,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.more_vert, size: 14, color: colorScheme.onPrimaryContainer),
+                    onPressed: () => _showMenu(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                  ),
+                ],
+              ),
+            ),
+            if (entity.fields.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  children: entity.fields.take(5).map((field) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Row(
+                        children: [
+                          if (field.pk)
+                            Icon(Icons.key, size: 12, color: colorScheme.primary)
+                          else
+                            const SizedBox(width: 12),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(field.name, style: theme.textTheme.labelSmall),
+                          ),
+                          Text(field.type, style: theme.textTheme.labelSmall),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            if (entity.fields.length > 5)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  '+${entity.fields.length - 5} more',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMenu(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(entity.title),
+        children: [
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onEdit();
+            },
+            child: const ListTile(
+              leading: Icon(Icons.edit),
+              title: Text('Edit'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onDelete();
+            },
+            child: ListTile(
+              leading: Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1581,8 +1933,10 @@ class _EntityNodeState extends State<_EntityNode> {
 /// Grid painter for canvas background
 class _GridPainter extends CustomPainter {
   final ColorScheme colorScheme;
+  final Offset offset;
+  final double scale;
 
-  _GridPainter(this.colorScheme);
+  _GridPainter(this.colorScheme, {this.offset = Offset.zero, this.scale = 1.0});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1590,10 +1944,14 @@ class _GridPainter extends CustomPainter {
       ..color = colorScheme.outlineVariant.withValues(alpha: 0.3)
       ..strokeWidth = 1;
 
-    const gridSize = 20.0;
+    final gridSize = 20.0 * scale;
+
+    // Calculate starting positions based on offset
+    final startX = (offset.dx % gridSize) - gridSize;
+    final startY = (offset.dy % gridSize) - gridSize;
 
     // Draw vertical lines
-    for (double x = 0; x < size.width; x += gridSize) {
+    for (double x = startX; x < size.width + gridSize; x += gridSize) {
       canvas.drawLine(
         Offset(x, 0),
         Offset(x, size.height),
@@ -1602,7 +1960,7 @@ class _GridPainter extends CustomPainter {
     }
 
     // Draw horizontal lines
-    for (double y = 0; y < size.height; y += gridSize) {
+    for (double y = startY; y < size.height + gridSize; y += gridSize) {
       canvas.drawLine(
         Offset(0, y),
         Offset(size.width, y),
@@ -1612,5 +1970,7 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridPainter oldDelegate) {
+    return oldDelegate.offset != offset || oldDelegate.scale != scale;
+  }
 }
