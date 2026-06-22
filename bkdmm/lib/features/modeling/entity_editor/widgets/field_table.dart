@@ -159,11 +159,17 @@ class _FieldTableState extends State<FieldTable> {
                 allowFiltering: isWide, // Only allow filtering on wide screens
                 selectionMode: SelectionMode.multiple,
                 navigationMode: GridNavigationMode.cell,
-                columnWidthMode: ColumnWidthMode.auto,
+                columnWidthMode: ColumnWidthMode.fill,
                 gridLinesVisibility: GridLinesVisibility.both,
                 headerGridLinesVisibility: GridLinesVisibility.both,
                 editingGestureType: EditingGestureType.doubleTap,
-                onQueryRowHeight: (details) => 40.0,
+                // Responsive row height based on available height
+                onQueryRowHeight: (details) {
+                  // Calculate row height based on available space
+                  // Min 36, max 48, default based on screen size
+                  final rowHeight = isWide ? 48.0 : (isMedium ? 42.0 : 36.0);
+                  return rowHeight;
+                },
                 columns: [
                   GridColumn(
                     columnName: 'pk',

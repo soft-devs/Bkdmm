@@ -1009,6 +1009,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   }
 
   Future<void> _closeProject() async {
+    // Set closing flag to prevent rebuild issues
+    setState(() => _isClosing = true);
+
     final projectState = ref.read(projectProvider);
 
     // Check for unsaved changes
@@ -1041,8 +1044,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     // Clear all tabs first
     ref.read(tabProvider.notifier).closeAllTabs();
 
-    // Close project and navigate back to home
-    ref.read(projectProvider.notifier).closeProject();
+    // Close project
+    await ref.read(projectProvider.notifier).closeProject(promptSave: false);
 
     if (mounted) {
       // Pop to return to home view
