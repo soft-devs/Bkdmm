@@ -7,6 +7,7 @@ import '../../../utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
 import '../widgets/tab_bar.dart';
+import '../../modeling/entity_editor/views/entity_editor_view.dart';
 
 /// Workspace view - Main project editing interface with tab management
 ///
@@ -322,8 +323,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   ) {
     // Find the entity
     Entity? entity;
+    String? moduleId;
     for (final module in project.modules) {
       if (module.id == tab.moduleId) {
+        moduleId = module.id;
         entity = module.entities.firstWhere(
           (e) => e.id == tab.entityId,
           orElse: () => throw StateError('Entity not found'),
@@ -332,86 +335,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       }
     }
 
-    if (entity == null) {
+    if (entity == null || moduleId == null) {
       return _buildNotFoundContent('Entity', tab.title, theme, colorScheme);
     }
 
-    return Container(
-      color: colorScheme.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Entity header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              border: Border(
-                bottom: BorderSide(
-                  color: colorScheme.outlineVariant,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.table_chart,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  entity.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  entity.chnname,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${entity.fields.length} fields',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Entity content (placeholder for now)
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.table_chart_outlined,
-                    size: 64,
-                    color: colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Entity Editor',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Field editor coming soon',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return EntityEditorView(
+      entity: entity,
+      moduleId: moduleId,
     );
   }
 

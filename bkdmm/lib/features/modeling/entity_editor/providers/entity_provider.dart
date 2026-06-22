@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/models/models.dart';
-import '../../../shared/providers/providers.dart';
-import '../../../utils/id_generator.dart';
+import '../../../../shared/models/models.dart';
+import '../../../../shared/providers/providers.dart';
+import '../../../../utils/id_generator.dart';
 
 /// Entity editing state
 class EntityEditState {
