@@ -86,7 +86,7 @@ class NodePainter {
   /// Draw shadow effect
   static void _drawShadow(Canvas canvas, Rect rect, bool isDragging) {
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(isDragging ? 0.3 : 0.15)
+      ..color = Colors.black.withValues(alpha: isDragging ? 0.3 : 0.15)
       ..maskFilter = MaskFilter.blur(
         BlurStyle.normal,
         isDragging ? 12 : 6,
@@ -130,7 +130,7 @@ class NodePainter {
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [headerColor, headerColor.withOpacity(0.8)],
+        colors: [headerColor, headerColor.withValues(alpha: 0.8)],
       ).createShader(headerRect);
 
     final headerRRect = RRect.fromRectAndCorners(
@@ -142,9 +142,9 @@ class NodePainter {
 
     // Table icon
     final iconPainter = TextPainter(
-      text: const TextSpan(
-        text: String.fromCharCode(Icons.table.codePoint),
-        style: TextStyle(
+      text: TextSpan(
+        text: String.fromCharCode(Icons.table_rows.codePoint),
+        style: const TextStyle(
           fontFamily: 'MaterialIcons',
           fontSize: 16,
           color: Colors.white,
@@ -202,7 +202,7 @@ class NodePainter {
           fieldRowHeight,
         );
         final rowPaint = Paint()
-          ..color = isDarkMode ? Colors.white.withOpacity(0.02) : Colors.grey.shade50;
+          ..color = isDarkMode ? Colors.white.withValues(alpha: 0.02) : Colors.grey.shade50;
         canvas.drawRect(rowRect, rowPaint);
       }
 

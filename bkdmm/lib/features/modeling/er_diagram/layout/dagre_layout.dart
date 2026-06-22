@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 
 /// Simplified Dagre-like layout algorithm for hierarchical graph layout
 ///
