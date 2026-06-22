@@ -1,33 +1,49 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 应用设置状态
+import '../services/services.dart';
+
+/// Application settings state
 class SettingsState {
-  /// 主题模式: 'system', 'light', 'dark'
+  /// Theme mode: 'system', 'light', 'dark'
   final String themeMode;
 
-  /// 语言代码: 'zh', 'en'
+  /// Language code: 'zh', 'en'
   final String locale;
 
-  /// 是否显示欢迎页面
+  /// Whether to show welcome page
   final bool showWelcomePage;
 
-  /// 最近使用的数据库类型
+  /// Default database type
   final String? defaultDatabase;
 
-  /// 自动保存间隔(秒), 0表示禁用
+  /// Auto-save interval (seconds), 0 means disabled
   final int autoSaveInterval;
 
-  /// 是否启用自动备份
+  /// Whether to enable auto backup
   final bool enableAutoBackup;
 
-  /// 备份保留数量
+  /// Backup retention count
   final int backupRetentionCount;
 
-  /// 编辑器字体大小
+  /// Editor font size
   final double editorFontSize;
 
-  /// 是否启用代码提示
+  /// Whether to enable code completion
   final bool enableCodeCompletion;
+
+  /// Show line numbers in code preview
+  final bool showLineNumbers;
+
+  /// Accent color (as 32-bit integer)
+  final int? accentColor;
+
+  /// Default fields for new tables
+  final bool defaultFieldsRevision;
+  final bool defaultFieldsCreatedBy;
+  final bool defaultFieldsCreatedTime;
+  final bool defaultFieldsUpdatedBy;
+  final bool defaultFieldsUpdatedTime;
 
   const SettingsState({
     this.themeMode = 'system',
@@ -39,6 +55,13 @@ class SettingsState {
     this.backupRetentionCount = 10,
     this.editorFontSize = 14.0,
     this.enableCodeCompletion = true,
+    this.showLineNumbers = true,
+    this.accentColor,
+    this.defaultFieldsRevision = true,
+    this.defaultFieldsCreatedBy = true,
+    this.defaultFieldsCreatedTime = true,
+    this.defaultFieldsUpdatedBy = true,
+    this.defaultFieldsUpdatedTime = true,
   });
 
   SettingsState copyWith({
@@ -51,6 +74,13 @@ class SettingsState {
     int? backupRetentionCount,
     double? editorFontSize,
     bool? enableCodeCompletion,
+    bool? showLineNumbers,
+    int? accentColor,
+    bool? defaultFieldsRevision,
+    bool? defaultFieldsCreatedBy,
+    bool? defaultFieldsCreatedTime,
+    bool? defaultFieldsUpdatedBy,
+    bool? defaultFieldsUpdatedTime,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -62,6 +92,13 @@ class SettingsState {
       backupRetentionCount: backupRetentionCount ?? this.backupRetentionCount,
       editorFontSize: editorFontSize ?? this.editorFontSize,
       enableCodeCompletion: enableCodeCompletion ?? this.enableCodeCompletion,
+      showLineNumbers: showLineNumbers ?? this.showLineNumbers,
+      accentColor: accentColor ?? this.accentColor,
+      defaultFieldsRevision: defaultFieldsRevision ?? this.defaultFieldsRevision,
+      defaultFieldsCreatedBy: defaultFieldsCreatedBy ?? this.defaultFieldsCreatedBy,
+      defaultFieldsCreatedTime: defaultFieldsCreatedTime ?? this.defaultFieldsCreatedTime,
+      defaultFieldsUpdatedBy: defaultFieldsUpdatedBy ?? this.defaultFieldsUpdatedBy,
+      defaultFieldsUpdatedTime: defaultFieldsUpdatedTime ?? this.defaultFieldsUpdatedTime,
     );
   }
 
@@ -76,6 +113,13 @@ class SettingsState {
       backupRetentionCount: json['backupRetentionCount'] as int? ?? 10,
       editorFontSize: (json['editorFontSize'] as num?)?.toDouble() ?? 14.0,
       enableCodeCompletion: json['enableCodeCompletion'] as bool? ?? true,
+      showLineNumbers: json['showLineNumbers'] as bool? ?? true,
+      accentColor: json['accentColor'] as int?,
+      defaultFieldsRevision: json['defaultFieldsRevision'] as bool? ?? true,
+      defaultFieldsCreatedBy: json['defaultFieldsCreatedBy'] as bool? ?? true,
+      defaultFieldsCreatedTime: json['defaultFieldsCreatedTime'] as bool? ?? true,
+      defaultFieldsUpdatedBy: json['defaultFieldsUpdatedBy'] as bool? ?? true,
+      defaultFieldsUpdatedTime: json['defaultFieldsUpdatedTime'] as bool? ?? true,
     );
   }
 
@@ -90,145 +134,244 @@ class SettingsState {
       'backupRetentionCount': backupRetentionCount,
       'editorFontSize': editorFontSize,
       'enableCodeCompletion': enableCodeCompletion,
+      'showLineNumbers': showLineNumbers,
+      'accentColor': accentColor,
+      'defaultFieldsRevision': defaultFieldsRevision,
+      'defaultFieldsCreatedBy': defaultFieldsCreatedBy,
+      'defaultFieldsCreatedTime': defaultFieldsCreatedTime,
+      'defaultFieldsUpdatedBy': defaultFieldsUpdatedBy,
+      'defaultFieldsUpdatedTime': defaultFieldsUpdatedTime,
     };
+  }
+
+  /// Get the ThemeMode enum from themeMode string
+  ThemeMode get themeModeEnum {
+    switch (themeMode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  /// Get accent color as Color object
+  Color? get accentColorValue {
+    if (accentColor == null) return null;
+    return Color(accentColor!);
   }
 }
 
-/// 设置状态管理器
+/// Settings state manager
 class SettingsNotifier extends StateNotifier<SettingsState> {
-  // Settings key for persistent storage (reserved for future use)
-  // static const String _settingsKey = 'app_settings';
+  static const String _settingsKey = 'app_settings';
+  final StorageService _storageService;
 
-  SettingsNotifier() : super(const SettingsState()) {
+  SettingsNotifier(this._storageService) : super(const SettingsState()) {
     _loadSettings();
   }
 
-  /// 从存储加载设置
+  /// Load settings from storage
   void _loadSettings() {
-    // TODO: 实现从持久化存储加载设置
-    // 当前使用默认值，后续可集成 shared_preferences 或 hive
+    try {
+      final settingsJson = _storageService.getSetting<Map<dynamic, dynamic>>(
+        _settingsKey,
+        defaultValue: null,
+      );
+
+      if (settingsJson != null) {
+        final convertedJson = Map<String, dynamic>.from(settingsJson);
+        state = SettingsState.fromJson(convertedJson);
+      }
+    } catch (e) {
+      // If loading fails, use default settings
+      state = const SettingsState();
+    }
   }
 
-  /// 保存设置到存储
+  /// Save settings to storage
   Future<void> _saveSettings() async {
-    // TODO: 实现持久化存储保存
-    // 当前仅更新内存状态，后续可集成 shared_preferences 或 hive
+    try {
+      await _storageService.saveSetting(_settingsKey, state.toJson());
+    } catch (e) {
+      // Log error but don't crash
+      debugPrint('Failed to save settings: $e');
+    }
   }
 
-  /// 更新主题模式
+  /// Update theme mode
   Future<void> setThemeMode(String mode) async {
     state = state.copyWith(themeMode: mode);
     await _saveSettings();
   }
 
-  /// 更新语言
+  /// Update language
   Future<void> setLocale(String locale) async {
     state = state.copyWith(locale: locale);
     await _saveSettings();
   }
 
-  /// 设置是否显示欢迎页面
+  /// Set whether to show welcome page
   Future<void> setShowWelcomePage(bool show) async {
     state = state.copyWith(showWelcomePage: show);
     await _saveSettings();
   }
 
-  /// 设置默认数据库
+  /// Set default database
   Future<void> setDefaultDatabase(String? database) async {
     state = state.copyWith(defaultDatabase: database);
     await _saveSettings();
   }
 
-  /// 设置自动保存间隔
+  /// Set auto-save interval
   Future<void> setAutoSaveInterval(int interval) async {
     state = state.copyWith(autoSaveInterval: interval);
     await _saveSettings();
   }
 
-  /// 设置是否启用自动备份
+  /// Set whether to enable auto backup
   Future<void> setEnableAutoBackup(bool enable) async {
     state = state.copyWith(enableAutoBackup: enable);
     await _saveSettings();
   }
 
-  /// 设置备份保留数量
+  /// Set backup retention count
   Future<void> setBackupRetentionCount(int count) async {
     state = state.copyWith(backupRetentionCount: count);
     await _saveSettings();
   }
 
-  /// 设置编辑器字体大小
+  /// Set editor font size
   Future<void> setEditorFontSize(double size) async {
     state = state.copyWith(editorFontSize: size);
     await _saveSettings();
   }
 
-  /// 设置是否启用代码提示
+  /// Set whether to enable code completion
   Future<void> setEnableCodeCompletion(bool enable) async {
     state = state.copyWith(enableCodeCompletion: enable);
     await _saveSettings();
   }
 
-  /// 重置所有设置为默认值
+  /// Set whether to show line numbers
+  Future<void> setShowLineNumbers(bool show) async {
+    state = state.copyWith(showLineNumbers: show);
+    await _saveSettings();
+  }
+
+  /// Set accent color
+  Future<void> setAccentColor(Color color) async {
+    state = state.copyWith(accentColor: color.value);
+    await _saveSettings();
+  }
+
+  /// Set default fields - revision
+  Future<void> setDefaultFieldsRevision(bool value) async {
+    state = state.copyWith(defaultFieldsRevision: value);
+    await _saveSettings();
+  }
+
+  /// Set default fields - created by
+  Future<void> setDefaultFieldsCreatedBy(bool value) async {
+    state = state.copyWith(defaultFieldsCreatedBy: value);
+    await _saveSettings();
+  }
+
+  /// Set default fields - created time
+  Future<void> setDefaultFieldsCreatedTime(bool value) async {
+    state = state.copyWith(defaultFieldsCreatedTime: value);
+    await _saveSettings();
+  }
+
+  /// Set default fields - updated by
+  Future<void> setDefaultFieldsUpdatedBy(bool value) async {
+    state = state.copyWith(defaultFieldsUpdatedBy: value);
+    await _saveSettings();
+  }
+
+  /// Set default fields - updated time
+  Future<void> setDefaultFieldsUpdatedTime(bool value) async {
+    state = state.copyWith(defaultFieldsUpdatedTime: value);
+    await _saveSettings();
+  }
+
+  /// Reset all settings to defaults
   Future<void> resetToDefaults() async {
     state = const SettingsState();
     await _saveSettings();
   }
 
-  /// 批量更新设置
+  /// Batch update settings
   Future<void> updateSettings(SettingsState newSettings) async {
     state = newSettings;
     await _saveSettings();
   }
 }
 
-/// 设置 Provider
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  return SettingsNotifier();
+/// Storage service provider
+final storageServiceProvider = Provider<StorageService>((ref) {
+  return StorageService();
 });
 
-/// 主题模式 Provider (便捷访问)
+/// Settings Provider
+final settingsProvider =
+    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
+  final storageService = ref.watch(storageServiceProvider);
+  return SettingsNotifier(storageService);
+});
+
+/// Theme mode Provider (convenient access)
 final themeModeProvider = Provider<String>((ref) {
   return ref.watch(settingsProvider).themeMode;
 });
 
-/// 语言 Provider (便捷访问)
+/// Language Provider (convenient access)
 final localeProvider = Provider<String>((ref) {
   return ref.watch(settingsProvider).locale;
 });
 
-/// 是否显示欢迎页面 Provider (便捷访问)
+/// Whether to show welcome page Provider (convenient access)
 final showWelcomePageProvider = Provider<bool>((ref) {
   return ref.watch(settingsProvider).showWelcomePage;
 });
 
-/// 默认数据库 Provider (便捷访问)
+/// Default database Provider (convenient access)
 final defaultDatabaseProvider = Provider<String?>((ref) {
   return ref.watch(settingsProvider).defaultDatabase;
 });
 
-/// 自动保存间隔 Provider (便捷访问)
+/// Auto-save interval Provider (convenient access)
 final autoSaveIntervalProvider = Provider<int>((ref) {
   return ref.watch(settingsProvider).autoSaveInterval;
 });
 
-/// 是否启用自动备份 Provider (便捷访问)
+/// Whether to enable auto backup Provider (convenient access)
 final enableAutoBackupProvider = Provider<bool>((ref) {
   return ref.watch(settingsProvider).enableAutoBackup;
 });
 
-/// 备份保留数量 Provider (便捷访问)
+/// Backup retention count Provider (convenient access)
 final backupRetentionCountProvider = Provider<int>((ref) {
   return ref.watch(settingsProvider).backupRetentionCount;
 });
 
-/// 编辑器字体大小 Provider (便捷访问)
+/// Editor font size Provider (convenient access)
 final editorFontSizeProvider = Provider<double>((ref) {
   return ref.watch(settingsProvider).editorFontSize;
 });
 
-/// 是否启用代码提示 Provider (便捷访问)
+/// Whether to enable code completion Provider (convenient access)
 final enableCodeCompletionProvider = Provider<bool>((ref) {
   return ref.watch(settingsProvider).enableCodeCompletion;
+});
+
+/// Show line numbers Provider (convenient access)
+final showLineNumbersProvider = Provider<bool>((ref) {
+  return ref.watch(settingsProvider).showLineNumbers;
+});
+
+/// Accent color Provider (convenient access)
+final accentColorProvider = Provider<Color?>((ref) {
+  return ref.watch(settingsProvider).accentColorValue;
 });
