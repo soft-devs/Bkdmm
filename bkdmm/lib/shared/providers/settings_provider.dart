@@ -262,7 +262,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   /// Set accent color
   Future<void> setAccentColor(Color color) async {
-    state = state.copyWith(accentColor: color.value);
+    state = state.copyWith(accentColor: color.toARGB32());
     await _saveSettings();
   }
 

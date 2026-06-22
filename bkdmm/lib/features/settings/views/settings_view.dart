@@ -529,8 +529,6 @@ class _ThemeModeDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AlertDialog(
       title: const Text('Theme Mode'),
       content: Column(
@@ -666,7 +664,7 @@ class _AccentColorDialog extends StatelessWidget {
           itemCount: _accentColors.length,
           itemBuilder: (context, index) {
             final color = _accentColors[index];
-            final isSelected = color.value == colorScheme.primary.value;
+            final isSelected = color.toARGB32 == colorScheme.primary.toARGB32;
 
             return InkWell(
               onTap: () {
