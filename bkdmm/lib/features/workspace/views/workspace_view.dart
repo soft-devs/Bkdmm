@@ -56,9 +56,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     final projectState = ref.watch(projectProvider);
     final project = projectState.project;
 
-    // If no project and not actively closing, show loading
-    // (the close operation should have already navigated back)
-    if (project == null && !_isClosing) {
+    // If closing or no project, show loading indicator
+    if (_isClosing || project == null) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -85,7 +84,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   SizedBox(
                     width: _sidebarWidth,
                     child: ModuleTree(
-                      project: project,
+                      project: currentProject,
                       onAddModule: () => _showAddModuleDialog(),
                       onAddEntity: (module) => _showAddEntityDialog(module),
                       onSelectModule: (module) => _onSelectModule(module),
@@ -105,7 +104,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
                         // Tab content area
                         Expanded(
-                          child: _buildTabContent(project, theme, colorScheme),
+                          child: _buildTabContent(currentProject, theme, colorScheme),
                         ),
                       ],
                     ),
@@ -115,14 +114,14 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   if (_showPropertiesPanel)
                     SizedBox(
                       width: _propertiesPanelWidth,
-                      child: _buildPropertiesPanel(project, theme, colorScheme),
+                      child: _buildPropertiesPanel(currentProject, theme, colorScheme),
                     ),
                 ],
               ),
             ),
 
             // Status bar
-            _buildStatusBar(project, projectState, theme, colorScheme),
+            _buildStatusBar(currentProject, projectState, theme, colorScheme),
           ],
         ),
         // Remove FAB - functionality is available from menu and module tree
@@ -454,27 +453,74 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
     return Container(
       color: colorScheme.surface,
-      child: CustomPaint(
-        painter: _GridPainter(colorScheme),
-        child: Stack(
-          children: [
-            // Placeholder for entity nodes
-            Center(
-              child: Wrap(
-                spacing: 20,
-                runSpacing: 20,
-                alignment: WrapAlignment.center,
-                children: module.entities.map((entity) {
-                  return _EntityNode(
+      child: InteractiveViewer(
+        minScale: 0.5,
+        maxScale: 2.0,
+        boundaryMargin: const EdgeInsets.all(100),
+        child: CustomPaint(
+          painter: _GridPainter(colorScheme),
+          child: Stack(
+            children: [
+              // Entity nodes - interactive and draggable
+              ...module.entities.map((entity) {
+                return Positioned(
+                  // Default positions - can be stored in entity later
+                  left: 50.0 + (module.entities.indexOf(entity) % 3) * 250,
+                  top: 50.0 + (module.entities.indexOf(entity) / 3).floor() * 200,
+                  child: _EntityNode(
                     entity: entity,
+                    module: module,
                     theme: theme,
                     colorScheme: colorScheme,
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
+                    onTap: () => _openEntityInTab(module, entity),
+                    onEdit: () => _showEditEntityDialog(module, entity),
+                    onDelete: () => _confirmDeleteEntity(module, entity),
+                  ),
+                );
+              }),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _openEntityInTab(Module module, Entity entity) {
+    ref.read(tabProvider.notifier).openEntity(entity, module.id);
+  }
+
+  void _showEditEntityDialog(Module module, Entity entity) {
+    // For now, just open in tab for editing
+    _openEntityInTab(module, entity);
+  }
+
+  void _confirmDeleteEntity(Module module, Entity entity) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Entity'),
+        content: Text('Are you sure you want to delete "${entity.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final updatedEntities = module.entities.where((e) => e.id != entity.id).toList();
+              final updatedModule = module.copyWith(
+                entities: updatedEntities,
+                updatedAt: DateTime.now(),
+              );
+              ref.read(projectProvider.notifier).updateModule(module.id, updatedModule);
+              Navigator.pop(context);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
@@ -1293,124 +1339,263 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-/// Entity node widget for ER diagram
-class _EntityNode extends StatelessWidget {
+/// Entity node widget for ER diagram - interactive
+class _EntityNode extends StatefulWidget {
   final Entity entity;
+  final Module module;
   final ThemeData theme;
   final ColorScheme colorScheme;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _EntityNode({
     required this.entity,
+    required this.module,
     required this.theme,
     required this.colorScheme,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
+  State<_EntityNode> createState() => _EntityNodeState();
+}
+
+class _EntityNodeState extends State<_EntityNode> {
+  bool _isHovered = false;
+  bool _isSelected = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: colorScheme.outline,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          setState(() => _isSelected = !_isSelected);
+          widget.onTap();
+        },
+        onDoubleTap: widget.onEdit,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 200,
+          decoration: BoxDecoration(
+            color: widget.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _isSelected
+                  ? widget.colorScheme.primary
+                  : (_isHovered
+                      ? widget.colorScheme.primary.withValues(alpha: 0.5)
+                      : widget.colorScheme.outline),
+              width: _isSelected ? 2 : 1,
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.table_chart,
-                  size: 16,
-                  color: colorScheme.onPrimaryContainer,
+            boxShadow: [
+              BoxShadow(
+                color: widget.colorScheme.shadow.withValues(alpha: _isHovered ? 0.2 : 0.1),
+                blurRadius: _isHovered ? 12 : 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: widget.colorScheme.primaryContainer,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.table_chart,
+                      size: 16,
+                      color: widget.colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.entity.title,
+                        style: widget.theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: widget.colorScheme.onPrimaryContainer,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Context menu button
+                    if (_isHovered)
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 14,
+                          color: widget.colorScheme.onPrimaryContainer,
+                        ),
+                        tooltip: 'Actions',
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: ListTile(
+                              leading: Icon(Icons.edit, size: 18),
+                              title: Text('Edit'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'fields',
+                            child: ListTile(
+                              leading: Icon(Icons.list_alt, size: 18),
+                              title: Text('Edit Fields'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: ListTile(
+                              leading: Icon(Icons.delete, size: 18),
+                              title: Text('Delete'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              widget.onEdit();
+                              break;
+                            case 'fields':
+                              widget.onEdit();
+                              break;
+                            case 'delete':
+                              widget.onDelete();
+                              break;
+                          }
+                        },
+                      ),
+                  ],
+                ),
+              ),
+
+              // Chinese name
+              if (widget.entity.chnname.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(
-                    entity.title,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onPrimaryContainer,
+                    widget.entity.chnname,
+                    style: widget.theme.textTheme.labelSmall?.copyWith(
+                      color: widget.colorScheme.onSurfaceVariant,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ],
-            ),
-          ),
 
-          // Fields
-          if (entity.fields.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: entity.fields.take(5).map((field) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Row(
-                      children: [
-                        if (field.pk)
-                          Icon(
-                            Icons.key,
-                            size: 12,
-                            color: colorScheme.primary,
-                          )
-                        else
-                          const SizedBox(width: 12),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            field.name,
-                            style: theme.textTheme.labelSmall,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+              // Fields
+              if (widget.entity.fields.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: widget.entity.fields.take(5).map((field) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Row(
+                          children: [
+                            if (field.pk)
+                              Icon(
+                                Icons.key,
+                                size: 12,
+                                color: widget.colorScheme.primary,
+                              )
+                            else
+                              const SizedBox(width: 12),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                field.name,
+                                style: widget.theme.textTheme.labelSmall,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              field.type,
+                              style: widget.theme.textTheme.labelSmall?.copyWith(
+                                color: widget.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          field.type,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-
-          // More fields indicator
-          if (entity.fields.length > 5)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
-              child: Text(
-                '+${entity.fields.length - 5} more fields',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
-            ),
-        ],
+
+              // More fields indicator
+              if (widget.entity.fields.length > 5)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
+                  child: Text(
+                    '+${widget.entity.fields.length - 5} more fields',
+                    style: widget.theme.textTheme.labelSmall?.copyWith(
+                      color: widget.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+
+              // Statistics footer
+              if (_isHovered)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: widget.colorScheme.surfaceContainerLow,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.list_alt, size: 12, color: widget.colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${widget.entity.fields.length}',
+                            style: widget.theme.textTheme.labelSmall?.copyWith(
+                              color: widget.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.sort, size: 12, color: widget.colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${widget.entity.indexes.length}',
+                            style: widget.theme.textTheme.labelSmall?.copyWith(
+                              color: widget.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
