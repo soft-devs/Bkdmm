@@ -1340,6 +1340,7 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   final Map<String, Offset> _entityPositions = {};
   Offset _canvasOffset = Offset.zero;
   double _scale = 1.0;
+  Offset _lastFocalPoint = Offset.zero;
 
   // For dragging
   String? _draggingEntityId;
@@ -1378,15 +1379,23 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
     );
   }
 
-  void _onCanvasPanStart(DragStartDetails details) {
-    // Starting canvas drag
+  void _onScaleStart(ScaleStartDetails details) {
+    _lastFocalPoint = details.localFocalPoint;
   }
 
-  void _onCanvasPanUpdate(DragUpdateDetails details) {
+  void _onScaleUpdate(ScaleUpdateDetails details) {
+    // Don't move canvas if dragging an entity
     if (_draggingEntityId != null) return;
 
     setState(() {
-      _canvasOffset += details.delta;
+      // Update scale
+      final newScale = details.scale * _scale;
+      _scale = newScale.clamp(0.5, 2.0);
+
+      // Update offset based on focal point movement
+      final focalPointDelta = details.localFocalPoint - _lastFocalPoint;
+      _canvasOffset += focalPointDelta;
+      _lastFocalPoint = details.localFocalPoint;
     });
   }
 
@@ -1408,12 +1417,6 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   void _onEntityPanEnd(DragEndDetails details) {
     setState(() {
       _draggingEntityId = null;
-    });
-  }
-
-  void _onScaleUpdate(ScaleUpdateDetails details) {
-    setState(() {
-      _scale = details.scale.clamp(0.5, 2.0);
     });
   }
 
@@ -1440,10 +1443,9 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Canvas with gestures
+        // Canvas with gestures - use only scale gesture
         GestureDetector(
-          onPanStart: _onCanvasPanStart,
-          onPanUpdate: _onCanvasPanUpdate,
+          onScaleStart: _onScaleStart,
           onScaleUpdate: _onScaleUpdate,
           child: Container(
             color: widget.colorScheme.surface,
