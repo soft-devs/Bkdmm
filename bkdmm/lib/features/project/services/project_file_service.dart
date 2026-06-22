@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'dart:convert';
-import '../../shared/models/models.dart';
-import '../../shared/services/file_service.dart';
-import '../../utils/id_generator.dart';
+import '../../../shared/models/models.dart';
+import '../../../shared/services/file_service.dart';
+import '../../../utils/id_generator.dart';
 
 /// Project file service - Handles project file read/write operations
 ///
@@ -268,7 +267,6 @@ class ProjectFileService {
     try {
       final file = File(filePath);
       final dir = file.parent;
-      final baseName = file.uri.pathSegments.last;
 
       final autoSaveFiles = await dir
           .list()

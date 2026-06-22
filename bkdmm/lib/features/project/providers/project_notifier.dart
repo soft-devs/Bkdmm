@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../../shared/models/models.dart';
-import '../../shared/services/services.dart';
+import '../../../shared/models/models.dart';
+import '../../../shared/services/services.dart';
 import '../services/project_file_service.dart';
-import '../services/data_migration.dart';
-import '../../utils/id_generator.dart';
+import '../../../utils/id_generator.dart';
 
 /// Project state - Represents the current state of the project
 class ProjectState {
@@ -100,8 +99,6 @@ class ProjectState {
 /// - Dirty tracking
 class ProjectNotifier extends StateNotifier<ProjectState> {
   final ProjectFileService _fileService;
-  final HistoryService _historyService;
-  final DataMigrationService _migrationService;
 
   /// Auto-save timer
   Timer? _autoSaveTimer;
@@ -116,11 +113,7 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
 
   ProjectNotifier({
     ProjectFileService? fileService,
-    HistoryService? historyService,
-    DataMigrationService? migrationService,
   })  : _fileService = fileService ?? ProjectFileService(),
-        _historyService = historyService ?? HistoryService(),
-        _migrationService = migrationService ?? DefaultDataMigrationService(),
         super(ProjectState.empty);
 
   /// Initialize the notifier
@@ -131,7 +124,7 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
 
   /// Load recent projects
   Future<void> _loadRecentProjects() async {
-    final history = _historyService.getHistoryList();
+    final history = HistoryService.getHistoryList();
     state = state.copyWith(recentProjects: history);
   }
 
@@ -495,13 +488,13 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
 
   /// Remove from recent projects
   Future<void> removeFromRecent(String path) async {
-    await _historyService.removeHistory(path);
+    await HistoryService.removeHistory(path);
     await _loadRecentProjects();
   }
 
   /// Clear all recent projects
   Future<void> clearRecentProjects() async {
-    await _historyService.clearHistory();
+    await HistoryService.clearHistory();
     state = state.copyWith(recentProjects: []);
   }
 
@@ -631,7 +624,7 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
   }
 
   Future<void> _addToHistory(String path, String name) async {
-    await _historyService.addHistory(ProjectHistory(
+    await HistoryService.addHistory(ProjectHistory(
       path: path,
       name: name,
       lastOpenedAt: DateTime.now(),
@@ -745,17 +738,11 @@ final projectFileServiceProvider = Provider<ProjectFileService>((ref) {
   return ProjectFileService();
 });
 
-/// Provider for migration service
-final migrationServiceProvider = Provider<DataMigrationService>((ref) {
-  return DefaultDataMigrationService();
-});
-
 /// Provider for project notifier
 final projectNotifierProvider =
     StateNotifierProvider<ProjectNotifier, ProjectState>((ref) {
   final notifier = ProjectNotifier(
     fileService: ref.watch(projectFileServiceProvider),
-    migrationService: ref.watch(migrationServiceProvider),
   );
   // Initialize the notifier
   notifier.init();

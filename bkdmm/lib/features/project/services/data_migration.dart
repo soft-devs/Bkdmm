@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Data migration service - Handles version-to-version data transformations
 ///
 /// Provides a migration system for upgrading older project file formats
@@ -77,8 +75,12 @@ class DataMigrationService {
     final parts2 = v2.split('.').map((p) => int.tryParse(p) ?? 0).toList();
 
     // Normalize to 3 parts
-    while (parts1.length < 3) parts1.add(0);
-    while (parts2.length < 3) parts2.add(0);
+    while (parts1.length < 3) {
+      parts1.add(0);
+    }
+    while (parts2.length < 3) {
+      parts2.add(0);
+    }
 
     for (var i = 0; i < 3; i++) {
       if (parts1[i] != parts2[i]) {
@@ -114,7 +116,7 @@ abstract class DataMigration {
 /// - Adding missing required fields with defaults
 /// - Converting old field formats
 /// - Restructuring data type definitions
-class Migration_0_9_0_to_1_0_0 extends DataMigration {
+class MigrationV090ToV100 extends DataMigration {
   @override
   String get fromVersion => '0.9.0';
 
@@ -348,7 +350,7 @@ class DefaultFieldsMigration extends DataMigration {
 class DefaultDataMigrationService extends DataMigrationService {
   DefaultDataMigrationService() {
     // Register all built-in migrations
-    registerMigration(Migration_0_9_0_to_1_0_0());
+    registerMigration(MigrationV090ToV100());
     // Future migrations can be added here:
     // registerMigration(FieldRenameMigration());
     // registerMigration(DefaultFieldsMigration());
@@ -370,8 +372,12 @@ class DataVersionUtils {
     final parts2 = parseVersion(v2);
 
     // Normalize to 3 parts
-    while (parts1.length < 3) parts1.add(0);
-    while (parts2.length < 3) parts2.add(0);
+    while (parts1.length < 3) {
+      parts1.add(0);
+    }
+    while (parts2.length < 3) {
+      parts2.add(0);
+    }
 
     for (var i = 0; i < 3; i++) {
       if (parts1[i] != parts2[i]) {
@@ -384,10 +390,14 @@ class DataVersionUtils {
   /// Check if version is valid semantic version
   static bool isValidVersion(String version) {
     final parts = version.split('.');
-    if (parts.length < 2 || parts.length > 3) return false;
+    if (parts.length < 2 || parts.length > 3) {
+      return false;
+    }
 
     for (final part in parts) {
-      if (int.tryParse(part) == null) return false;
+      if (int.tryParse(part) == null) {
+        return false;
+      }
     }
     return true;
   }
@@ -395,7 +405,9 @@ class DataVersionUtils {
   /// Increment version (patch, minor, or major)
   static String incrementVersion(String version, {VersionIncrement increment = VersionIncrement.patch}) {
     final parts = parseVersion(version);
-    while (parts.length < 3) parts.add(0);
+    while (parts.length < 3) {
+      parts.add(0);
+    }
 
     switch (increment) {
       case VersionIncrement.patch:

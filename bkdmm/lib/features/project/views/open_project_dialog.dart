@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 
-import '../../shared/models/models.dart';
+import '../../../shared/models/models.dart';
 
 /// Open project dialog - Dialog for opening existing projects
 ///
@@ -170,7 +170,9 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
       if (result != null && result.files.isNotEmpty) {
         final path = result.files.first.path;
         if (path != null) {
-          Navigator.of(context).pop(path);
+          if (mounted) {
+            Navigator.of(context).pop(path);
+          }
         }
       }
     } finally {
