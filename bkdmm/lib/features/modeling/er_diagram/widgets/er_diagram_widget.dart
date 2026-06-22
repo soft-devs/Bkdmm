@@ -101,33 +101,38 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     return Stack(
       children: [
         // Main diagram area
-        GestureDetector(
-          onTapDown: _onTapDown,
-          onTap: _onTap,
-          onDoubleTapDown: _onDoubleTapDown,
-          onDoubleTap: _onDoubleTap,
-          onLongPressStart: _onLongPressStart,
-          onSecondaryTapDown: _onSecondaryTapDown,
-          onPanStart: _onPanStart,
-          onPanUpdate: _onPanUpdate,
-          onPanEnd: _onPanEnd,
-          child: Container(
-            color: isDarkMode ? const Color(0xFF1A202C) : Colors.grey.shade100,
-            child: ClipRect(
-              child: InteractiveViewer(
-                transformationController: _transformController,
-                minScale: 0.1,
-                maxScale: 3.0,
-                constrained: false,
-                onInteractionUpdate: _onInteractionUpdate,
-                child: CustomPaint(
-                  key: _paintKey,
-                  size: _calculateCanvasSize(graphState),
-                  painter: ERGraphPainter(
-                    graphState: graphState,
-                    isDarkMode: isDarkMode,
-                    hoveredNodeId: graphState.hoveredNodeId,
-                    searchQuery: graphState.searchQuery,
+        MouseRegion(
+          cursor: _getCursorForMode(graphState),
+          child: GestureDetector(
+            onTapDown: _onTapDown,
+            onTap: _onTap,
+            onDoubleTapDown: _onDoubleTapDown,
+            onDoubleTap: _onDoubleTap,
+            onLongPressStart: _onLongPressStart,
+            onSecondaryTapDown: _onSecondaryTapDown,
+            onPanStart: _onPanStart,
+            onPanUpdate: _onPanUpdate,
+            onPanEnd: _onPanEnd,
+            child: Container(
+              color: isDarkMode ? const Color(0xFF1A202C) : Colors.grey.shade100,
+              child: ClipRect(
+                child: InteractiveViewer(
+                  transformationController: _transformController,
+                  minScale: 0.1,
+                  maxScale: 3.0,
+                  constrained: false,
+                  onInteractionUpdate: _onInteractionUpdate,
+                  // In edit mode, disable pan to allow node dragging
+                  panEnabled: graphState.interactionMode == InteractionMode.move,
+                  child: CustomPaint(
+                    key: _paintKey,
+                    size: _calculateCanvasSize(graphState),
+                    painter: ERGraphPainter(
+                      graphState: graphState,
+                      isDarkMode: isDarkMode,
+                      hoveredNodeId: graphState.hoveredNodeId,
+                      searchQuery: graphState.searchQuery,
+                    ),
                   ),
                 ),
               ),
@@ -174,6 +179,48 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Mode toggle button
+            _ToolbarButton(
+              icon: graphState.interactionMode == InteractionMode.move
+                  ? Icons.pan_tool
+                  : Icons.edit,
+              tooltip: graphState.interactionMode == InteractionMode.move
+                  ? 'Move Mode (Pan/Zoom)'
+                  : 'Edit Mode (Drag/Connect)',
+              onPressed: () => _toggleMode(),
+            ),
+            const SizedBox(width: 4),
+
+            // Mode indicator
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: graphState.interactionMode == InteractionMode.move
+                    ? Colors.blue.withValues(alpha: 0.2)
+                    : Colors.green.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                graphState.interactionMode == InteractionMode.move ? 'MOVE' : 'EDIT',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: graphState.interactionMode == InteractionMode.move
+                      ? Colors.blue
+                      : Colors.green,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Divider
+            Container(
+              width: 1,
+              height: 24,
+              color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+            ),
+            const SizedBox(width: 8),
+
             // Zoom in
             _ToolbarButton(
               icon: Icons.zoom_in,
@@ -365,6 +412,11 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
   void _onDoubleTap() {
     final graphState = ref.read(erGraphProvider(widget.moduleId));
 
+    // In move mode, double-click does nothing
+    if (graphState.interactionMode == InteractionMode.move) {
+      return;
+    }
+
     // Convert tap position to graph coordinates
     final graphPos = _transformController.toScene(_lastTapPosition);
     final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
@@ -405,11 +457,28 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
 
   void _onPanStart(DragStartDetails details) {
     final graphState = ref.read(erGraphProvider(widget.moduleId));
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
 
     // Convert position to graph coordinates
     final graphPos = _transformController.toScene(details.localPosition);
-    final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
 
+    // In edit mode, check for anchor hit first (for edge creation)
+    if (graphState.interactionMode == InteractionMode.edit) {
+      final hitAnchor = ERGraphPainter.hitTestAnchor(graphState, graphPos);
+      if (hitAnchor != null) {
+        // Start edge creation from this node
+        graphNotifier.startEdgeCreation(hitAnchor.id);
+        return;
+      }
+    }
+
+    // In move mode, don't allow node dragging - let InteractiveViewer handle pan
+    if (graphState.interactionMode == InteractionMode.move) {
+      return;
+    }
+
+    // In edit mode, check for node hit (for dragging)
+    final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
     if (hitNode != null) {
       // Start dragging the node
       setState(() {
@@ -419,16 +488,29 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
         _nodeStartPos = Offset(hitNode.x, hitNode.y);
       });
 
-      final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
       graphNotifier.selectNode(hitNode.id);
       graphNotifier.startDrag(hitNode.id);
     }
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
+    final graphState = ref.read(erGraphProvider(widget.moduleId));
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+
+    // Handle edge creation preview
+    if (graphState.isCreatingEdge) {
+      final graphPos = _transformController.toScene(details.localPosition);
+      graphNotifier.updateEdgePreview(graphPos);
+      return;
+    }
+
+    // Handle node dragging
     if (!_isDragging || _draggedNodeId == null) return;
 
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+    // In move mode, don't process node dragging
+    if (graphState.interactionMode == InteractionMode.move) {
+      return;
+    }
 
     // Calculate new position
     final graphPos = _transformController.toScene(details.localPosition);
@@ -441,8 +523,23 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
   }
 
   void _onPanEnd(DragEndDetails details) {
+    final graphState = ref.read(erGraphProvider(widget.moduleId));
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+
+    // Handle edge creation completion
+    if (graphState.isCreatingEdge) {
+      // Find target node at the preview end position
+      final hitNode = ERGraphPainter.hitTestNode(graphState, graphState.edgePreviewEnd);
+      if (hitNode != null) {
+        graphNotifier.completeEdgeCreation(hitNode.id);
+      } else {
+        graphNotifier.cancelEdgeCreation();
+      }
+      return;
+    }
+
+    // Handle node drag end
     if (_isDragging && _draggedNodeId != null) {
-      final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
       graphNotifier.endDrag(_draggedNodeId!);
     }
 
@@ -468,6 +565,30 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
   }
 
   // Toolbar actions
+
+  /// Toggle interaction mode
+  void _toggleMode() {
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+    graphNotifier.toggleInteractionMode();
+  }
+
+  /// Get mouse cursor based on current mode
+  MouseCursor _getCursorForMode(ERGraphState graphState) {
+    if (_isDragging) {
+      return SystemMouseCursors.grabbing;
+    }
+
+    if (graphState.isCreatingEdge) {
+      return SystemMouseCursors.crosshair;
+    }
+
+    switch (graphState.interactionMode) {
+      case InteractionMode.move:
+        return SystemMouseCursors.grab;
+      case InteractionMode.edit:
+        return SystemMouseCursors.basic;
+    }
+  }
 
   void _zoomIn(ERGraphState graphState) {
     final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);

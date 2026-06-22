@@ -1,3 +1,4 @@
+import 'dart:math' as Math;
 import 'package:flutter/material.dart';
 import '../providers/graph_provider.dart';
 import 'edge_painter.dart';
@@ -42,6 +43,11 @@ class ERGraphPainter extends CustomPainter {
 
     // Draw edges first (below nodes)
     _drawEdges(canvas, size);
+
+    // Draw edge preview if creating
+    if (graphState.isCreatingEdge) {
+      _drawEdgePreview(canvas);
+    }
 
     // Draw nodes on top
     _drawNodes(canvas, size);
@@ -124,6 +130,9 @@ class ERGraphPainter extends CustomPainter {
       return 0;
     });
 
+    // Show anchors only in edit mode
+    final showAnchors = graphState.interactionMode == InteractionMode.edit;
+
     for (final node in sortedNodes) {
       // Check if node should be visible based on search
       if (!_isNodeVisible(node)) continue;
@@ -133,8 +142,130 @@ class ERGraphPainter extends CustomPainter {
         node: node,
         scale: graphState.zoom,
         isDarkMode: isDarkMode,
+        showAnchors: showAnchors,
       );
     }
+  }
+
+  /// Draw edge preview during creation
+  void _drawEdgePreview(Canvas canvas) {
+    final startNode = graphState.getNode(graphState.edgeStartNodeId ?? '');
+    if (startNode == null) return;
+
+    final startRect = NodePainter.getNodeRect(startNode);
+    final startPoint = _getClosestAnchor(startRect, graphState.edgePreviewEnd);
+
+    // Draw dashed line preview
+    final previewPaint = Paint()
+      ..color = isDarkMode ? Colors.blue.shade300 : Colors.blue.shade500
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    // Create dashed path
+    final path = _createDashedPath(startPoint, graphState.edgePreviewEnd);
+    canvas.drawPath(path, previewPaint);
+
+    // Draw arrow at end
+    _drawPreviewArrow(canvas, startPoint, graphState.edgePreviewEnd, previewPaint);
+
+    // Highlight potential target node
+    final targetNode = hitTestNode(graphState, graphState.edgePreviewEnd);
+    if (targetNode != null && targetNode.id != startNode.id) {
+      final targetRect = NodePainter.getNodeRect(targetNode);
+      _drawPotentialTargetHighlight(canvas, targetRect);
+    }
+  }
+
+  /// Get the closest anchor point on a node to a target position
+  Offset _getClosestAnchor(Rect nodeRect, Offset target) {
+    final anchors = NodePainter.getAnchorPositions(nodeRect);
+    Offset closest = anchors[0];
+    double minDistance = double.infinity;
+
+    for (final anchor in anchors) {
+      final distance = (anchor - target).distance;
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = anchor;
+      }
+    }
+    return closest;
+  }
+
+  /// Create a dashed line path
+  Path _createDashedPath(Offset start, Offset end) {
+    final path = Path();
+    const dashLength = 10.0;
+    const gapLength = 5.0;
+
+    final totalLength = (end - start).distance;
+    final direction = (end - start) / totalLength;
+
+    var currentLength = 0.0;
+    var isDash = true;
+
+    path.moveTo(start.dx, start.dy);
+
+    while (currentLength < totalLength) {
+      final segmentLength = isDash ? dashLength : gapLength;
+      final nextLength = currentLength + segmentLength;
+
+      if (nextLength > totalLength) {
+        if (isDash) {
+          path.lineTo(end.dx, end.dy);
+        }
+        break;
+      }
+
+      final nextPoint = start + direction * nextLength;
+      if (isDash) {
+        path.lineTo(nextPoint.dx, nextPoint.dy);
+      } else {
+        path.moveTo(nextPoint.dx, nextPoint.dy);
+      }
+
+      currentLength = nextLength;
+      isDash = !isDash;
+    }
+
+    return path;
+  }
+
+  /// Draw arrow at preview line end
+  void _drawPreviewArrow(Canvas canvas, Offset start, Offset end, Paint paint) {
+    const arrowSize = 10.0;
+    final direction = (end - start);
+    final angle = direction.direction;
+
+    final arrowPaint = Paint()
+      ..color = paint.color
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(end.dx, end.dy);
+    path.lineTo(
+      end.dx - arrowSize * Math.cos(angle - Math.pi / 6),
+      end.dy - arrowSize * Math.sin(angle - Math.pi / 6),
+    );
+    path.lineTo(
+      end.dx - arrowSize * Math.cos(angle + Math.pi / 6),
+      end.dy - arrowSize * Math.sin(angle + Math.pi / 6),
+    );
+    path.close();
+
+    canvas.drawPath(path, arrowPaint);
+  }
+
+  /// Draw highlight on potential target node
+  void _drawPotentialTargetHighlight(Canvas canvas, Rect rect) {
+    final highlightPaint = Paint()
+      ..color = (isDarkMode ? Colors.blue.shade300 : Colors.blue.shade500).withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect.inflate(4), const Radius.circular(NodePainter.cornerRadius + 4)),
+      highlightPaint,
+    );
   }
 
   /// Check if a node should be visible based on search query
@@ -172,6 +303,21 @@ class ERGraphPainter extends CustomPainter {
     for (var i = graphState.nodes.length - 1; i >= 0; i--) {
       final node = graphState.nodes[i];
       if (NodePainter.hitTest(node, point)) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  /// Hit test for an anchor point on a node
+  static ERGraphNode? hitTestAnchor(ERGraphState graphState, Offset point) {
+    if (graphState.interactionMode != InteractionMode.edit) return null;
+
+    // Check nodes in reverse order (top to bottom)
+    for (var i = graphState.nodes.length - 1; i >= 0; i--) {
+      final node = graphState.nodes[i];
+      final hitNodeId = NodePainter.hitTestAnchor(node, point, graphState.interactionMode);
+      if (hitNodeId != null) {
         return node;
       }
     }

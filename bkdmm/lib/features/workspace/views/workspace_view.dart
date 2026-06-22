@@ -1336,6 +1336,9 @@ class _ERDiagramCanvas extends StatefulWidget {
 }
 
 class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
+  // Interaction mode
+  InteractionMode _interactionMode = InteractionMode.move; // 默认移动模式
+
   // Store entity positions
   final Map<String, Offset> _entityPositions = {};
   Offset _canvasOffset = Offset.zero;
@@ -1345,6 +1348,11 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   // For dragging
   String? _draggingEntityId;
   Offset _dragStartPosition = Offset.zero;
+
+  // For edge creation
+  bool _isCreatingEdge = false;
+  String? _edgeStartEntityId;
+  Offset _edgePreviewEnd = Offset.zero;
 
   @override
   void initState() {
