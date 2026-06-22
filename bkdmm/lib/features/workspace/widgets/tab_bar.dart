@@ -352,23 +352,15 @@ class _TabItem extends StatelessWidget {
   void _showContextMenu(BuildContext context, TapDownDetails details) {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject()! as RenderBox;
-    final Offset position = RelativeRect.fromRect(
-      Rect.fromLTWH(
-        details.globalPosition.dx,
-        details.globalPosition.dy,
-        0,
-        0,
-      ),
-      Offset.zero & overlay.size,
-    ).leftTop;
+    final Offset local = overlay.globalToLocal(details.globalPosition);
 
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy,
-        position.dx,
-        position.dy,
+        local.dx,
+        local.dy,
+        local.dx,
+        local.dy,
       ),
       items: [
         const PopupMenuItem(

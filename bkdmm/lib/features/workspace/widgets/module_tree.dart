@@ -26,7 +26,6 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
   final Set<String> _expandedModules = {};
   String? _selectedModuleId;
   String? _selectedEntityId;
-  bool _isDragging = false;
 
   @override
   void initState() {
@@ -230,8 +229,6 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
               _showRenameEntityDialog(entity, module, context),
           onOpenRelation: () =>
               ref.read(tabProvider.notifier).openRelation(module.id, module.name),
-          onDragStart: () => setState(() => _isDragging = true),
-          onDragEnd: () => setState(() => _isDragging = false),
           theme: theme,
           colorScheme: colorScheme,
         );
@@ -304,7 +301,9 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
               Navigator.pop(context);
               // TODO: Call project notifier to delete module
             },
-            backgroundColor: Theme.of(context).colorScheme.error,
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -331,7 +330,9 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
               Navigator.pop(context);
               // TODO: Call project notifier to delete entity
             },
-            backgroundColor: Theme.of(context).colorScheme.error,
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -417,8 +418,6 @@ class _ModuleTreeItem extends StatelessWidget {
   final VoidCallback onRenameModule;
   final Function(Entity) onRenameEntity;
   final VoidCallback onOpenRelation;
-  final VoidCallback onDragStart;
-  final VoidCallback onDragEnd;
   final ThemeData theme;
   final ColorScheme colorScheme;
 
@@ -436,8 +435,6 @@ class _ModuleTreeItem extends StatelessWidget {
     required this.onRenameModule,
     required this.onRenameEntity,
     required this.onOpenRelation,
-    required this.onDragStart,
-    required this.onDragEnd,
     required this.theme,
     required this.colorScheme,
   });
