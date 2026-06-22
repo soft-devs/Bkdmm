@@ -8,6 +8,7 @@ import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
 import '../widgets/tab_bar.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
+import '../../modeling/er_diagram/widgets/er_diagram_widget.dart';
 import '../../datatype/views/datatype_view.dart';
 
 /// ER 图交互模式
@@ -459,15 +460,62 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    return _ERDiagramCanvas(
-      module: module,
-      theme: theme,
-      colorScheme: colorScheme,
-      onEntityTap: (entity) => _openEntityInTab(module, entity),
-      onEntityDoubleTap: (entity) => _openEntityInTab(module, entity),
-      onEntityDelete: (entity) => _confirmDeleteEntity(module, entity),
-      onAddEntity: () => _showAddEntityDialog(module),
+    // 使用 ERDiagramWidget 替代 _ERDiagramCanvas
+    return ERDiagramWidget(
+      moduleId: module.id,
+      onEntityEdit: (entity) => _openEntityInTab(module, entity),
+      onContextMenu: (position, entity) => _showDiagramContextMenu(position, entity, module),
     );
+  }
+
+  void _showDiagramContextMenu(Offset position, Entity? entity, Module module) {
+    // 显示右键菜单
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx,
+        position.dy,
+      ),
+      items: [
+        if (entity != null) ...[
+          const PopupMenuItem(
+            value: 'edit',
+            child: ListTile(
+              leading: Icon(Icons.edit),
+              title: Text('Edit Entity'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+          const PopupMenuItem(
+            value: 'delete',
+            child: ListTile(
+              leading: Icon(Icons.delete, color: Colors.red),
+              title: Text('Delete Entity', style: TextStyle(color: Colors.red)),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ] else ...[
+          const PopupMenuItem(
+            value: 'add_entity',
+            child: ListTile(
+              leading: Icon(Icons.add),
+              title: Text('Add Entity'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ],
+      ],
+    ).then((value) {
+      if (value == 'edit' && entity != null) {
+        _openEntityInTab(module, entity);
+      } else if (value == 'delete' && entity != null) {
+        _confirmDeleteEntity(module, entity);
+      } else if (value == 'add_entity') {
+        _showAddEntityDialog(module);
+      }
+    });
   }
 
   void _openEntityInTab(Module module, Entity entity) {
