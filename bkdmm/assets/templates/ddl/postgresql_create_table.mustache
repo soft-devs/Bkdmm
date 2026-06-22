@@ -1,0 +1,14 @@
+-- PostgreSQL CREATE TABLE Template
+-- Table: {{tableName}}
+-- Comment: {{tableComment}}
+
+CREATE TABLE {{tableName}} (
+{{#fields}}
+  {{name}} {{typeDB}}{{#pk}} PRIMARY KEY{{/pk}}{{#notNull}} NOT NULL{{/notNull}}{{#hasDefaultValue}} DEFAULT {{defaultValue}}{{/hasDefaultValue}},
+{{/fields}}
+);
+
+COMMENT ON TABLE {{tableName}} IS '{{tableComment}}';
+{{#fields}}
+COMMENT ON COLUMN {{tableName}}.{{name}} IS '{{chnname}}';
+{{/fields}}

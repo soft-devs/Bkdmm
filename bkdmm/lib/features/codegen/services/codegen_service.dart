@@ -34,25 +34,6 @@ class CodegenService {
   CodegenService({TemplateService? templateService})
       : _templateService = templateService ?? TemplateService();
 
-  /// Cache for loaded templates
-  final Map<String, String> _templateCache = {};
-
-  /// Load a template from assets
-  Future<String> _loadTemplate(String path) async {
-    if (_templateCache.containsKey(path)) {
-      return _templateCache[path]!;
-    }
-
-    try {
-      final template = await rootBundle.loadString(path);
-      _templateCache[path] = template;
-      return template;
-    } catch (e) {
-      // Return empty template if file not found
-      return '';
-    }
-  }
-
   /// Get default database templates
   List<DatabaseTemplate> getDefaultDatabases() {
     return [

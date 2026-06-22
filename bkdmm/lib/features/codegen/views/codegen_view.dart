@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,7 +74,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
       body: Column(
         children: [
           // Toolbar
-          _buildToolbar(theme, colorScheme, codegenState),
+          _buildToolbar(theme, colorScheme, codegenState, project),
 
           // Main content
           Expanded(
@@ -112,6 +111,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     ThemeData theme,
     ColorScheme colorScheme,
     CodegenState state,
+    Project? project,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -324,7 +324,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         ),
       ),
       selected: isSelected,
-      selectedTileColor: colorScheme.primaryContainer.withOpacity(0.2),
+      selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.2),
       onTap: () {
         ref.read(codegenProvider.notifier).selectProject();
       },
@@ -404,7 +404,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         ),
       ),
       selected: isSelected,
-      selectedTileColor: colorScheme.primaryContainer.withOpacity(0.2),
+      selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.2),
       dense: true,
       onTap: () {
         ref.read(codegenProvider.notifier).selectEntity(entity);

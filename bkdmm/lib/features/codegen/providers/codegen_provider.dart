@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
+import '../../modeling/entity_editor/providers/entity_provider.dart';
 import '../services/codegen_service.dart';
 
 /// Code generation state
