@@ -579,7 +579,7 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     }
 
     if (graphState.isCreatingEdge) {
-      return SystemMouseCursors.crosshair;
+      return SystemMouseCursors.click;
     }
 
     switch (graphState.interactionMode) {

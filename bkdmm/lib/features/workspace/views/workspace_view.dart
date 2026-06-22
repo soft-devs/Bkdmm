@@ -8,7 +8,6 @@ import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
 import '../widgets/tab_bar.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
-import '../../modeling/er_diagram/providers/graph_provider.dart';
 import '../../datatype/views/datatype_view.dart';
 
 /// ER 图交互模式
@@ -1358,11 +1357,6 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   String? _draggingEntityId;
   Offset _dragStartPosition = Offset.zero;
 
-  // For edge creation
-  bool _isCreatingEdge = false;
-  String? _edgeStartEntityId;
-  Offset _edgePreviewEnd = Offset.zero;
-
   @override
   void initState() {
     super.initState();
@@ -1401,8 +1395,8 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
-    // Don't move canvas if dragging an entity or creating edge
-    if (_draggingEntityId != null || _isCreatingEdge) return;
+    // Don't move canvas if dragging an entity
+    if (_draggingEntityId != null) return;
 
     setState(() {
       // Update scale

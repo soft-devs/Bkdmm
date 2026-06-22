@@ -244,12 +244,12 @@ class ERGraphPainter extends CustomPainter {
     final path = Path();
     path.moveTo(end.dx, end.dy);
     path.lineTo(
-      end.dx - arrowSize * Math.cos(angle - Math.pi / 6),
-      end.dy - arrowSize * Math.sin(angle - Math.pi / 6),
+      end.dx - arrowSize * math.cos(angle - math.pi / 6),
+      end.dy - arrowSize * math.sin(angle - math.pi / 6),
     );
     path.lineTo(
-      end.dx - arrowSize * Math.cos(angle + Math.pi / 6),
-      end.dy - arrowSize * Math.sin(angle + Math.pi / 6),
+      end.dx - arrowSize * math.cos(angle + math.pi / 6),
+      end.dy - arrowSize * math.sin(angle + math.pi / 6),
     );
     path.close();
 
