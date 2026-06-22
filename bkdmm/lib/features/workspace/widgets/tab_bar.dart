@@ -276,7 +276,10 @@ class _TabItem extends StatelessWidget {
       onTap: onTap,
       onSecondaryTapDown: (details) => _showContextMenu(context, details),
       child: Container(
-        constraints: const BoxConstraints(minWidth: 100, maxWidth: 200),
+        constraints: BoxConstraints(
+          minWidth: 80,
+          maxWidth: maxWidth.clamp(100.0, 200.0),
+        ),
         decoration: BoxDecoration(
           color: isActive ? colorScheme.surface : null,
           border: Border(
@@ -306,31 +309,16 @@ class _TabItem extends StatelessWidget {
                   : colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 8),
-            // Title
+            // Title - simplified to single line for better responsiveness
             Flexible(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tab.title,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: isActive ? FontWeight.w600 : null,
-                      color: isActive ? colorScheme.primary : null,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  if (tab.subtitle != null)
-                    Text(
-                      tab.subtitle!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                ],
+              child: Text(
+                tab.title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: isActive ? FontWeight.w600 : null,
+                  color: isActive ? colorScheme.primary : null,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
             const SizedBox(width: 4),

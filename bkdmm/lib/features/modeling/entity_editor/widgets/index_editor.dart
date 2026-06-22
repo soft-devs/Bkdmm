@@ -248,95 +248,117 @@ class _IndexEditorState extends State<IndexEditor> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: Text(existingIndex == null ? 'Add Index' : 'Edit Index'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Index Name *',
-                    hintText: 'e.g., idx_user_id',
-                    prefixIcon: Icon(Icons.label),
+          content: SizedBox(
+            width: 400,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Index Name *',
+                      hintText: 'e.g., idx_user_id',
+                      prefixIcon: Icon(Icons.label),
+                    ),
+                    autofocus: true,
                   ),
-                  autofocus: true,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<IndexType>(
-                  value: selectedType,
-                  decoration: const InputDecoration(
-                    labelText: 'Index Type',
-                    prefixIcon: Icon(Icons.category),
-                  ),
-                  items: IndexType.values.map((type) {
-                    return DropdownMenuItem(
-                      value: type,
-                      child: Row(
-                        children: [
-                          Icon(_getIndexTypeIcon(type), size: 18),
-                          const SizedBox(width: 8),
-                          Text(_getIndexTypeLabel(type)),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => selectedType = value);
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Select Fields:',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: widget.availableFields.length,
-                    itemBuilder: (context, index) {
-                      final field = widget.availableFields[index];
-                      final isSelected = selectedFields.contains(field.name);
-                      return CheckboxListTile(
-                        title: Text(field.name),
-                        subtitle: Text(
-                          '${field.chnname} (${field.type})',
-                          style: Theme.of(context).textTheme.bodySmall,
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<IndexType>(
+                    value: selectedType,
+                    decoration: const InputDecoration(
+                      labelText: 'Index Type',
+                      prefixIcon: Icon(Icons.category),
+                    ),
+                    items: IndexType.values.map((type) {
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Row(
+                          children: [
+                            Icon(_getIndexTypeIcon(type), size: 18),
+                            const SizedBox(width: 8),
+                            Text(_getIndexTypeLabel(type)),
+                          ],
                         ),
-                        value: isSelected,
-                        onChanged: (value) {
-                          setState(() {
-                            if (value == true) {
-                              selectedFields.add(field.name);
-                            } else {
-                              selectedFields.remove(field.name);
-                            }
-                          });
-                        },
-                        dense: true,
                       );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => selectedType = value);
+                      }
                     },
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: remarkController,
-                  decoration: const InputDecoration(
-                    labelText: 'Remark',
-                    hintText: 'Optional description',
-                    prefixIcon: Icon(Icons.notes),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Select Fields:',
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
-                  maxLines: 2,
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  // Fixed height container for field selection
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 200,
+                      minHeight: 50,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Theme.of(context).colorScheme.outline),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: widget.availableFields.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  'No fields available',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: widget.availableFields.length,
+                              itemBuilder: (context, index) {
+                                final field = widget.availableFields[index];
+                                final isSelected = selectedFields.contains(field.name);
+                                return CheckboxListTile(
+                                  title: Text(field.name),
+                                  subtitle: Text(
+                                    '${field.chnname} (${field.type})',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  value: isSelected,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        selectedFields.add(field.name);
+                                      } else {
+                                        selectedFields.remove(field.name);
+                                      }
+                                    });
+                                  },
+                                  dense: true,
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: remarkController,
+                    decoration: const InputDecoration(
+                      labelText: 'Remark',
+                      hintText: 'Optional description',
+                      prefixIcon: Icon(Icons.notes),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [

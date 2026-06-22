@@ -64,98 +64,152 @@ class _FieldTableState extends State<FieldTable> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Column(
-      children: [
-        // Toolbar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
-            border: Border(
-              bottom: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          child: Row(
-            children: [
-              Text(
-                'Fields (${widget.fields.length})',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate column widths based on available width
+        final availableWidth = constraints.maxWidth;
+        final isWide = availableWidth > 800;
+        final isMedium = availableWidth > 500;
+
+        // Responsive column widths
+        final pkWidth = 60.0;
+        final nameWidth = isWide ? 150.0 : (isMedium ? 120.0 : 100.0);
+        final typeWidth = isWide ? 120.0 : (isMedium ? 100.0 : 80.0);
+        final chnnameWidth = isWide ? 120.0 : (isMedium ? 100.0 : 0.0); // Hide on small screens
+        final notNullWidth = 70.0;
+        final autoIncWidth = isMedium ? 80.0 : 0.0; // Hide on small screens
+        final remarkWidth = isWide ? 150.0 : (isMedium ? 100.0 : 60.0);
+
+        return Column(
+          children: [
+            // Toolbar - responsive layout
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                border: Border(
+                  bottom: BorderSide(color: colorScheme.outlineVariant),
                 ),
               ),
-              const Spacer(),
-              // Add field button
-              FilledButton.icon(
-                onPressed: () => _showAddFieldDialog(),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Field'),
-              ),
-              const SizedBox(width: 8),
-              // Delete selected button
-              OutlinedButton.icon(
-                onPressed: _deleteSelectedFields,
-                icon: const Icon(Icons.delete, size: 18),
-                label: const Text('Delete Selected'),
-              ),
-            ],
-          ),
-        ),
+              child: LayoutBuilder(
+                builder: (context, toolbarConstraints) {
+                  final toolbarWidth = toolbarConstraints.maxWidth;
+                  final isCompact = toolbarWidth < 400;
 
-        // DataGrid
-        Expanded(
-          child: SfDataGrid(
-            source: _dataSource,
-            controller: _controller,
-            allowEditing: true,
-            allowSorting: true,
-            allowFiltering: true,
-            selectionMode: SelectionMode.multiple,
-            navigationMode: GridNavigationMode.cell,
-            columnWidthMode: ColumnWidthMode.auto,
-            gridLinesVisibility: GridLinesVisibility.both,
-            headerGridLinesVisibility: GridLinesVisibility.both,
-            editingGestureType: EditingGestureType.doubleTap,
-            onQueryRowHeight: (details) => 40.0,
-            columns: [
-              GridColumn(
-                columnName: 'pk',
-                width: 60,
-                label: _buildHeaderCell('PK', tooltip: 'Primary Key'),
+                  if (isCompact) {
+                    // Compact toolbar - buttons only
+                    return Row(
+                      children: [
+                        Text(
+                          '(${widget.fields.length})',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => _showAddFieldDialog(),
+                          icon: const Icon(Icons.add),
+                          tooltip: 'Add Field',
+                        ),
+                        IconButton(
+                          onPressed: _deleteSelectedFields,
+                          icon: const Icon(Icons.delete),
+                          tooltip: 'Delete Selected',
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Text(
+                        'Fields (${widget.fields.length})',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Add field button
+                      FilledButton.icon(
+                        onPressed: () => _showAddFieldDialog(),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add Field'),
+                      ),
+                      const SizedBox(width: 8),
+                      // Delete selected button
+                      OutlinedButton.icon(
+                        onPressed: _deleteSelectedFields,
+                        icon: const Icon(Icons.delete, size: 18),
+                        label: const Text('Delete Selected'),
+                      ),
+                    ],
+                  );
+                },
               ),
-              GridColumn(
-                columnName: 'name',
-                width: 150,
-                label: _buildHeaderCell('Field Name'),
+            ),
+
+            // DataGrid
+            Expanded(
+              child: SfDataGrid(
+                source: _dataSource,
+                controller: _controller,
+                allowEditing: true,
+                allowSorting: true,
+                allowFiltering: isWide, // Only allow filtering on wide screens
+                selectionMode: SelectionMode.multiple,
+                navigationMode: GridNavigationMode.cell,
+                columnWidthMode: ColumnWidthMode.auto,
+                gridLinesVisibility: GridLinesVisibility.both,
+                headerGridLinesVisibility: GridLinesVisibility.both,
+                editingGestureType: EditingGestureType.doubleTap,
+                onQueryRowHeight: (details) => 40.0,
+                columns: [
+                  GridColumn(
+                    columnName: 'pk',
+                    width: pkWidth,
+                    label: _buildHeaderCell('PK', tooltip: 'Primary Key'),
+                  ),
+                  GridColumn(
+                    columnName: 'name',
+                    width: nameWidth,
+                    label: _buildHeaderCell('Field Name'),
+                  ),
+                  GridColumn(
+                    columnName: 'type',
+                    width: typeWidth,
+                    label: _buildHeaderCell('Data Type'),
+                  ),
+                  if (chnnameWidth > 0)
+                    GridColumn(
+                      columnName: 'chnname',
+                      width: chnnameWidth,
+                      label: _buildHeaderCell('Chinese Name'),
+                    ),
+                  if (notNullWidth > 0)
+                    GridColumn(
+                      columnName: 'notNull',
+                      width: notNullWidth,
+                      label: _buildHeaderCell('Not Null'),
+                    ),
+                  if (autoIncWidth > 0)
+                    GridColumn(
+                      columnName: 'autoIncrement',
+                      width: autoIncWidth,
+                      label: _buildHeaderCell('Auto Inc'),
+                    ),
+                  if (remarkWidth > 0)
+                    GridColumn(
+                      columnName: 'remark',
+                      width: remarkWidth,
+                      label: _buildHeaderCell('Remark'),
+                    ),
+                ],
               ),
-              GridColumn(
-                columnName: 'type',
-                width: 120,
-                label: _buildHeaderCell('Data Type'),
-              ),
-              GridColumn(
-                columnName: 'chnname',
-                width: 120,
-                label: _buildHeaderCell('Chinese Name'),
-              ),
-              GridColumn(
-                columnName: 'notNull',
-                width: 70,
-                label: _buildHeaderCell('Not Null'),
-              ),
-              GridColumn(
-                columnName: 'autoIncrement',
-                width: 80,
-                label: _buildHeaderCell('Auto Inc'),
-              ),
-              GridColumn(
-                columnName: 'remark',
-                width: 150,
-                label: _buildHeaderCell('Remark'),
-              ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
