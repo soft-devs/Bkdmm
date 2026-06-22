@@ -8,7 +8,16 @@ import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
 import '../widgets/tab_bar.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
+import '../../modeling/er_diagram/providers/graph_provider.dart';
 import '../../datatype/views/datatype_view.dart';
+
+/// ER 图交互模式
+enum InteractionMode {
+  /// 移动模式 - 平移/缩放画布，仅查看节点
+  move,
+  /// 编辑模式 - 拖拽节点、创建连线、编辑属性
+  edit,
+}
 
 /// Workspace view - Main project editing interface with tab management
 ///
@@ -1392,8 +1401,8 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
-    // Don't move canvas if dragging an entity
-    if (_draggingEntityId != null) return;
+    // Don't move canvas if dragging an entity or creating edge
+    if (_draggingEntityId != null || _isCreatingEdge) return;
 
     setState(() {
       // Update scale
@@ -1408,6 +1417,9 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   }
 
   void _onEntityPanStart(String entityId, DragStartDetails details) {
+    // Don't allow dragging in move mode
+    if (_interactionMode == InteractionMode.move) return;
+
     setState(() {
       _draggingEntityId = entityId;
       _dragStartPosition = _entityPositions[entityId] ?? Offset.zero;
@@ -1425,6 +1437,14 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
   void _onEntityPanEnd(DragEndDetails details) {
     setState(() {
       _draggingEntityId = null;
+    });
+  }
+
+  void _toggleMode() {
+    setState(() {
+      _interactionMode = _interactionMode == InteractionMode.move
+          ? InteractionMode.edit
+          : InteractionMode.move;
     });
   }
 
@@ -1483,6 +1503,7 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
                 onPanUpdate: _onEntityPanUpdate,
                 onPanEnd: _onEntityPanEnd,
                 isDragging: _draggingEntityId == entity.id,
+                interactionMode: _interactionMode,
               ),
             ),
           );
@@ -1505,6 +1526,40 @@ class _ERDiagramCanvasState extends State<_ERDiagramCanvas> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Mode toggle button
+            IconButton(
+              icon: Icon(_interactionMode == InteractionMode.move
+                  ? Icons.pan_tool
+                  : Icons.edit),
+              onPressed: _toggleMode,
+              tooltip: _interactionMode == InteractionMode.move
+                  ? 'Move Mode (Pan/Zoom)'
+                  : 'Edit Mode (Drag/Connect)',
+              iconSize: 20,
+            ),
+            // Mode indicator
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _interactionMode == InteractionMode.move
+                    ? Colors.blue.withValues(alpha: 0.2)
+                    : Colors.green.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                _interactionMode == InteractionMode.move ? 'MOVE' : 'EDIT',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: _interactionMode == InteractionMode.move
+                      ? Colors.blue
+                      : Colors.green,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const VerticalDivider(width: 1),
+            const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.zoom_in),
               onPressed: () => setState(() => _scale = (_scale + 0.1).clamp(0.5, 2.0)),
@@ -1554,6 +1609,7 @@ class _DraggableEntityNode extends StatelessWidget {
   final Function(DragUpdateDetails) onPanUpdate;
   final Function(DragEndDetails) onPanEnd;
   final bool isDragging;
+  final InteractionMode interactionMode;
 
   const _DraggableEntityNode({
     required this.entity,
@@ -1566,6 +1622,7 @@ class _DraggableEntityNode extends StatelessWidget {
     required this.onPanUpdate,
     required this.onPanEnd,
     required this.isDragging,
+    required this.interactionMode,
   });
 
   @override
@@ -1577,7 +1634,7 @@ class _DraggableEntityNode extends StatelessWidget {
       onPanUpdate: onPanUpdate,
       onPanEnd: onPanEnd,
       child: MouseRegion(
-        cursor: isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
+        cursor: _getCursor(),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: 200,
@@ -1788,6 +1845,13 @@ class _DraggableEntityNode extends StatelessWidget {
         onDelete();
       }
     });
+  }
+
+  MouseCursor _getCursor() {
+    if (interactionMode == InteractionMode.move) {
+      return SystemMouseCursors.basic;
+    }
+    return isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab;
   }
 }
 
