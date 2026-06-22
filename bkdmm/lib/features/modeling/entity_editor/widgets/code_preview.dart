@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../shared/models/models.dart';
@@ -131,7 +130,7 @@ class _CodePreviewState extends State<CodePreview> {
 
     // Add index DDL
     for (final index in widget.entity.indexes) {
-      result += '\n\n' + _generateIndexDDL(index);
+      result = '$result\n\n${_generateIndexDDL(index)}';
     }
 
     return result.trim();

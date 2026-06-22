@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 import '../../../../shared/models/models.dart';
-import '../providers/entity_provider.dart';
 
 /// Field table widget using Syncfusion DataGrid
 ///
@@ -512,19 +511,7 @@ class FieldDataSource extends DataGridSource {
     onUpdateField(field.id, updatedField);
   }
 
-  @override
-  void onCellBeginEdit(DataGridRow dataGridRow, RowColumnIndex rowColumnIndex) {
-    // Called when editing begins
-  }
-
-  @override
-  void onCellSubmitEdit(DataGridRow dataGridRow, RowColumnIndex rowColumnIndex, dynamic newValue) {
-    final cell = dataGridRow.getCells()[rowColumnIndex.columnIndex];
-    final fieldName = dataGridRow.getCellValue('name') as String;
-    final field = _fields.firstWhere(
-      (f) => f.name == fieldName,
-      orElse: () => _fields.first,
-    );
-    _updateFieldProperty(field, cell.columnName, newValue);
-  }
+  // Note: onCellBeginEdit and onCellSubmitEdit may not be needed
+  // since we're using direct cell widget interaction (checkboxes/dropdowns)
+  // The editing happens directly in the buildRow method
 }

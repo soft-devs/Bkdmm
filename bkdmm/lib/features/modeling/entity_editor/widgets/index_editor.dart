@@ -201,7 +201,6 @@ class _IndexEditorState extends State<IndexEditor> {
       case IndexType.fulltext:
         return Icons.text_fields;
       case IndexType.normal:
-      default:
         return Icons.sort;
     }
   }
@@ -213,7 +212,6 @@ class _IndexEditorState extends State<IndexEditor> {
       case IndexType.fulltext:
         return colorScheme.tertiaryContainer;
       case IndexType.normal:
-      default:
         return colorScheme.secondaryContainer;
     }
   }
@@ -225,7 +223,6 @@ class _IndexEditorState extends State<IndexEditor> {
       case IndexType.fulltext:
         return 'FULLTEXT';
       case IndexType.normal:
-      default:
         return 'NORMAL';
     }
   }
