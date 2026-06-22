@@ -749,6 +749,10 @@ final projectNotifierProvider =
   return notifier;
 });
 
+/// Alias for backward compatibility (used by home_view.dart)
+/// This points to the main projectNotifierProvider
+final projectProvider = projectNotifierProvider;
+
 /// Convenience provider for current project
 final currentProjectProvider = Provider<Project?>((ref) {
   return ref.watch(projectNotifierProvider).project;
