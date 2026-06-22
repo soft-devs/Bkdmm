@@ -1,0 +1,334 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/models/data_type.dart';
+import '../../../shared/constants/default_data_types.dart';
+import '../providers/datatype_provider.dart';
+
+/// Dialog for editing a data type
+class DataTypeEditDialog extends ConsumerStatefulWidget {
+  /// Existing data type to edit (null for new)
+  final DataType? existingType;
+
+  /// Callback when save is pressed
+  final void Function(DataType) onSave;
+
+  const DataTypeEditDialog({
+    super.key,
+    this.existingType,
+    required this.onSave,
+  });
+
+  @override
+  ConsumerState<DataTypeEditDialog> createState() => _DataTypeEditDialogState();
+}
+
+class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
+  late TextEditingController _nameController;
+  late TextEditingController _chnnameController;
+  late TextEditingController _remarkController;
+  late TextEditingController _javaController;
+
+  late Map<String, TextEditingController> _dbTypeControllers;
+
+  bool _isDefaultType = false;
+  bool _isValid = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final existing = widget.existingType;
+    _isDefaultType = existing != null && DefaultDataTypes.isDefaultType(existing.id);
+
+    _nameController = TextEditingController(text: existing?.name ?? '');
+    _chnnameController = TextEditingController(text: existing?.chnname ?? '');
+    _remarkController = TextEditingController(text: existing?.remark ?? '');
+    _javaController = TextEditingController(text: existing?.java ?? '');
+
+    // Initialize database type controllers
+    _dbTypeControllers = {};
+    for (final dbCode in DatabaseCodes.all) {
+      _dbTypeControllers[dbCode] = TextEditingController(
+        text: existing?.apply[dbCode] ?? '',
+      );
+    }
+
+    // Add listeners
+    _nameController.addListener(_validate);
+    _chnnameController.addListener(_validate);
+
+    _validate();
+  }
+
+  void _validate() {
+    final name = _nameController.text.trim();
+    final chnname = _chnnameController.text.trim();
+
+    // Check basic validity
+    final hasName = name.isNotEmpty;
+    final hasChnname = chnname.isNotEmpty;
+
+    // Check if name already exists (for new types or changed names)
+    final nameExists = ref.read(dataTypeNotifierProvider).nameExists(
+          name,
+          excludeId: widget.existingType?.id,
+        );
+
+    setState(() {
+      _isValid = hasName && hasChnname && !nameExists;
+    });
+  }
+
+  Map<String, String> _buildApplyMap() {
+    final apply = <String, String>{};
+    for (final entry in _dbTypeControllers.entries) {
+      final value = entry.value.text.trim();
+      if (value.isNotEmpty) {
+        apply[entry.key] = value;
+      }
+    }
+    return apply;
+  }
+
+  DataType _buildDataType() {
+    final existing = widget.existingType;
+
+    return DataType(
+      id: existing?.id ?? '',
+      name: _nameController.text.trim(),
+      chnname: _chnnameController.text.trim(),
+      remark: _remarkController.text.trim().isEmpty
+          ? null
+          : _remarkController.text.trim(),
+      apply: _buildApplyMap(),
+      java: _javaController.text.trim().isEmpty
+          ? null
+          : _javaController.text.trim(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _chnnameController.dispose();
+    _remarkController.dispose();
+    _javaController.dispose();
+    for (final controller in _dbTypeControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(
+            widget.existingType != null ? Icons.edit : Icons.add,
+            color: colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            widget.existingType != null ? 'Edit Data Type' : 'Add Data Type',
+          ),
+          if (_isDefaultType)
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'Default',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+        ],
+      ),
+      content: SizedBox(
+        width: 600,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Basic info section
+              _buildSectionHeader('Basic Info', Icons.info_outline),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Type Name (English)',
+                  hintText: 'e.g., MyCustomType',
+                  prefixIcon: const Icon(Icons.code),
+                  helperText: 'Unique identifier for this type',
+                  errorText: _nameController.text.trim().isEmpty
+                      ? 'Name is required'
+                      : ref.read(dataTypeNotifierProvider).nameExists(
+                                _nameController.text.trim(),
+                                excludeId: widget.existingType?.id,
+                              )
+                          ? 'Name already exists'
+                          : null,
+                  enabled: !_isDefaultType,
+                ),
+                autofocus: widget.existingType == null,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _chnnameController,
+                decoration: InputDecoration(
+                  labelText: 'Chinese Name',
+                  hintText: 'e.g., 自定义类型',
+                  prefixIcon: const Icon(Icons.translate),
+                  helperText: 'Display name in Chinese',
+                  errorText: _chnnameController.text.trim().isEmpty
+                      ? 'Chinese name is required'
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _remarkController,
+                decoration: InputDecoration(
+                  labelText: 'Remark',
+                  hintText: 'Description of this data type',
+                  prefixIcon: const Icon(Icons.note),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _javaController,
+                decoration: InputDecoration(
+                  labelText: 'Java Type',
+                  hintText: 'e.g., String, Integer, BigDecimal',
+                  prefixIcon: const Icon(Icons.code_blocks),
+                  helperText: 'Java type mapping for code generation',
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Database mapping section
+              _buildSectionHeader('Database Type Mapping', Icons.storage),
+              const SizedBox(height: 12),
+              Text(
+                'Define how this type maps to each database',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Database mappings
+              ...DatabaseCodes.all.map((dbCode) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: TextField(
+                    controller: _dbTypeControllers[dbCode],
+                    decoration: InputDecoration(
+                      labelText: DatabaseCodes.getDisplayName(dbCode),
+                      hintText: 'e.g., VARCHAR(255)',
+                      prefixIcon: _buildDatabaseIcon(dbCode),
+                      helperText: _getDefaultMapping(dbCode),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        if (widget.existingType != null && _isDefaultType)
+          TextButton(
+            onPressed: () {
+              // Restore default values
+              final defaultType = DefaultDataTypes.getById(widget.existingType!.id);
+              if (defaultType != null) {
+                _nameController.text = defaultType.name;
+                _chnnameController.text = defaultType.chnname;
+                _remarkController.text = defaultType.remark ?? '';
+                _javaController.text = defaultType.java ?? '';
+                for (final entry in defaultType.apply.entries) {
+                  _dbTypeControllers[entry.key]?.text = entry.value;
+                }
+              }
+            },
+            child: const Text('Restore Default'),
+          ),
+        FilledButton(
+          onPressed: _isValid
+              ? () {
+                  widget.onSave(_buildDataType());
+                  Navigator.of(context).pop();
+                }
+              : null,
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatabaseIcon(String dbCode) {
+    IconData icon;
+    switch (dbCode) {
+      case DatabaseCodes.mysql:
+        icon = Icons.storage;
+        break;
+      case DatabaseCodes.postgresql:
+        icon = Icons.storage;
+        break;
+      case DatabaseCodes.oracle:
+        icon = Icons.business;
+        break;
+      case DatabaseCodes.sqlServer:
+        icon = Icons.business;
+        break;
+      case DatabaseCodes.sqlite:
+        icon = Icons.phone_android;
+        break;
+      default:
+        icon = Icons.storage;
+    }
+    return Icon(icon);
+  }
+
+  String _getDefaultMapping(String dbCode) {
+    final defaultType = widget.existingType != null
+        ? DefaultDataTypes.getById(widget.existingType!.id)
+        : null;
+    return defaultType?.apply[dbCode] ?? '';
+  }
+}

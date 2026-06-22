@@ -9,6 +9,7 @@ enum TabType {
   relation,
   settings,
   module,
+  datatype,
 }
 
 /// Represents a single tab in the workspace
@@ -88,6 +89,18 @@ class WorkspaceTab {
       subtitle: moduleName,
       icon: 'account_tree',
       moduleId: moduleId,
+    );
+  }
+
+  /// Create tab for data type management
+  factory WorkspaceTab.datatype({
+    required String id,
+  }) {
+    return WorkspaceTab(
+      id: id,
+      type: TabType.datatype,
+      title: 'Data Types',
+      icon: 'data_object',
     );
   }
 

@@ -8,7 +8,8 @@
         "MYSQL": "VARCHAR(32)",
         "ORACLE": "VARCHAR2(32)",
         "POSTGRESQL": "VARCHAR(32)",
-        "SQLSERVER": "NVARCHAR(32)"
+        "SQLSERVER": "NVARCHAR(32)",
+        "SQLITE": "TEXT"
       },
       "java": "String"
     },
@@ -20,7 +21,8 @@
         "MYSQL": "VARCHAR(128)",
         "ORACLE": "VARCHAR2(128)",
         "POSTGRESQL": "VARCHAR(128)",
-        "SQLSERVER": "NVARCHAR(128)"
+        "SQLSERVER": "NVARCHAR(128)",
+        "SQLITE": "TEXT"
       },
       "java": "String"
     },
@@ -32,7 +34,8 @@
         "MYSQL": "VARCHAR(512)",
         "ORACLE": "VARCHAR2(512)",
         "POSTGRESQL": "VARCHAR(512)",
-        "SQLSERVER": "NVARCHAR(512)"
+        "SQLSERVER": "NVARCHAR(512)",
+        "SQLITE": "TEXT"
       },
       "java": "String"
     },
@@ -44,7 +47,8 @@
         "MYSQL": "TEXT",
         "ORACLE": "CLOB",
         "POSTGRESQL": "TEXT",
-        "SQLSERVER": "NVARCHAR(MAX)"
+        "SQLSERVER": "NVARCHAR(MAX)",
+        "SQLITE": "TEXT"
       },
       "java": "String"
     },
@@ -56,7 +60,8 @@
         "MYSQL": "INT",
         "ORACLE": "NUMBER(10)",
         "POSTGRESQL": "INTEGER",
-        "SQLSERVER": "INT"
+        "SQLSERVER": "INT",
+        "SQLITE": "INTEGER"
       },
       "java": "Integer"
     },
@@ -68,7 +73,8 @@
         "MYSQL": "BIGINT",
         "ORACLE": "NUMBER(19)",
         "POSTGRESQL": "BIGINT",
-        "SQLSERVER": "BIGINT"
+        "SQLSERVER": "BIGINT",
+        "SQLITE": "INTEGER"
       },
       "java": "Long"
     },
@@ -80,7 +86,8 @@
         "MYSQL": "DECIMAL(32,8)",
         "ORACLE": "NUMBER(32,8)",
         "POSTGRESQL": "DECIMAL(32,8)",
-        "SQLSERVER": "DECIMAL(32,8)"
+        "SQLSERVER": "DECIMAL(32,8)",
+        "SQLITE": "REAL"
       },
       "java": "BigDecimal"
     },
@@ -92,7 +99,8 @@
         "MYSQL": "DATETIME",
         "ORACLE": "DATE",
         "POSTGRESQL": "TIMESTAMP",
-        "SQLSERVER": "DATETIME"
+        "SQLSERVER": "DATETIME",
+        "SQLITE": "TEXT"
       },
       "java": "LocalDateTime"
     },
@@ -104,7 +112,8 @@
         "MYSQL": "VARCHAR(1)",
         "ORACLE": "VARCHAR2(1)",
         "POSTGRESQL": "VARCHAR(1)",
-        "SQLSERVER": "NVARCHAR(1)"
+        "SQLSERVER": "NVARCHAR(1)",
+        "SQLITE": "TEXT"
       },
       "java": "String"
     },
@@ -116,7 +125,8 @@
         "MYSQL": "VARCHAR(32)",
         "ORACLE": "VARCHAR2(32)",
         "POSTGRESQL": "VARCHAR(32)",
-        "SQLSERVER": "NVARCHAR(32)"
+        "SQLSERVER": "NVARCHAR(32)",
+        "SQLITE": "TEXT"
       },
       "java": "String"
     }
