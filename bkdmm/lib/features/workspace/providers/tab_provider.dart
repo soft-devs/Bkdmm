@@ -212,7 +212,7 @@ class TabNotifier extends StateNotifier<TabState> {
   /// Load tabs from storage
   Future<void> _loadTabs() async {
     try {
-      final saved = StorageService.getString(_storageKey);
+      final saved = StorageService().getSetting<String>(_storageKey);
       if (saved != null && saved.isNotEmpty) {
         final json = jsonDecode(saved) as Map<String, dynamic>;
         state = TabState.fromJson(json);
@@ -226,7 +226,7 @@ class TabNotifier extends StateNotifier<TabState> {
   Future<void> _saveTabs() async {
     try {
       final json = state.toJson();
-      await StorageService.setString(_storageKey, jsonEncode(json));
+      await StorageService().saveSetting(_storageKey, jsonEncode(json));
     } catch (_) {
       // Ignore errors saving tabs
     }
@@ -286,7 +286,7 @@ class TabNotifier extends StateNotifier<TabState> {
   /// Open settings tab
   void openSettings() {
     const tabId = 'settings';
-    const tab = WorkspaceTab.settings(id: tabId);
+    final tab = WorkspaceTab.settings(id: tabId);
     openTab(tab);
   }
 

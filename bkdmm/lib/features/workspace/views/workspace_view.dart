@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
-import '../../../shared/widgets/app_scaffold.dart';
+import '../../../utils/id_generator.dart';
+import '../providers/tab_provider.dart';
+import '../widgets/module_tree.dart';
+import '../widgets/tab_bar.dart';
 
-/// Workspace view - Main project editing interface
+/// Workspace view - Main project editing interface with tab management
 ///
-/// Displays the project
-/// - Module list (sidebar)
-/// - Entity diagram (canvas)
-/// - Properties panel
+/// Layout:
+/// ┌─────────────────────────────────────────────────────┐
+/// │ MenuBar                                             │
+/// ├─────────┬───────────────────────────────────────────┤
+/// │ Module  │ Tab Bar (closable, scrollable)            │
+/// │ Tree    ├───────────────────────────────────────────┤
+/// │         │                                           │
+/// │ - Module│         Tab Content Area                  │
+/// │   - Table1│                                         │
+/// │   - Table2│   (EntityEditor / ERDiagram / etc)      │
+/// │         │                                           │
+/// ├─────────┴───────────────────────────────────────────┤
+/// │ StatusBar                                           │
+/// └─────────────────────────────────────────────────────┘
 class WorkspaceView extends ConsumerStatefulWidget {
   const WorkspaceView({super.key});
 
@@ -18,7 +32,21 @@ class WorkspaceView extends ConsumerStatefulWidget {
 }
 
 class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
-  int _selectedModuleIndex = 0;
+  bool _showPropertiesPanel = true;
+  double _sidebarWidth = 240;
+  double _propertiesPanelWidth = 280;
+
+  @override
+  void initState() {
+    super.initState();
+    // Open settings tab by default if no tabs are open
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tabState = ref.read(tabProvider);
+      if (!tabState.hasTabs) {
+        // Don't auto-open any tab, let user select from tree
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,222 +68,452 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AppScaffold(
-      title: project.name,
-      isLoading: projectState.isLoading,
-      actions: [
-        // Save button
-        if (projectState.isDirty)
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveProject,
-            tooltip: 'Save',
-          ),
-        // More actions
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: _handleMenuAction,
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'save_as',
-              child: ListTile(
-                leading: Icon(Icons.save_as),
-                title: Text('Save As...'),
-                contentPadding: EdgeInsets.zero,
+    return TabShortcuts(
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        body: Column(
+          children: [
+            // Menu bar
+            _buildMenuBar(project, projectState, theme, colorScheme),
+
+            // Main content area
+            Expanded(
+              child: Row(
+                children: [
+                  // Module tree sidebar
+                  SizedBox(
+                    width: _sidebarWidth,
+                    child: ModuleTree(
+                      project: project,
+                      onAddModule: () => _showAddModuleDialog(),
+                      onAddEntity: (module) => _showAddEntityDialog(module),
+                      onSelectModule: (module) => _onSelectModule(module),
+                    ),
+                  ),
+
+                  // Main content
+                  Expanded(
+                    child: Column(
+                      children: [
+                        // Tab bar
+                        WorkspaceTabBar(
+                          onNewTab: () => _showAddModuleDialog(),
+                          onSettingsTab: () =>
+                              ref.read(tabProvider.notifier).openSettings(),
+                        ),
+
+                        // Tab content area
+                        Expanded(
+                          child: _buildTabContent(project, theme, colorScheme),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Properties panel (toggleable)
+                  if (_showPropertiesPanel)
+                    SizedBox(
+                      width: _propertiesPanelWidth,
+                      child: _buildPropertiesPanel(project, theme, colorScheme),
+                    ),
+                ],
               ),
             ),
-            const PopupMenuItem(
-              value: 'close',
-              child: ListTile(
-                leading: Icon(Icons.close),
-                title: Text('Close Project'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuDivider(),
-            const PopupMenuItem(
-              value: 'settings',
-              child: ListTile(
-                leading: Icon(Icons.settings),
-                title: Text('Project Settings'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
+
+            // Status bar
+            _buildStatusBar(project, projectState, theme, colorScheme),
           ],
         ),
-      ],
-      body: Row(
-        children: [
-          // Module list sidebar
-          _buildModuleSidebar(project, theme, colorScheme),
-
-          // Main canvas area
-          Expanded(
-            child: _buildCanvasArea(project, theme, colorScheme),
-          ),
-
-          // Properties panel (optional, can be toggled)
-          // For now, just show a placeholder
-          SizedBox(
-            width: 280,
-            child: _buildPropertiesPanel(project, theme, colorScheme),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addModule,
-        tooltip: 'Add Module',
-        child: const Icon(Icons.add),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _showAddModuleDialog(),
+          tooltip: 'Add Module',
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
 
-  Widget _buildModuleSidebar(
-    dynamic project,
+  Widget _buildMenuBar(
+    Project project,
+    ProjectState projectState,
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    final modules = project.modules as List;
-
     return Container(
-      width: 240,
+      height: 48,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
+        color: colorScheme.surface,
         border: Border(
-          right: BorderSide(
+          bottom: BorderSide(
             color: colorScheme.outlineVariant,
             width: 1,
           ),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
+          // Project name
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Icon(
+                  Icons.folder_open,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
                 Text(
-                  'Modules',
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  project.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (modules.isNotEmpty)
-                  Text(
-                    '${modules.length}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                if (projectState.isDirty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(
+                      '*',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.primary,
+                      ),
                     ),
                   ),
               ],
             ),
           ),
-          const Divider(height: 1),
 
-          // Module list
-          Expanded(
-            child: modules.isEmpty
-                ? _buildEmptyModulesState(theme, colorScheme)
-                : ListView.builder(
-                    itemCount: modules.length,
-                    itemBuilder: (context, index) {
-                      final module = modules[index];
-                      final isSelected = _selectedModuleIndex == index;
+          const Spacer(),
 
-                      return ListTile(
-                        leading: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? colorScheme.primaryContainer
-                                : colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.view_module,
-                            size: 18,
-                            color: isSelected
-                                ? colorScheme.onPrimaryContainer
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        title: Text(
-                          module.name,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: isSelected ? FontWeight.w600 : null,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          '${(module.entities as List).length} entities',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        selected: isSelected,
-                        onTap: () {
-                          setState(() => _selectedModuleIndex = index);
-                        },
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyModulesState(ThemeData theme, ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.view_module_outlined,
-            size: 48,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No modules yet',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+          // Actions
+          if (projectState.isDirty)
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveProject,
+              tooltip: 'Save (Ctrl+S)',
             ),
+
+          // Toggle properties panel
+          IconButton(
+            icon: Icon(
+              _showPropertiesPanel ? Icons.close_fullscreen : Icons.open_in_full,
+            ),
+            onPressed: () {
+              setState(() {
+                _showPropertiesPanel = !_showPropertiesPanel;
+              });
+            },
+            tooltip: _showPropertiesPanel
+                ? 'Hide Properties'
+                : 'Show Properties',
           ),
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: _addModule,
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add Module'),
+
+          // More actions menu
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (action) => _handleMenuAction(action),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'save',
+                child: ListTile(
+                  leading: Icon(Icons.save),
+                  title: Text('Save'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'save_as',
+                child: ListTile(
+                  leading: Icon(Icons.save_as),
+                  title: Text('Save As...'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'close',
+                child: ListTile(
+                  leading: Icon(Icons.close),
+                  title: Text('Close Project'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'settings',
+                child: ListTile(
+                  leading: Icon(Icons.settings),
+                  title: Text('Project Settings'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCanvasArea(
-    dynamic project,
+  Widget _buildTabContent(
+    Project project,
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    final modules = project.modules as List;
+    final tabState = ref.watch(tabProvider);
+    final activeTab = tabState.activeTab;
 
-    if (modules.isEmpty) {
-      return _buildEmptyCanvas(theme, colorScheme);
+    if (activeTab == null) {
+      return _buildEmptyTabContent(project, theme, colorScheme);
     }
 
-    if (_selectedModuleIndex >= modules.length) {
-      _selectedModuleIndex = 0;
+    switch (activeTab.type) {
+      case TabType.entity:
+        return _buildEntityEditor(activeTab, project, theme, colorScheme);
+      case TabType.module:
+        return _buildModuleView(activeTab, project, theme, colorScheme);
+      case TabType.relation:
+        return _buildRelationView(activeTab, project, theme, colorScheme);
+      case TabType.settings:
+        return _buildSettingsView(theme, colorScheme);
+    }
+  }
+
+  Widget _buildEmptyTabContent(
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    return Container(
+      color: colorScheme.surface,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.tab_outlined,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Select an item from the tree',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Double-click a module or entity to open it in a tab',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEntityEditor(
+    WorkspaceTab tab,
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    // Find the entity
+    Entity? entity;
+    for (final module in project.modules) {
+      if (module.id == tab.moduleId) {
+        entity = module.entities.firstWhere(
+          (e) => e.id == tab.entityId,
+          orElse: () => throw StateError('Entity not found'),
+        );
+        break;
+      }
     }
 
-    final selectedModule = modules[_selectedModuleIndex];
-    final entities = selectedModule.entities as List;
+    if (entity == null) {
+      return _buildNotFoundContent('Entity', tab.title, theme, colorScheme);
+    }
 
-    if (entities.isEmpty) {
-      return _buildEmptyModuleCanvas(selectedModule.name, theme, colorScheme);
+    return Container(
+      color: colorScheme.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Entity header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.table_chart,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  entity.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  entity.chnname,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${entity.fields.length} fields',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Entity content (placeholder for now)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.table_chart_outlined,
+                    size: 64,
+                    color: colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Entity Editor',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Field editor coming soon',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModuleView(
+    WorkspaceTab tab,
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    // Find the module
+    final module = project.modules.firstWhere(
+      (m) => m.id == tab.moduleId,
+      orElse: () => throw StateError('Module not found'),
+    );
+
+    return Container(
+      color: colorScheme.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Module header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.view_module,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  module.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  module.chnname,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${module.entities.length} entities',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Module content (ER diagram placeholder)
+          Expanded(
+            child: _buildERDiagram(module, theme, colorScheme),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildERDiagram(
+    Module module,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    if (module.entities.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.account_tree_outlined,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No entities in this module',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: () => _showAddEntityDialog(module),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Entity'),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
@@ -266,27 +524,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           children: [
             // Placeholder for entity nodes
             Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.account_tree,
-                    size: 64,
-                    color: colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Module: ${selectedModule.name}',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${entities.length} entities',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+              child: Wrap(
+                spacing: 20,
+                runSpacing: 20,
+                alignment: WrapAlignment.center,
+                children: module.entities.map((entity) {
+                  return _EntityNode(
+                    entity: entity,
+                    theme: theme,
+                    colorScheme: colorScheme,
+                  );
+                }).toList(),
               ),
             ),
           ],
@@ -295,43 +543,144 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     );
   }
 
-  Widget _buildEmptyCanvas(ThemeData theme, ColorScheme colorScheme) {
-    return Center(
+  Widget _buildRelationView(
+    WorkspaceTab tab,
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    // Find the module
+    final module = project.modules.firstWhere(
+      (m) => m.id == tab.moduleId,
+      orElse: () => throw StateError('Module not found'),
+    );
+
+    return Container(
+      color: colorScheme.surface,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.account_tree_outlined,
-            size: 80,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Start building your model',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.account_tree,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Relations - ${module.name}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Add a module to begin',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _addModule,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Module'),
+
+          // Relations content
+          Expanded(
+            child: module.graphCanvas.edges.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.account_tree_outlined,
+                          size: 64,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No relations defined',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: module.graphCanvas.edges.length,
+                    itemBuilder: (context, index) {
+                      final edge = module.graphCanvas.edges[index];
+                      return ListTile(
+                        leading: const Icon(Icons.arrow_forward),
+                        title: Text('${edge.source} → ${edge.target}'),
+                        subtitle: Text(edge.label ?? 'No label'),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyModuleCanvas(
-    String moduleName,
+  Widget _buildSettingsView(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      color: colorScheme.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.settings,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Project Settings',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Settings content
+          Expanded(
+            child: Center(
+              child: Text(
+                'Settings editor coming soon',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotFoundContent(
+    String type,
+    String name,
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
@@ -340,27 +689,21 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.table_chart_outlined,
+            Icons.error_outline,
             size: 64,
-            color: colorScheme.primary.withValues(alpha: 0.5),
+            color: colorScheme.error,
           ),
           const SizedBox(height: 16),
           Text(
-            'Module: $moduleName',
-            style: theme.textTheme.titleLarge,
+            '$type not found',
+            style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'No entities in this module',
+            name,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _addEntity,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Entity'),
           ),
         ],
       ),
@@ -368,10 +711,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   }
 
   Widget _buildPropertiesPanel(
-    dynamic project,
+    Project project,
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
+    final tabState = ref.watch(tabProvider);
+    final activeTab = tabState.activeTab;
+
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -388,94 +734,295 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           // Header
           Container(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              'Properties',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant,
+                ),
               ),
             ),
-          ),
-          const Divider(height: 1),
-
-          // Project info
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Project name
-                _PropertyField(
-                  label: 'Project Name',
-                  value: project.name,
-                ),
-                const SizedBox(height: 12),
-
-                // Description
-                _PropertyField(
-                  label: 'Description',
-                  value: project.description ?? 'No description',
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 12),
-
-                // Version
-                _PropertyField(
-                  label: 'Version',
-                  value: project.version,
-                ),
-                const SizedBox(height: 12),
-
-                // Created
-                _PropertyField(
-                  label: 'Created',
-                  value: _formatDateTime(project.createdAt),
-                ),
-                const SizedBox(height: 12),
-
-                // Updated
-                _PropertyField(
-                  label: 'Last Modified',
-                  value: _formatDateTime(project.updatedAt),
-                ),
-                const SizedBox(height: 24),
-
-                // Statistics
                 Text(
-                  'Statistics',
+                  'Properties',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _StatTile(
-                  icon: Icons.view_module,
-                  label: 'Modules',
-                  value: '${(project.modules as List).length}',
-                ),
-                const SizedBox(height: 8),
-                _StatTile(
-                  icon: Icons.table_chart,
-                  label: 'Entities',
-                  value: '${_countEntities(project.modules)}',
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: () {
+                    setState(() {
+                      _showPropertiesPanel = false;
+                    });
+                  },
+                  visualDensity: VisualDensity.compact,
                 ),
               ],
             ),
+          ),
+
+          // Properties content
+          Expanded(
+            child: activeTab != null
+                ? _buildTabProperties(activeTab, project, theme, colorScheme)
+                : _buildProjectProperties(project, theme, colorScheme),
           ),
         ],
       ),
     );
   }
 
-  int _countEntities(List modules) {
-    int count = 0;
-    for (final module in modules) {
-      count += (module.entities as List).length;
+  Widget _buildTabProperties(
+    WorkspaceTab tab,
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    switch (tab.type) {
+      case TabType.entity:
+        return _buildEntityProperties(tab, project, theme, colorScheme);
+      case TabType.module:
+        return _buildModuleProperties(tab, project, theme, colorScheme);
+      case TabType.relation:
+      case TabType.settings:
+        return _buildProjectProperties(project, theme, colorScheme);
     }
-    return count;
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  Widget _buildEntityProperties(
+    WorkspaceTab tab,
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    // Find the entity
+    Entity? entity;
+    Module? parentModule;
+    for (final module in project.modules) {
+      if (module.id == tab.moduleId) {
+        parentModule = module;
+        entity = module.entities.firstWhere(
+          (e) => e.id == tab.entityId,
+          orElse: () => throw StateError('Entity not found'),
+        );
+        break;
+      }
+    }
+
+    if (entity == null) {
+      return _buildProjectProperties(project, theme, colorScheme);
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _PropertySection(title: 'Entity Info'),
+        _PropertyField(label: 'Title', value: entity.title),
+        _PropertyField(label: 'Chinese Name', value: entity.chnname),
+        _PropertyField(label: 'Remark', value: entity.remark ?? 'None'),
+        _PropertyField(label: 'ID', value: entity.id),
+        const SizedBox(height: 16),
+        _PropertySection(title: 'Statistics'),
+        _StatTile(icon: Icons.list_alt, label: 'Fields', value: '${entity.fields.length}'),
+        _StatTile(icon: Icons.key, label: 'Primary Keys', value: '${entity.primaryKeys.length}'),
+        _StatTile(icon: Icons.sort, label: 'Indexes', value: '${entity.indexes.length}'),
+        const SizedBox(height: 16),
+        _PropertySection(title: 'Timestamps'),
+        _PropertyField(label: 'Created', value: _formatDateTime(entity.createdAt)),
+        _PropertyField(label: 'Updated', value: _formatDateTime(entity.updatedAt)),
+      ],
+    );
+  }
+
+  Widget _buildModuleProperties(
+    WorkspaceTab tab,
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    // Find the module
+    final module = project.modules.firstWhere(
+      (m) => m.id == tab.moduleId,
+      orElse: () => throw StateError('Module not found'),
+    );
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _PropertySection(title: 'Module Info'),
+        _PropertyField(label: 'Name', value: module.name),
+        _PropertyField(label: 'Chinese Name', value: module.chnname),
+        _PropertyField(label: 'Description', value: module.description ?? 'None'),
+        _PropertyField(label: 'ID', value: module.id),
+        const SizedBox(height: 16),
+        _PropertySection(title: 'Statistics'),
+        _StatTile(icon: Icons.table_chart, label: 'Entities', value: '${module.entities.length}'),
+        _StatTile(icon: Icons.account_tree, label: 'Relations', value: '${module.graphCanvas.edges.length}'),
+        const SizedBox(height: 16),
+        _PropertySection(title: 'Timestamps'),
+        _PropertyField(label: 'Created', value: _formatDateTime(module.createdAt)),
+        _PropertyField(label: 'Updated', value: _formatDateTime(module.updatedAt)),
+      ],
+    );
+  }
+
+  Widget _buildProjectProperties(
+    Project project,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _PropertySection(title: 'Project Info'),
+        _PropertyField(label: 'Name', value: project.name),
+        _PropertyField(label: 'Description', value: project.description ?? 'None'),
+        _PropertyField(label: 'Version', value: project.version),
+        _PropertyField(label: 'ID', value: project.id),
+        const SizedBox(height: 16),
+        _PropertySection(title: 'Statistics'),
+        _StatTile(icon: Icons.view_module, label: 'Modules', value: '${project.modules.length}'),
+        _StatTile(
+          icon: Icons.table_chart,
+          label: 'Entities',
+          value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.length)}',
+        ),
+        _StatTile(
+          icon: Icons.list_alt,
+          label: 'Fields',
+          value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.fold<int>(0, (s, e) => s + e.fields.length))}',
+        ),
+        const SizedBox(height: 16),
+        _PropertySection(title: 'Timestamps'),
+        _PropertyField(label: 'Created', value: _formatDateTime(project.createdAt)),
+        _PropertyField(label: 'Updated', value: _formatDateTime(project.updatedAt)),
+      ],
+    );
+  }
+
+  Widget _buildStatusBar(
+    Project project,
+    ProjectState projectState,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final tabState = ref.watch(tabProvider);
+
+    return Container(
+      height: 24,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLowest,
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Project info
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.folder,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  project.name,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Separator
+          Container(
+            width: 1,
+            height: 14,
+            color: colorScheme.outlineVariant,
+          ),
+
+          // Tab count
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.tab,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${tabState.tabs.length} tabs',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const Spacer(),
+
+          // Save status
+          if (projectState.isDirty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.circle,
+                    size: 8,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Unsaved',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (projectState.lastSavedAt != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check,
+                    size: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Saved',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _onSelectModule(Module module) {
+    // Open module in tab when selected
+    ref.read(tabProvider.notifier).openModule(module);
   }
 
   Future<void> _saveProject() async {
@@ -501,6 +1048,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
   void _handleMenuAction(String action) {
     switch (action) {
+      case 'save':
+        _saveProject();
+        break;
       case 'save_as':
         _saveProjectAs();
         break;
@@ -508,7 +1058,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         _closeProject();
         break;
       case 'settings':
-        _showProjectSettings();
+        ref.read(tabProvider.notifier).openSettings();
         break;
     }
   }
@@ -557,36 +1107,158 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     }
   }
 
-  void _showProjectSettings() {
-    // TODO: Implement project settings dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Project settings coming soon')),
-    );
-  }
+  Future<void> _showAddModuleDialog() async {
+    final nameController = TextEditingController();
+    final chnnameController = TextEditingController();
 
-  Future<void> _addModule() async {
-    final moduleName = await showDialog<String>(
+    final result = await showDialog<bool>(
       context: context,
-      builder: (context) => _AddModuleDialog(),
+      builder: (context) => AlertDialog(
+        title: const Text('Add Module'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Module Name (English)',
+                hintText: 'e.g., user',
+                prefixIcon: Icon(Icons.code),
+              ),
+              autofocus: true,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: chnnameController,
+              decoration: const InputDecoration(
+                labelText: 'Chinese Name',
+                hintText: 'e.g., 用户模块',
+                prefixIcon: Icon(Icons.translate),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (nameController.text.trim().isNotEmpty) {
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
     );
 
-    if (moduleName != null && moduleName.isNotEmpty && mounted) {
-      // Create a new module with the given name
-      final project = ref.read(projectProvider).project;
-      if (project != null) {
-        // Create a basic module - actual implementation would use proper Module class
-        // This is a placeholder that would be replaced with proper module creation
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Module "$moduleName" would be added')),
-        );
-      }
+    if (result == true && mounted) {
+      final module = ref.read(projectProvider.notifier).createNewModule(
+        name: nameController.text.trim(),
+        chnname: chnnameController.text.trim().isNotEmpty
+            ? chnnameController.text.trim()
+            : nameController.text.trim(),
+      );
+      ref.read(projectProvider.notifier).addModule(module);
     }
   }
 
-  Future<void> _addEntity() async {
-    // TODO: Implement add entity dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add entity coming soon')),
+  Future<void> _showAddEntityDialog(Module module) async {
+    final titleController = TextEditingController();
+    final chnnameController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add Entity to ${module.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Entity Title (English)',
+                hintText: 'e.g., user',
+                prefixIcon: Icon(Icons.code),
+              ),
+              autofocus: true,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: chnnameController,
+              decoration: const InputDecoration(
+                labelText: 'Chinese Name',
+                hintText: 'e.g., 用户',
+                prefixIcon: Icon(Icons.translate),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (titleController.text.trim().isNotEmpty) {
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && mounted) {
+      final now = DateTime.now();
+      final entity = Entity(
+        id: IdGenerator.generate(),
+        title: titleController.text.trim(),
+        chnname: chnnameController.text.trim().isNotEmpty
+            ? chnnameController.text.trim()
+            : titleController.text.trim(),
+        fields: [],
+        indexes: [],
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      final updatedModule = module.copyWith(
+        entities: [...module.entities, entity],
+        updatedAt: now,
+      );
+      ref.read(projectProvider.notifier).updateModule(module.id, updatedModule);
+    }
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+/// Property section widget
+class _PropertySection extends StatelessWidget {
+  final String title;
+
+  const _PropertySection({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -608,23 +1280,26 @@ class _PropertyField extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium,
-          maxLines: maxLines,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium,
+            maxLines: maxLines,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -646,92 +1321,155 @@ class _StatTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
             color: colorScheme.onSurfaceVariant,
           ),
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
-        ),
-      ],
+          const Spacer(),
+          Text(
+            value,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Add module dialog
-class _AddModuleDialog extends StatefulWidget {
-  @override
-  State<_AddModuleDialog> createState() => _AddModuleDialogState();
-}
+/// Entity node widget for ER diagram
+class _EntityNode extends StatelessWidget {
+  final Entity entity;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
 
-class _AddModuleDialogState extends State<_AddModuleDialog> {
-  final _controller = TextEditingController();
-  bool _isValid = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_validate);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _validate() {
-    setState(() {
-      _isValid = _controller.text.trim().isNotEmpty;
-    });
-  }
+  const _EntityNode({
+    required this.entity,
+    required this.theme,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Add Module'),
-      content: TextField(
-        controller: _controller,
-        decoration: const InputDecoration(
-          labelText: 'Module Name',
-          hintText: 'Enter module name',
-          prefixIcon: Icon(Icons.view_module),
+    return Container(
+      width: 200,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: colorScheme.outline,
         ),
-        autofocus: true,
-        textInputAction: TextInputAction.done,
-        onSubmitted: _submit,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _isValid ? () => _submit(_controller.text) : null,
-          child: const Text('Add'),
-        ),
-      ],
-    );
-  }
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.table_chart,
+                  size: 16,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    entity.title,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-  void _submit(String value) {
-    if (value.trim().isNotEmpty) {
-      Navigator.pop(context, value.trim());
-    }
+          // Fields
+          if (entity.fields.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: entity.fields.take(5).map((field) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(
+                      children: [
+                        if (field.pk)
+                          Icon(
+                            Icons.key,
+                            size: 12,
+                            color: colorScheme.primary,
+                          )
+                        else
+                          const SizedBox(width: 12),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            field.name,
+                            style: theme.textTheme.labelSmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          field.type,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+          // More fields indicator
+          if (entity.fields.length > 5)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
+              child: Text(
+                '+${entity.fields.length - 5} more fields',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
