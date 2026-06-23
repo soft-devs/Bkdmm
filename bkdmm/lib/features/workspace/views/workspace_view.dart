@@ -455,7 +455,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     // 使用 ERDiagramWidget 替代 _ERDiagramCanvas
     return ERDiagramWidget(
       moduleId: module.id,
-      onEntityEdit: (entity) => _openEntityInTab(module, entity),
+      onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
       onContextMenu: (position, entity) => _showDiagramContextMenu(position, entity, module),
     );
   }
@@ -501,7 +501,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       ],
     ).then((value) {
       if (value == 'edit' && entity != null) {
-        _openEntityInTab(module, entity);
+        _showEntityEditorDialog(module, entity);
       } else if (value == 'delete' && entity != null) {
         _confirmDeleteEntity(module, entity);
       } else if (value == 'add_entity') {
@@ -510,8 +510,62 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     });
   }
 
-  void _openEntityInTab(Module module, Entity entity) {
-    ref.read(tabProvider.notifier).openEntity(entity, module.id);
+  void _showEntityEditorDialog(Module module, Entity entity) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(24),
+        child: SizedBox(
+          width: 900,
+          height: 700,
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.table_chart,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${entity.title} - ${entity.chnname}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      tooltip: 'Close',
+                    ),
+                  ],
+                ),
+              ),
+
+              // Entity editor content
+              Expanded(
+                child: EntityEditorView(
+                  entity: entity,
+                  moduleId: module.id,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _confirmDeleteEntity(Module module, Entity entity) {
@@ -1122,46 +1176,74 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Future<void> _showAddModuleDialog() async {
     final nameController = TextEditingController();
     final chnnameController = TextEditingController();
+    final descController = TextEditingController();
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Module'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+        title: const Row(
           children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Module Name (English)',
-                hintText: 'e.g., user',
-                prefixIcon: Icon(Icons.code),
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: chnnameController,
-              decoration: const InputDecoration(
-                labelText: 'Chinese Name',
-                hintText: 'e.g., 用户模块',
-                prefixIcon: Icon(Icons.translate),
-              ),
-            ),
+            Icon(Icons.view_module),
+            SizedBox(width: 8),
+            Text('Create New Module'),
           ],
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'A module is a container for related database tables/entities.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Module Name *',
+                  hintText: 'e.g., user_management, order_system',
+                  prefixIcon: Icon(Icons.folder_outlined),
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: chnnameController,
+                decoration: const InputDecoration(
+                  labelText: 'Chinese Name',
+                  hintText: 'e.g., 用户管理模块',
+                  prefixIcon: Icon(Icons.translate),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  hintText: 'Brief description of this module',
+                  prefixIcon: Icon(Icons.description_outlined),
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          FilledButton.icon(
             onPressed: () {
               if (nameController.text.trim().isNotEmpty) {
                 Navigator.pop(context, true);
               }
             },
-            child: const Text('Add'),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Create Module'),
           ),
         ],
       ),
@@ -1173,6 +1255,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         chnname: chnnameController.text.trim().isNotEmpty
             ? chnnameController.text.trim()
             : nameController.text.trim(),
+        description: descController.text.trim().isNotEmpty
+            ? descController.text.trim()
+            : null,
       );
       ref.read(projectProvider.notifier).addModule(module);
     }
@@ -1181,46 +1266,75 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Future<void> _showAddEntityDialog(Module module) async {
     final titleController = TextEditingController();
     final chnnameController = TextEditingController();
+    final remarkController = TextEditingController();
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add Entity to ${module.name}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+        title: Row(
           children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Entity Title (English)',
-                hintText: 'e.g., user',
-                prefixIcon: Icon(Icons.code),
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: chnnameController,
-              decoration: const InputDecoration(
-                labelText: 'Chinese Name',
-                hintText: 'e.g., 用户',
-                prefixIcon: Icon(Icons.translate),
-              ),
-            ),
+            const Icon(Icons.table_chart),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Create Table in "${module.name}"')),
           ],
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Create a new database table/entity in module "${module.chnname}".',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Table Name *',
+                  hintText: 'e.g., user_info, order_detail',
+                  prefixIcon: Icon(Icons.table_chart_outlined),
+                  helperText: 'Use snake_case for database naming',
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: chnnameController,
+                decoration: const InputDecoration(
+                  labelText: 'Chinese Name',
+                  hintText: 'e.g., 用户信息表',
+                  prefixIcon: Icon(Icons.translate),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: remarkController,
+                decoration: const InputDecoration(
+                  labelText: 'Remark',
+                  hintText: 'Table description',
+                  prefixIcon: Icon(Icons.notes_outlined),
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          FilledButton.icon(
             onPressed: () {
               if (titleController.text.trim().isNotEmpty) {
                 Navigator.pop(context, true);
               }
             },
-            child: const Text('Add'),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Create Table'),
           ),
         ],
       ),
@@ -1234,6 +1348,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         chnname: chnnameController.text.trim().isNotEmpty
             ? chnnameController.text.trim()
             : titleController.text.trim(),
+        remark: remarkController.text.trim().isNotEmpty
+            ? remarkController.text.trim()
+            : null,
         fields: [],
         indexes: [],
         createdAt: now,

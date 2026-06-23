@@ -302,7 +302,8 @@ class ERGraphPainter extends CustomPainter {
     // Check nodes in reverse order (top to bottom)
     for (var i = graphState.nodes.length - 1; i >= 0; i--) {
       final node = graphState.nodes[i];
-      if (NodePainter.hitTest(node, point)) {
+      // Use body hit test to exclude anchors
+      if (NodePainter.hitTestNodeBody(node, point, graphState.interactionMode)) {
         return node;
       }
     }
@@ -310,16 +311,27 @@ class ERGraphPainter extends CustomPainter {
   }
 
   /// Hit test for an anchor point on a node
+  /// Returns the node that contains the hit anchor
   static ERGraphNode? hitTestAnchor(ERGraphState graphState, Offset point) {
     if (graphState.interactionMode != InteractionMode.edit) return null;
 
     // Check nodes in reverse order (top to bottom)
     for (var i = graphState.nodes.length - 1; i >= 0; i--) {
       final node = graphState.nodes[i];
-      final hitNodeId = NodePainter.hitTestAnchor(node, point, graphState.interactionMode);
-      if (hitNodeId != null) {
+      final anchorIndex = NodePainter.hitTestAnchorIndex(node, point, graphState.interactionMode);
+      if (anchorIndex != null) {
         return node;
       }
+    }
+    return null;
+  }
+
+  /// Get the anchor position for a node at a given index
+  static Offset? getAnchorPosition(ERGraphState graphState, ERGraphNode node, int anchorIndex) {
+    final rect = NodePainter.getNodeRect(node);
+    final anchors = NodePainter.getAnchorPositions(rect);
+    if (anchorIndex >= 0 && anchorIndex < anchors.length) {
+      return anchors[anchorIndex];
     }
     return null;
   }

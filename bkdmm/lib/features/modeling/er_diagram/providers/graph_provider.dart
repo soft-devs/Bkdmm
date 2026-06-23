@@ -132,7 +132,7 @@ class ERGraphState {
 
   const ERGraphState({
     required this.moduleId,
-    this.interactionMode = InteractionMode.move, // 默认移动模式
+    this.interactionMode = InteractionMode.edit, // 默认编辑模式
     this.isCreatingEdge = false,
     this.edgeStartNodeId,
     this.edgePreviewEnd = Offset.zero,
@@ -219,9 +219,18 @@ class ERGraphState {
 /// Notifier for managing ER diagram graph state
 class ERGraphNotifier extends StateNotifier<ERGraphState> {
   final Ref ref;
+  bool _needsSync = false; // Flag for delayed sync
 
   ERGraphNotifier(this.ref, String moduleId) : super(ERGraphState(moduleId: moduleId)) {
     _loadFromModule();
+  }
+
+  /// Called after initialization to sync if needed
+  void postInit() {
+    if (_needsSync) {
+      _syncToProject();
+      _needsSync = false;
+    }
   }
 
   /// Load graph data from the module
@@ -233,14 +242,51 @@ class ERGraphNotifier extends StateNotifier<ERGraphState> {
       final module = project.modules.firstWhere((m) => m.id == state.moduleId);
       final graphCanvas = module.graphCanvas;
 
-      // Create node map for quick lookup
+      // Create entity map for quick lookup
       final entityMap = <String, Entity>{};
       for (final entity in module.entities) {
         entityMap[entity.title] = entity;
       }
 
+      // Create a map of existing nodes by entity title
+      final existingNodeMap = <String, GraphNode>{};
+      for (final node in graphCanvas.nodes) {
+        // Extract entity title from node title (format: "tableName:index")
+        final entityTitle = node.title.split(':').first;
+        existingNodeMap[entityTitle] = node;
+      }
+
+      // Build nodes list: sync with current entities
+      final graphNodes = <GraphNode>[];
+      bool shouldSync = false;
+
+      for (int i = 0; i < module.entities.length; i++) {
+        final entity = module.entities[i];
+
+        // Check if node already exists for this entity
+        if (existingNodeMap.containsKey(entity.title)) {
+          // Use existing node with its position
+          graphNodes.add(existingNodeMap[entity.title]!);
+        } else {
+          // Create new node with default position
+          final col = i % 3;
+          final row = i ~/ 3;
+          graphNodes.add(GraphNode(
+            title: '${entity.title}:1',
+            x: 50.0 + col * 280.0,
+            y: 50.0 + row * 220.0,
+          ));
+          shouldSync = true;
+        }
+      }
+
+      // Check if any entities were removed (need sync)
+      if (graphNodes.length != graphCanvas.nodes.length) {
+        shouldSync = true;
+      }
+
       // Convert GraphNodes to ERGraphNodes
-      final nodes = graphCanvas.nodes.map((node) {
+      final nodes = graphNodes.map((node) {
         // Extract entity title from node title (format: "tableName:index")
         final entityTitle = node.title.split(':').first;
         return ERGraphNode(
@@ -259,6 +305,11 @@ class ERGraphNotifier extends StateNotifier<ERGraphState> {
         edges: edges,
         contentBounds: _calculateBounds(nodes),
       );
+
+      // Mark for delayed sync instead of calling immediately
+      if (shouldSync) {
+        _needsSync = true;
+      }
     } catch (_) {
       // Module not found, keep empty state
     }

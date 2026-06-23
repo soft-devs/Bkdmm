@@ -37,7 +37,8 @@ class NodePainter {
   }
 
   /// Check if a point hits an anchor
-  static String? hitTestAnchor(ERGraphNode node, Offset point, InteractionMode mode) {
+  /// Returns the anchor index (0-3) if hit, null otherwise
+  static int? hitTestAnchorIndex(ERGraphNode node, Offset point, InteractionMode mode) {
     if (mode != InteractionMode.edit) return null;
 
     final rect = getNodeRect(node);
@@ -46,14 +47,42 @@ class NodePainter {
     for (var i = 0; i < anchors.length; i++) {
       final anchorRect = Rect.fromCenter(
         center: anchors[i],
-        width: anchorSize * 2,
-        height: anchorSize * 2,
+        width: anchorSize * 2.5, // Slightly larger hit area
+        height: anchorSize * 2.5,
       );
       if (anchorRect.contains(point)) {
-        return node.id; // Return node ID if hit anchor
+        return i; // Return anchor index
       }
     }
     return null;
+  }
+
+  /// Check if a point hits an anchor (legacy method for compatibility)
+  static String? hitTestAnchor(ERGraphNode node, Offset point, InteractionMode mode) {
+    final index = hitTestAnchorIndex(node, point, mode);
+    return index != null ? node.id : null;
+  }
+
+  /// Check if a point hits a node (excluding anchor areas)
+  static bool hitTestNodeBody(ERGraphNode node, Offset point, InteractionMode mode) {
+    final rect = getNodeRect(node);
+
+    // If in edit mode, check if point is on an anchor first
+    if (mode == InteractionMode.edit) {
+      final anchors = getAnchorPositions(rect);
+      for (final anchor in anchors) {
+        final anchorRect = Rect.fromCenter(
+          center: anchor,
+          width: anchorSize * 2.5,
+          height: anchorSize * 2.5,
+        );
+        if (anchorRect.contains(point)) {
+          return false; // Point is on anchor, not node body
+        }
+      }
+    }
+
+    return rect.contains(point);
   }
 
   /// Paint the node

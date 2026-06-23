@@ -1,30 +1,42 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/models/models.dart';
 import '../../../project/providers/project_notifier.dart';
-import '../export/image_export.dart';
 import '../layout/dagre_layout.dart';
 import '../painters/er_graph_painter.dart';
 import '../painters/node_painter.dart';
 import '../providers/graph_provider.dart';
 
-/// Main ER Diagram visualization widget
+/// Interaction state machine for ER diagram
 ///
-/// Provides interactive visualization of entity-relationship diagrams with:
-/// - Zoom and pan controls
-/// - Node selection and dragging
-/// - Double-click to open entity editor
-/// - Auto-layout functionality
-/// - Image export
+/// States:
+/// - IDLE: No active interaction, InteractiveViewer handles pan/zoom
+/// - DRAG_NODE: Dragging a node, pan disabled
+/// - DRAG_EDGE: Creating edge from anchor, pan disabled
+/// - PAN_CANVAS: Panning canvas (handled by InteractiveViewer)
+enum InteractionState {
+  idle,
+  dragNode,
+  dragEdge,
+  panCanvas,
+}
+
+/// Main ER Diagram visualization widget.
+///
+/// PDManER-style interaction with explicit state machine:
+/// - Move Mode: pan/zoom canvas, click to select nodes (default)
+/// - Edit Mode: drag nodes, create edges from anchors
+///
+/// Interactions:
+/// - Single click: select node
+/// - Double click: edit entity (opens dialog)
+/// - Right click: context menu
 class ERDiagramWidget extends ConsumerStatefulWidget {
-  /// The module ID to display
   final String moduleId;
-
-  /// Callback when an entity is selected for editing
   final void Function(Entity entity)? onEntityEdit;
-
-  /// Callback when context menu is requested
   final void Function(Offset position, Entity? entity)? onContextMenu;
 
   const ERDiagramWidget({
@@ -39,33 +51,37 @@ class ERDiagramWidget extends ConsumerStatefulWidget {
 }
 
 class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
-  /// Key for the CustomPaint for image export
   final GlobalKey _paintKey = GlobalKey();
-
-  /// Current transformation controller
   final TransformationController _transformController = TransformationController();
 
-  /// Whether we're currently dragging a node
-  bool _isDragging = false;
+  // State machine
+  InteractionState _interactionState = InteractionState.idle;
 
-  /// The node being dragged
+  // Node drag state
   String? _draggedNodeId;
-
-  /// Drag start position
   Offset _dragStart = Offset.zero;
-
-  /// Node position at drag start
   Offset _nodeStartPos = Offset.zero;
 
-  /// Last tap position for context menu
-  Offset _lastTapPosition = Offset.zero;
+  // Edge creation state
+  Offset? _edgeDragStart;
+  String? _edgeSourceNodeId;
+  int? _edgeSourceAnchorIndex; // Which anchor was hit
+  Offset _edgeCurrentPos = Offset.zero;
+
+  // Track if we've started a definite gesture
+  bool _gestureClaimed = false;
+  Offset _pointerDownPos = Offset.zero;
+
+  // Double click detection
+  String? _lastClickedNodeId;
+  DateTime? _lastClickTime;
+  static const _doubleClickThreshold = Duration(milliseconds: 300);
 
   @override
   void initState() {
     super.initState();
-    // Initialize transform from saved viewport
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeFromSavedViewport();
+      ref.read(erGraphProvider(widget.moduleId).notifier).postInit();
     });
   }
 
@@ -75,64 +91,117 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     super.dispose();
   }
 
-  void _initializeFromSavedViewport() {
-    // Load viewport from project if available
-    final project = ref.read(projectNotifierProvider).project;
-    if (project == null) return;
+  // ── Graph ↔ screen coordinate helpers ──
 
-    try {
-      final module = project.modules.firstWhere((m) => m.id == widget.moduleId);
-      final viewport = module.graphCanvas.viewport;
-      if (viewport != null) {
-        _transformController.value = Matrix4.identity()
-          ..translate(viewport.offsetX, viewport.offsetY)
-          ..scale(viewport.scale);
-      }
-    } catch (_) {
-      // Module not found or no viewport, use default
+  Offset _toScene(Offset local) {
+    final matrix = _transformController.value;
+    final inverse = Matrix4.tryInvert(matrix) ?? Matrix4.identity();
+    return MatrixUtils.transformPoint(inverse, local);
+  }
+
+  Offset _toScreen(Offset scene) {
+    final matrix = _transformController.value;
+    return MatrixUtils.transformPoint(matrix, scene);
+  }
+
+  // ── State Machine Helpers ──
+
+  /// Check if pan should be enabled (only in IDLE state)
+  bool get _panEnabled => _interactionState == InteractionState.idle;
+
+  /// Transition to a new state
+  void _transitionTo(InteractionState newState) {
+    if (_interactionState != newState) {
+      debugPrint('State transition: $_interactionState -> $newState');
+      _interactionState = newState;
+      // Trigger rebuild to update panEnabled
+      setState(() {});
     }
   }
+
+  /// Reset to idle state
+  void _resetToIdle() {
+    _draggedNodeId = null;
+    _edgeSourceNodeId = null;
+    _edgeSourceAnchorIndex = null;
+    _edgeDragStart = null;
+    _edgeCurrentPos = Offset.zero;
+    _gestureClaimed = false;
+    _transitionTo(InteractionState.idle);
+  }
+
+  // ── Build ──
 
   @override
   Widget build(BuildContext context) {
     final graphState = ref.watch(erGraphProvider(widget.moduleId));
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // React to project changes (e.g. entity added from tree)
+    // This listener triggers when any project data changes
+    ref.listen(projectNotifierProvider, (prev, next) {
+      if (next.project != null) {
+        try {
+          final module = next.project!.modules.firstWhere((m) => m.id == widget.moduleId);
+          final prevModule = prev?.project?.modules.where((m) => m.id == widget.moduleId).firstOrNull;
+
+          // Reload if:
+          // 1. Module is new (prevModule is null)
+          // 2. Entity count changed
+          // 3. Entity content changed (compare by title)
+          bool shouldReload = false;
+
+          if (prevModule == null) {
+            shouldReload = true;
+          } else if (module.entities.length != prevModule.entities.length) {
+            shouldReload = true;
+          } else {
+            // Check if any entity was modified
+            for (int i = 0; i < module.entities.length; i++) {
+              if (i >= prevModule.entities.length ||
+                  module.entities[i].title != prevModule.entities[i].title ||
+                  module.entities[i].fields.length != prevModule.entities[i].fields.length) {
+                shouldReload = true;
+                break;
+              }
+            }
+          }
+
+          if (shouldReload) {
+            ref.read(erGraphProvider(widget.moduleId).notifier).reload();
+          }
+        } catch (_) {
+          // Module not found, ignore
+        }
+      }
+    });
 
     return Stack(
       children: [
-        // Main diagram area
-        MouseRegion(
-          cursor: _getCursorForMode(graphState),
-          child: GestureDetector(
-            onTapDown: _onTapDown,
-            onTap: _onTap,
-            onDoubleTapDown: _onDoubleTapDown,
-            onDoubleTap: _onDoubleTap,
-            onLongPressStart: _onLongPressStart,
-            onSecondaryTapDown: _onSecondaryTapDown,
-            onPanStart: _onPanStart,
-            onPanUpdate: _onPanUpdate,
-            onPanEnd: _onPanEnd,
-            child: Container(
-              color: isDarkMode ? const Color(0xFF1A202C) : Colors.grey.shade100,
-              child: ClipRect(
-                child: InteractiveViewer(
-                  transformationController: _transformController,
-                  minScale: 0.1,
-                  maxScale: 3.0,
-                  constrained: false,
-                  onInteractionUpdate: _onInteractionUpdate,
-                  // In edit mode, disable pan to allow node dragging
-                  panEnabled: graphState.interactionMode == InteractionMode.move,
-                  child: CustomPaint(
-                    key: _paintKey,
-                    size: _calculateCanvasSize(graphState),
-                    painter: ERGraphPainter(
-                      graphState: graphState,
-                      isDarkMode: isDarkMode,
-                      hoveredNodeId: graphState.hoveredNodeId,
-                      searchQuery: graphState.searchQuery,
-                    ),
+        // Canvas with InteractiveViewer
+        SizedBox.expand(
+          child: MouseRegion(
+            cursor: _getCursor(graphState),
+            child: Listener(
+              behavior: HitTestBehavior.opaque,
+              onPointerSignal: _onPointerSignal,
+              onPointerDown: _onPointerDown,
+              onPointerMove: _onPointerMove,
+              onPointerUp: _onPointerUp,
+              onPointerCancel: _onPointerCancel,
+              child: InteractiveViewer(
+                transformationController: _transformController,
+                minScale: 0.1,
+                maxScale: 5.0,
+                constrained: false,
+                panEnabled: _panEnabled, // Dynamic based on state machine
+                scaleEnabled: true,
+                child: CustomPaint(
+                  key: _paintKey,
+                  size: _canvasSize(graphState),
+                  painter: ERGraphPainter(
+                    graphState: graphState,
+                    isDarkMode: isDark,
                   ),
                 ),
               ),
@@ -140,649 +209,470 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
           ),
         ),
 
-        // Toolbar overlay
-        Positioned(
-          top: 16,
-          right: 16,
-          child: _buildToolbar(graphState, isDarkMode),
-        ),
+        // Toolbar
+        Positioned(top: 12, right: 12, child: _toolbar(graphState, isDark)),
 
-        // Empty state
-        if (graphState.nodes.isEmpty) _buildEmptyState(isDarkMode),
-
-        // Search overlay
-        if (graphState.searchQuery.isNotEmpty)
-          Positioned(
-            top: 16,
-            left: 16,
-            child: _buildSearchIndicator(graphState),
+        // Empty state hint
+        if (graphState.nodes.isEmpty)
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.table_chart, size: 56, color: isDark ? Colors.grey.shade600 : Colors.grey.shade400),
+                const SizedBox(height: 12),
+                Text('No tables yet', style: TextStyle(fontSize: 16, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600)),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Entity'),
+                  onPressed: () => widget.onContextMenu?.call(Offset.zero, null),
+                ),
+              ],
+            ),
           ),
 
-        // Zoom indicator
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: _buildZoomIndicator(graphState),
-        ),
+        // Edge preview overlay (only when in DRAG_EDGE state)
+        if (_interactionState == InteractionState.dragEdge && _edgeDragStart != null)
+          _EdgePreviewLine(
+            start: _toScreen(_edgeDragStart!),
+            end: _toScreen(_edgeCurrentPos),
+            isDark: isDark,
+          ),
       ],
     );
   }
 
-  /// Build the toolbar
-  Widget _buildToolbar(ERGraphState graphState, bool isDarkMode) {
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(8),
-      color: isDarkMode ? const Color(0xFF2D3748) : Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Mode toggle button
-            _ToolbarButton(
-              icon: graphState.interactionMode == InteractionMode.move
-                  ? Icons.pan_tool
-                  : Icons.edit,
-              tooltip: graphState.interactionMode == InteractionMode.move
-                  ? 'Move Mode (Pan/Zoom)'
-                  : 'Edit Mode (Drag/Connect)',
-              onPressed: () => _toggleMode(),
-            ),
-            const SizedBox(width: 4),
-
-            // Mode indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: graphState.interactionMode == InteractionMode.move
-                    ? Colors.blue.withValues(alpha: 0.2)
-                    : Colors.green.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                graphState.interactionMode == InteractionMode.move ? 'MOVE' : 'EDIT',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: graphState.interactionMode == InteractionMode.move
-                      ? Colors.blue
-                      : Colors.green,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-
-            // Divider
-            Container(
-              width: 1,
-              height: 24,
-              color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
-            ),
-            const SizedBox(width: 8),
-
-            // Zoom in
-            _ToolbarButton(
-              icon: Icons.zoom_in,
-              tooltip: 'Zoom In',
-              onPressed: () => _zoomIn(graphState),
-            ),
-            const SizedBox(width: 4),
-
-            // Zoom out
-            _ToolbarButton(
-              icon: Icons.zoom_out,
-              tooltip: 'Zoom Out',
-              onPressed: () => _zoomOut(graphState),
-            ),
-            const SizedBox(width: 4),
-
-            // Fit to screen
-            _ToolbarButton(
-              icon: Icons.fit_screen,
-              tooltip: 'Fit to Screen',
-              onPressed: () => _fitToScreen(graphState),
-            ),
-            const SizedBox(width: 8),
-
-            // Divider
-            Container(
-              width: 1,
-              height: 24,
-              color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
-            ),
-            const SizedBox(width: 8),
-
-            // Search
-            _ToolbarButton(
-              icon: Icons.search,
-              tooltip: 'Search Tables',
-              onPressed: () => _showSearchDialog(graphState),
-            ),
-            const SizedBox(width: 4),
-
-            // Auto layout
-            _ToolbarButton(
-              icon: Icons.account_tree,
-              tooltip: 'Auto Layout',
-              onPressed: graphState.isLayouting ? null : () => _autoLayout(graphState),
-            ),
-            const SizedBox(width: 4),
-
-            // Export
-            _ToolbarButton(
-              icon: Icons.download,
-              tooltip: 'Export Image',
-              onPressed: () => _exportImage(graphState, isDarkMode),
-            ),
-          ],
-        ),
-      ),
+  Size _canvasSize(ERGraphState s) {
+    if (s.nodes.isEmpty) return const Size(4000, 4000);
+    double maxX = 0, maxY = 0;
+    for (final n in s.nodes) {
+      final sz = n.entity != null
+          ? NodePainter.calculateNodeSize(n.entity!)
+          : const Size(NodePainter.defaultWidth, NodePainter.minHeight);
+      maxX = math.max(maxX, n.x + sz.width);
+      maxY = math.max(maxY, n.y + sz.height);
+    }
+    return Size(
+      (maxX + 200).clamp(2000, 10000),
+      (maxY + 200).clamp(2000, 10000),
     );
   }
 
-  /// Build empty state indicator
-  Widget _buildEmptyState(bool isDarkMode) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.table_chart,
-            size: 64,
-            color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+  // ── Pointer handling with State Machine ──
+
+  void _onPointerSignal(PointerSignalEvent event) {
+    // Scroll events are handled by InteractiveViewer for zoom
+  }
+
+  void _onPointerDown(PointerDownEvent event) {
+    final graphState = ref.read(erGraphProvider(widget.moduleId));
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+    final scenePos = _toScene(event.localPosition);
+
+    // Store initial position for gesture disambiguation
+    _pointerDownPos = event.localPosition;
+    _gestureClaimed = false;
+
+    // Only handle interactions in edit mode
+    if (graphState.interactionMode == InteractionMode.edit) {
+      // Priority 1: Anchor hit → start edge creation
+      for (var i = graphState.nodes.length - 1; i >= 0; i--) {
+        final node = graphState.nodes[i];
+        final anchorIndex = NodePainter.hitTestAnchorIndex(node, scenePos, graphState.interactionMode);
+        if (anchorIndex != null) {
+          // Get the exact anchor position
+          final rect = NodePainter.getNodeRect(node);
+          final anchors = NodePainter.getAnchorPositions(rect);
+
+          _edgeSourceNodeId = node.id;
+          _edgeSourceAnchorIndex = anchorIndex;
+          _edgeDragStart = anchors[anchorIndex];
+          _edgeCurrentPos = scenePos;
+          _gestureClaimed = true;
+          _transitionTo(InteractionState.dragEdge);
+          graphNotifier.startEdgeCreation(node.id);
+          return;
+        }
+      }
+
+      // Priority 2: Node body hit → potential node drag (excludes anchors)
+      final hitNode = ERGraphPainter.hitTestNode(graphState, scenePos);
+      if (hitNode != null) {
+        _draggedNodeId = hitNode.id;
+        _dragStart = scenePos;
+        _nodeStartPos = Offset(hitNode.x, hitNode.y);
+        _gestureClaimed = true;
+        _transitionTo(InteractionState.dragNode);
+        graphNotifier.selectNode(hitNode.id);
+        graphNotifier.startDrag(hitNode.id);
+        return;
+      }
+    }
+
+    // No hit or move mode → let InteractiveViewer handle pan
+    // State stays IDLE, panEnabled is true
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+    final scenePos = _toScene(event.localPosition);
+
+    // Handle based on current state
+    switch (_interactionState) {
+      case InteractionState.dragEdge:
+        // Update edge preview position
+        _edgeCurrentPos = scenePos;
+        graphNotifier.updateEdgePreview(scenePos);
+        // Force rebuild to update overlay
+        setState(() {});
+        break;
+
+      case InteractionState.dragNode:
+        // Move the node
+        if (_draggedNodeId != null) {
+          final delta = scenePos - _dragStart;
+          final newX = _nodeStartPos.dx + delta.dx;
+          final newY = _nodeStartPos.dy + delta.dy;
+          graphNotifier.moveNode(_draggedNodeId!, newX, newY);
+        }
+        break;
+
+      case InteractionState.idle:
+        // Check if we should start panning (movement threshold)
+        if (!_gestureClaimed) {
+          final delta = event.localPosition - _pointerDownPos;
+          if (delta.distance > 5) {
+            // InteractiveViewer will handle this
+            // We just stay idle and let it pan
+          }
+        }
+        break;
+
+      case InteractionState.panCanvas:
+        // InteractiveViewer handles this
+        break;
+    }
+  }
+
+  void _onPointerUp(PointerUpEvent event) {
+    final graphState = ref.read(erGraphProvider(widget.moduleId));
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+    final scenePos = _toScene(event.localPosition);
+
+    // Handle based on current state
+    switch (_interactionState) {
+      case InteractionState.dragEdge:
+        // Try to complete edge creation
+        final targetNode = ERGraphPainter.hitTestNode(graphState, scenePos);
+        if (targetNode != null && targetNode.id != _edgeSourceNodeId) {
+          // Show relationship type dialog
+          _showRelationDialog(_edgeSourceNodeId!, targetNode.id);
+        } else {
+          // No valid target, cancel
+          graphNotifier.cancelEdgeCreation();
+        }
+        break;
+
+      case InteractionState.dragNode:
+        // Finish node drag
+        if (_draggedNodeId != null) {
+          // Check if it was a click vs drag
+          final delta = scenePos - _dragStart;
+          if (delta.distance < 5) {
+            // It was a click, not a drag - clear selection if clicking empty space
+            final hitNode = ERGraphPainter.hitTestNode(graphState, scenePos);
+            if (hitNode == null) {
+              graphNotifier.clearSelection();
+            }
+          }
+          graphNotifier.endDrag(_draggedNodeId!);
+        }
+        break;
+
+      case InteractionState.idle:
+        // Handle click (no movement)
+        if (!_gestureClaimed) {
+          final delta = event.localPosition - _pointerDownPos;
+          if (delta.distance < 5) {
+            // It was a click
+            final hitNode = ERGraphPainter.hitTestNode(graphState, scenePos);
+            if (hitNode == null) {
+              graphNotifier.clearSelection();
+            } else {
+              // Check for double click
+              final now = DateTime.now();
+              final isDoubleClick = _lastClickedNodeId == hitNode.id &&
+                  _lastClickTime != null &&
+                  now.difference(_lastClickTime!) < _doubleClickThreshold;
+
+              if (isDoubleClick) {
+                // Double click - open edit dialog
+                if (hitNode.entity != null) {
+                  widget.onEntityEdit?.call(hitNode.entity!);
+                }
+                _lastClickedNodeId = null;
+                _lastClickTime = null;
+              } else {
+                // Single click - select node
+                _lastClickedNodeId = hitNode.id;
+                _lastClickTime = now;
+                if (graphState.interactionMode == InteractionMode.move) {
+                  graphNotifier.selectNode(hitNode.id);
+                }
+              }
+            }
+          }
+        }
+        break;
+
+      case InteractionState.panCanvas:
+        // InteractiveViewer finished panning
+        break;
+    }
+
+    // Always reset to idle after pointer up
+    _resetToIdle();
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    // Cancel any ongoing operation
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+
+    if (_interactionState == InteractionState.dragEdge) {
+      graphNotifier.cancelEdgeCreation();
+    } else if (_interactionState == InteractionState.dragNode && _draggedNodeId != null) {
+      graphNotifier.endDrag(_draggedNodeId!);
+    }
+
+    _resetToIdle();
+  }
+
+  void _showRelationDialog(String sourceId, String targetId) {
+    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+    final graphState = ref.read(erGraphProvider(widget.moduleId));
+
+    final sourceNode = graphState.getNode(sourceId);
+    final targetNode = graphState.getNode(targetId);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Create Relation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${sourceNode?.data.title.split(':').first ?? sourceId} → ${targetNode?.data.title.split(':').first ?? targetId}'),
+            const SizedBox(height: 16),
+            const Text('Relation type:'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'No tables to display',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: isDarkMode ? Colors.grey.shade500 : Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add entities to this module to see them here',
-            style: TextStyle(
-              fontSize: 14,
-              color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade500,
-            ),
+          FilledButton(
+            onPressed: () {
+              graphNotifier.completeEdgeCreation(targetId);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Create'),
           ),
         ],
       ),
     );
   }
 
-  /// Build search indicator
-  Widget _buildSearchIndicator(ERGraphState graphState) {
-    return Material(
-      elevation: 2,
-      borderRadius: BorderRadius.circular(16),
-      color: Theme.of(context).colorScheme.primary,
+  MouseCursor _getCursor(ERGraphState graphState) {
+    switch (_interactionState) {
+      case InteractionState.dragNode:
+        return SystemMouseCursors.grabbing;
+      case InteractionState.dragEdge:
+        return SystemMouseCursors.click;
+      case InteractionState.panCanvas:
+        return SystemMouseCursors.grab;
+      case InteractionState.idle:
+        if (graphState.interactionMode == InteractionMode.move) {
+          return SystemMouseCursors.grab;
+        }
+        return SystemMouseCursors.basic;
+    }
+  }
+
+  // ── Toolbar ──
+
+  Widget _toolbar(ERGraphState graphState, bool isDark) {
+    final notifier = ref.read(erGraphProvider(widget.moduleId).notifier);
+    final editMode = graphState.interactionMode == InteractionMode.edit;
+
+    return Card(
+      elevation: 4,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.search, size: 16, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              'Search: ${graphState.searchQuery}',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+            // Mode toggle
+            _ToolBtn(
+              icon: editMode ? Icons.edit : Icons.pan_tool,
+              tooltip: editMode ? 'Edit Mode' : 'Move Mode',
+              active: true,
+              onTap: () => notifier.toggleInteractionMode(),
             ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () => ref.read(erGraphProvider(widget.moduleId).notifier).clearSearch(),
-              child: const Icon(Icons.close, size: 16, color: Colors.white),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: (editMode ? Colors.green : Colors.blue).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(editMode ? 'EDIT' : 'MOVE',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
+                      color: editMode ? Colors.green.shade700 : Colors.blue.shade700)),
             ),
+
+            const SizedBox(width: 8),
+            Container(width: 1, height: 20, color: Colors.grey.shade300),
+            const SizedBox(width: 8),
+
+            // Zoom
+            _ToolBtn(icon: Icons.zoom_in, tooltip: 'Zoom in', onTap: _zoomIn),
+            _ToolBtn(icon: Icons.zoom_out, tooltip: 'Zoom out', onTap: _zoomOut),
+            _ToolBtn(icon: Icons.fit_screen, tooltip: 'Fit to screen', onTap: _fitToScreen),
+
+            const SizedBox(width: 8),
+            Container(width: 1, height: 20, color: Colors.grey.shade300),
+            const SizedBox(width: 8),
+
+            // Layout & export
+            _ToolBtn(icon: Icons.auto_fix_high, tooltip: 'Auto layout', onTap: _autoLayout),
+            _ToolBtn(icon: Icons.image, tooltip: 'Export image', onTap: () {}),
           ],
         ),
       ),
     );
   }
 
-  /// Build zoom indicator
-  Widget _buildZoomIndicator(ERGraphState graphState) {
-    return Material(
-      elevation: 2,
-      borderRadius: BorderRadius.circular(4),
-      color: Colors.black54,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Text(
-          '${(graphState.zoom * 100).toInt()}%',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-      ),
-    );
+  void _zoomIn() {
+    final scale = _transformController.value.getMaxScaleOnAxis() * 1.2;
+    _transformController.value = Matrix4.identity()..scale(scale.clamp(0.1, 5.0));
   }
 
-  /// Calculate canvas size based on content
-  Size _calculateCanvasSize(ERGraphState graphState) {
-    const minSize = Size(800, 600);
-    if (graphState.nodes.isEmpty) return minSize;
-
-    double maxX = 0;
-    double maxY = 0;
-
-    for (final node in graphState.nodes) {
-      final entity = node.entity;
-      final size = entity != null
-          ? NodePainter.calculateNodeSize(entity)
-          : const Size(NodePainter.defaultWidth, NodePainter.minHeight);
-
-      maxX = maxX.clamp(node.x + size.width, node.x + size.width);
-      maxY = maxY.clamp(node.y + size.height, node.y + size.height);
-    }
-
-    return Size(
-      (maxX + 100).clamp(minSize.width, double.infinity),
-      (maxY + 100).clamp(minSize.height, double.infinity),
-    );
+  void _zoomOut() {
+    final scale = _transformController.value.getMaxScaleOnAxis() / 1.2;
+    _transformController.value = Matrix4.identity()..scale(scale.clamp(0.1, 5.0));
   }
 
-  // Gesture handlers
-
-  void _onTapDown(TapDownDetails details) {
-    _lastTapPosition = details.localPosition;
+  void _fitToScreen() {
+    _transformController.value = Matrix4.identity();
   }
 
-  void _onTap() {
+  void _autoLayout() async {
     final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
     final graphState = ref.read(erGraphProvider(widget.moduleId));
+    if (graphState.nodes.isEmpty) return;
 
-    // Convert tap position to graph coordinates
-    final graphPos = _transformController.toScene(_lastTapPosition);
-    final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
-
-    if (hitNode != null) {
-      // Select the node
-      graphNotifier.selectNode(hitNode.id);
-    } else {
-      // Clear selection if clicking on empty space
-      graphNotifier.clearSelection();
-    }
-  }
-
-  void _onDoubleTapDown(TapDownDetails details) {
-    _lastTapPosition = details.localPosition;
-  }
-
-  void _onDoubleTap() {
-    final graphState = ref.read(erGraphProvider(widget.moduleId));
-
-    // In move mode, double-click does nothing
-    if (graphState.interactionMode == InteractionMode.move) {
-      return;
-    }
-
-    // Convert tap position to graph coordinates
-    final graphPos = _transformController.toScene(_lastTapPosition);
-    final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
-
-    if (hitNode != null && hitNode.entity != null) {
-      // Open entity editor
-      widget.onEntityEdit?.call(hitNode.entity!);
-    }
-  }
-
-  void _onLongPressStart(LongPressStartDetails details) {
-    final graphState = ref.read(erGraphProvider(widget.moduleId));
-
-    // Convert position to graph coordinates
-    final graphPos = _transformController.toScene(details.localPosition);
-    final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
-
-    // Show context menu
-    widget.onContextMenu?.call(
-      details.globalPosition,
-      hitNode?.entity,
-    );
-  }
-
-  void _onSecondaryTapDown(TapDownDetails details) {
-    final graphState = ref.read(erGraphProvider(widget.moduleId));
-
-    // Convert position to graph coordinates
-    final graphPos = _transformController.toScene(details.localPosition);
-    final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
-
-    // Show context menu
-    widget.onContextMenu?.call(
-      details.globalPosition,
-      hitNode?.entity,
-    );
-  }
-
-  void _onPanStart(DragStartDetails details) {
-    final graphState = ref.read(erGraphProvider(widget.moduleId));
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-
-    // Convert position to graph coordinates
-    final graphPos = _transformController.toScene(details.localPosition);
-
-    // In edit mode, check for anchor hit first (for edge creation)
-    if (graphState.interactionMode == InteractionMode.edit) {
-      final hitAnchor = ERGraphPainter.hitTestAnchor(graphState, graphPos);
-      if (hitAnchor != null) {
-        // Start edge creation from this node
-        graphNotifier.startEdgeCreation(hitAnchor.id);
-        return;
-      }
-    }
-
-    // In move mode, don't allow node dragging - let InteractiveViewer handle pan
-    if (graphState.interactionMode == InteractionMode.move) {
-      return;
-    }
-
-    // In edit mode, check for node hit (for dragging)
-    final hitNode = ERGraphPainter.hitTestNode(graphState, graphPos);
-    if (hitNode != null) {
-      // Start dragging the node
-      setState(() {
-        _isDragging = true;
-        _draggedNodeId = hitNode.id;
-        _dragStart = graphPos;
-        _nodeStartPos = Offset(hitNode.x, hitNode.y);
-      });
-
-      graphNotifier.selectNode(hitNode.id);
-      graphNotifier.startDrag(hitNode.id);
-    }
-  }
-
-  void _onPanUpdate(DragUpdateDetails details) {
-    final graphState = ref.read(erGraphProvider(widget.moduleId));
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-
-    // Handle edge creation preview
-    if (graphState.isCreatingEdge) {
-      final graphPos = _transformController.toScene(details.localPosition);
-      graphNotifier.updateEdgePreview(graphPos);
-      return;
-    }
-
-    // Handle node dragging
-    if (!_isDragging || _draggedNodeId == null) return;
-
-    // In move mode, don't process node dragging
-    if (graphState.interactionMode == InteractionMode.move) {
-      return;
-    }
-
-    // Calculate new position
-    final graphPos = _transformController.toScene(details.localPosition);
-    final delta = graphPos - _dragStart;
-
-    final newX = _nodeStartPos.dx + delta.dx;
-    final newY = _nodeStartPos.dy + delta.dy;
-
-    graphNotifier.moveNode(_draggedNodeId!, newX, newY);
-  }
-
-  void _onPanEnd(DragEndDetails details) {
-    final graphState = ref.read(erGraphProvider(widget.moduleId));
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-
-    // Handle edge creation completion
-    if (graphState.isCreatingEdge) {
-      // Find target node at the preview end position
-      final hitNode = ERGraphPainter.hitTestNode(graphState, graphState.edgePreviewEnd);
-      if (hitNode != null) {
-        graphNotifier.completeEdgeCreation(hitNode.id);
-      } else {
-        graphNotifier.cancelEdgeCreation();
-      }
-      return;
-    }
-
-    // Handle node drag end
-    if (_isDragging && _draggedNodeId != null) {
-      graphNotifier.endDrag(_draggedNodeId!);
-    }
-
-    setState(() {
-      _isDragging = false;
-      _draggedNodeId = null;
-    });
-  }
-
-  void _onInteractionUpdate(ScaleUpdateDetails details) {
-    // Save viewport state
-    _saveViewport();
-  }
-
-  void _saveViewport() {
-    final matrix = _transformController.value;
-    final scale = matrix.getMaxScaleOnAxis();
-
-    // Update the graph notifier with viewport info
-    // This will be saved to the project
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-    graphNotifier.setZoom(scale);
-  }
-
-  // Toolbar actions
-
-  /// Toggle interaction mode
-  void _toggleMode() {
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-    graphNotifier.toggleInteractionMode();
-  }
-
-  /// Get mouse cursor based on current mode
-  MouseCursor _getCursorForMode(ERGraphState graphState) {
-    if (_isDragging) {
-      return SystemMouseCursors.grabbing;
-    }
-
-    if (graphState.isCreatingEdge) {
-      return SystemMouseCursors.click;
-    }
-
-    switch (graphState.interactionMode) {
-      case InteractionMode.move:
-        return SystemMouseCursors.grab;
-      case InteractionMode.edit:
-        return SystemMouseCursors.basic;
-    }
-  }
-
-  void _zoomIn(ERGraphState graphState) {
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-    graphNotifier.zoomIn();
-
-    final newScale = graphState.zoom * 1.2;
-    _transformController.value = Matrix4.identity()
-      ..scale(newScale);
-  }
-
-  void _zoomOut(ERGraphState graphState) {
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-    graphNotifier.zoomOut();
-
-    final newScale = graphState.zoom / 1.2;
-    _transformController.value = Matrix4.identity()
-      ..scale(newScale);
-  }
-
-  void _fitToScreen(ERGraphState graphState) {
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-
-    final viewportSize = renderBox.size;
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
-    graphNotifier.fitToView(viewportSize);
-
-    // Update transform controller after fitToView updates the state
-    final newState = ref.read(erGraphProvider(widget.moduleId));
-    _transformController.value = Matrix4.identity()
-      ..translate(newState.panOffset.dx, newState.panOffset.dy)
-      ..scale(newState.zoom);
-  }
-
-  void _showSearchDialog(ERGraphState graphState) {
-    showDialog(
-      context: context,
-      builder: (context) => _SearchDialog(
-        onSearch: (query) {
-          ref.read(erGraphProvider(widget.moduleId).notifier).setSearchQuery(query);
-        },
-      ),
-    );
-  }
-
-  void _autoLayout(ERGraphState graphState) async {
-    final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
     graphNotifier.setLayouting(true);
+    final layout = DagreLayout();
+    final nodeIds = graphState.nodes.map((n) => n.id).toList();
+    final edges = graphState.edges.map((e) => LayoutEdge(source: e.source, target: e.target)).toList();
 
-    try {
-      // Create layout algorithm
-      final layout = DagreLayout();
-
-      // Prepare node and edge data
-      final nodeIds = graphState.nodes.map((n) => n.id).toList();
-      final edges = graphState.edges.map((e) => LayoutEdge(
-        source: e.source,
-        target: e.target,
-      )).toList();
-
-      // Get node sizes
-      Size getNodeSize(String nodeId) {
-        final node = graphState.getNode(nodeId);
-        if (node?.entity != null) {
-          return NodePainter.calculateNodeSize(node!.entity!);
-        }
-        return const Size(NodePainter.defaultWidth, NodePainter.minHeight);
-      }
-
-      // Calculate layout
-      final positions = layout.layout(
-        nodes: nodeIds,
-        edges: edges,
-        nodeSize: getNodeSize,
-      );
-
-      // Apply layout
-      graphNotifier.applyLayout(
-        positions.map((key, value) => MapEntry(key, value)),
-      );
-
-      // Fit to screen after layout
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final newState = ref.read(erGraphProvider(widget.moduleId));
-        _fitToScreen(newState);
-      });
-    } finally {
-      graphNotifier.setLayouting(false);
+    Size getSize(String id) {
+      final node = graphState.getNode(id);
+      if (node?.entity != null) return NodePainter.calculateNodeSize(node!.entity!);
+      return const Size(NodePainter.defaultWidth, NodePainter.minHeight);
     }
-  }
 
-  void _exportImage(ERGraphState graphState, bool isDarkMode) async {
-    final result = await ERDiagramExporter.exportToPNG(
-      graphState: graphState,
-      context: context,
-      isDarkMode: isDarkMode,
-      pixelRatio: 2,
-    );
+    final positions = layout.layout(nodes: nodeIds, edges: edges, nodeSize: getSize);
+    graphNotifier.applyLayout(positions.map((k, v) => MapEntry(k, v)));
+    graphNotifier.setLayouting(false);
 
-    if (mounted) {
-      if (result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exported to ${result.path}')),
-        );
-      } else if (!result.cancelled) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.error ?? 'Export failed')),
-        );
-      }
-    }
+    _transformController.value = Matrix4.identity();
   }
 }
 
-/// Toolbar button widget
-class _ToolbarButton extends StatelessWidget {
+// ── Toolbar button ──
+
+class _ToolBtn extends StatelessWidget {
   final IconData icon;
   final String tooltip;
-  final VoidCallback? onPressed;
+  final VoidCallback? onTap;
+  final bool active;
 
-  const _ToolbarButton({
-    required this.icon,
-    required this.tooltip,
-    this.onPressed,
-  });
+  const _ToolBtn({required this.icon, required this.tooltip, this.onTap, this.active = false});
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
       child: InkWell(
-        onTap: onPressed,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(4),
         child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(
-            icon,
-            size: 20,
-            color: onPressed == null
-                ? Colors.grey
-                : Theme.of(context).colorScheme.primary,
-          ),
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, size: 18, color: onTap == null ? Colors.grey : Theme.of(context).colorScheme.primary),
         ),
       ),
     );
   }
 }
 
-/// Search dialog widget
-class _SearchDialog extends StatefulWidget {
-  final void Function(String query) onSearch;
+// ── Edge preview overlay ──
 
-  const _SearchDialog({required this.onSearch});
+class _EdgePreviewLine extends StatelessWidget {
+  final Offset start;
+  final Offset end;
+  final bool isDark;
 
-  @override
-  State<_SearchDialog> createState() => _SearchDialogState();
-}
-
-class _SearchDialogState extends State<_SearchDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  const _EdgePreviewLine({required this.start, required this.end, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Search Tables'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: const InputDecoration(
-          hintText: 'Enter table name...',
-          prefixIcon: Icon(Icons.search),
-        ),
-        onSubmitted: (_) => _search(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _search,
-          child: const Text('Search'),
-        ),
-      ],
+    return CustomPaint(
+      size: Size.infinite,
+      painter: _EdgePreviewPainter(start: start, end: end, isDark: isDark),
     );
   }
+}
 
-  void _search() {
-    widget.onSearch(_controller.text);
-    Navigator.pop(context);
+class _EdgePreviewPainter extends CustomPainter {
+  final Offset start;
+  final Offset end;
+  final bool isDark;
+
+  _EdgePreviewPainter({required this.start, required this.end, required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = (isDark ? Colors.blue.shade300 : Colors.blue.shade500).withValues(alpha: 0.6)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    // Dashed line
+    final d = (end - start).distance;
+    final dir = (end - start) / d;
+    const dash = 10.0, gap = 6.0;
+    double t = 0;
+    bool draw = true;
+    while (t < d) {
+      final seg = draw ? dash : gap;
+      final next = math.min(t + seg, d);
+      if (draw) canvas.drawLine(start + dir * t, start + dir * next, paint);
+      t = next;
+      draw = !draw;
+    }
+
+    // Arrow
+    final angle = dir.direction;
+    final arrow = Path()
+      ..moveTo(end.dx, end.dy)
+      ..lineTo(end.dx - 10 * math.cos(angle - math.pi / 6), end.dy - 10 * math.sin(angle - math.pi / 6))
+      ..lineTo(end.dx - 10 * math.cos(angle + math.pi / 6), end.dy - 10 * math.sin(angle + math.pi / 6))
+      ..close();
+    canvas.drawPath(arrow, Paint()..color = paint.color..style = PaintingStyle.fill);
   }
+
+  @override
+  bool shouldRepaint(covariant _EdgePreviewPainter old) => old.start != start || old.end != end;
 }
