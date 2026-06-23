@@ -147,19 +147,31 @@ class GraphNode {
 /// 图连线
 @JsonSerializable()
 class GraphEdge {
-  /// 源节点
+  /// 源节点 (表名:序号)
   final String source;
 
-  /// 目标节点
+  /// 目标节点 (表名:序号)
   final String target;
+
+  /// 源字段名 (可选，用于字段级连线)
+  final String? sourceField;
+
+  /// 目标字段名 (可选，用于字段级连线)
+  final String? targetField;
 
   /// 关系标签
   final String? label;
 
+  /// 关系类型: 1:1, 1:N, N:1, N:M
+  final String? relationType;
+
   GraphEdge({
     required this.source,
     required this.target,
+    this.sourceField,
+    this.targetField,
     this.label,
+    this.relationType,
   });
 
   factory GraphEdge.fromJson(Map<String, dynamic> json) =>
@@ -169,12 +181,18 @@ class GraphEdge {
   GraphEdge copyWith({
     String? source,
     String? target,
+    String? sourceField,
+    String? targetField,
     String? label,
+    String? relationType,
   }) {
     return GraphEdge(
       source: source ?? this.source,
       target: target ?? this.target,
+      sourceField: sourceField ?? this.sourceField,
+      targetField: targetField ?? this.targetField,
       label: label ?? this.label,
+      relationType: relationType ?? this.relationType,
     );
   }
 }

@@ -39,6 +39,9 @@ dependencies:
   # UUID 生成
   uuid: ^4.0.0
 
+  # 图表布局引擎
+  graphview: ^1.2.0
+
   # 国际化
   intl: ^0.19.0
 

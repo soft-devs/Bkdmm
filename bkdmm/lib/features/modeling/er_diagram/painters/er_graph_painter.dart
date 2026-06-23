@@ -310,7 +310,23 @@ class ERGraphPainter extends CustomPainter {
     return null;
   }
 
-  /// Hit test for an anchor point on a node
+  /// Hit test for field anchor on a node
+  /// Returns (node, fieldIndex, isLeftAnchor) if hit
+  static (ERGraphNode, int, bool)? hitTestFieldAnchor(ERGraphState graphState, Offset point) {
+    if (graphState.interactionMode != InteractionMode.edit) return null;
+
+    // Check nodes in reverse order (top to bottom)
+    for (var i = graphState.nodes.length - 1; i >= 0; i--) {
+      final node = graphState.nodes[i];
+      final result = NodePainter.hitTestFieldAnchor(node, point, graphState.interactionMode);
+      if (result != null) {
+        return (node, result.$1, result.$2);
+      }
+    }
+    return null;
+  }
+
+  /// Hit test for an anchor point on a node (legacy)
   /// Returns the node that contains the hit anchor
   static ERGraphNode? hitTestAnchor(ERGraphState graphState, Offset point) {
     if (graphState.interactionMode != InteractionMode.edit) return null;
@@ -334,6 +350,20 @@ class ERGraphPainter extends CustomPainter {
       return anchors[anchorIndex];
     }
     return null;
+  }
+
+  /// Get field anchor position
+  static Offset? getFieldAnchorPosition(ERGraphNode node, int fieldIndex, bool isLeft) {
+    final entity = node.entity;
+    if (entity == null || fieldIndex < 0 || fieldIndex >= entity.fields.length) return null;
+
+    final rect = NodePainter.getNodeRect(node);
+
+    if (isLeft) {
+      return NodePainter.getLeftFieldAnchor(rect, fieldIndex);
+    } else {
+      return NodePainter.getRightFieldAnchor(rect, fieldIndex);
+    }
   }
 
   /// Hit test for an edge

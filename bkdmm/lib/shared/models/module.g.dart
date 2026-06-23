@@ -70,13 +70,19 @@ Map<String, dynamic> _$GraphNodeToJson(GraphNode instance) => <String, dynamic>{
 GraphEdge _$GraphEdgeFromJson(Map<String, dynamic> json) => GraphEdge(
       source: json['source'] as String,
       target: json['target'] as String,
+      sourceField: json['sourceField'] as String?,
+      targetField: json['targetField'] as String?,
       label: json['label'] as String?,
+      relationType: json['relationType'] as String?,
     );
 
 Map<String, dynamic> _$GraphEdgeToJson(GraphEdge instance) => <String, dynamic>{
       'source': instance.source,
       'target': instance.target,
+      'sourceField': instance.sourceField,
+      'targetField': instance.targetField,
       'label': instance.label,
+      'relationType': instance.relationType,
     };
 
 Viewport _$ViewportFromJson(Map<String, dynamic> json) => Viewport(

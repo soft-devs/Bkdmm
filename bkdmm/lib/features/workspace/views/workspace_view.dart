@@ -8,7 +8,10 @@ import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
 import '../widgets/tab_bar.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
-import '../../modeling/er_diagram/widgets/er_diagram_widget.dart';
+// v1 - 原始 ER 图编辑器
+// import '../../modeling/er_diagram/widgets/er_diagram_widget.dart';
+// v2 - 混合架构 ER 图编辑器
+import '../../modeling/er_diagram_v2/widgets/er_diagram_canvas.dart';
 import '../../datatype/views/datatype_view.dart';
 
 /// Workspace view - Main project editing interface with tab management
@@ -453,7 +456,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     }
 
     // 使用 ERDiagramWidget 替代 _ERDiagramCanvas
-    return ERDiagramWidget(
+    // v1: ERDiagramWidget, v2: ERDiagramCanvas
+    return ERDiagramCanvas(
       moduleId: module.id,
       onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
       onContextMenu: (position, entity) => _showDiagramContextMenu(position, entity, module),

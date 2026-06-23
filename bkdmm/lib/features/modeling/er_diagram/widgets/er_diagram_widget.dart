@@ -65,7 +65,7 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
   // Edge creation state
   Offset? _edgeDragStart;
   String? _edgeSourceNodeId;
-  int? _edgeSourceAnchorIndex; // Which anchor was hit
+  int? _edgeSourceFieldIndex; // Which field was hit
   Offset _edgeCurrentPos = Offset.zero;
 
   // Track if we've started a definite gesture
@@ -119,16 +119,6 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     }
   }
 
-  /// Reset to idle state
-  void _resetToIdle() {
-    _draggedNodeId = null;
-    _edgeSourceNodeId = null;
-    _edgeSourceAnchorIndex = null;
-    _edgeDragStart = null;
-    _edgeCurrentPos = Offset.zero;
-    _gestureClaimed = false;
-    _transitionTo(InteractionState.idle);
-  }
 
   // ── Build ──
 
@@ -275,24 +265,22 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
 
     // Only handle interactions in edit mode
     if (graphState.interactionMode == InteractionMode.edit) {
-      // Priority 1: Anchor hit → start edge creation
-      for (var i = graphState.nodes.length - 1; i >= 0; i--) {
-        final node = graphState.nodes[i];
-        final anchorIndex = NodePainter.hitTestAnchorIndex(node, scenePos, graphState.interactionMode);
-        if (anchorIndex != null) {
-          // Get the exact anchor position
-          final rect = NodePainter.getNodeRect(node);
-          final anchors = NodePainter.getAnchorPositions(rect);
+      // Priority 1: Field anchor hit → start edge creation (field-to-field)
+      final fieldAnchorHit = ERGraphPainter.hitTestFieldAnchor(graphState, scenePos);
+      if (fieldAnchorHit != null) {
+        final (node, fieldIndex, isLeft) = fieldAnchorHit;
 
-          _edgeSourceNodeId = node.id;
-          _edgeSourceAnchorIndex = anchorIndex;
-          _edgeDragStart = anchors[anchorIndex];
-          _edgeCurrentPos = scenePos;
-          _gestureClaimed = true;
-          _transitionTo(InteractionState.dragEdge);
-          graphNotifier.startEdgeCreation(node.id);
-          return;
-        }
+        // Get the exact anchor position
+        final anchorPos = ERGraphPainter.getFieldAnchorPosition(node, fieldIndex, isLeft);
+
+        _edgeSourceNodeId = node.id;
+        _edgeSourceFieldIndex = fieldIndex;
+        _edgeDragStart = anchorPos ?? scenePos;
+        _edgeCurrentPos = scenePos;
+        _gestureClaimed = true;
+        _transitionTo(InteractionState.dragEdge);
+        graphNotifier.startEdgeCreation(node.id);
+        return;
       }
 
       // Priority 2: Node body hit → potential node drag (excludes anchors)
@@ -363,10 +351,29 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     switch (_interactionState) {
       case InteractionState.dragEdge:
         // Try to complete edge creation
-        final targetNode = ERGraphPainter.hitTestNode(graphState, scenePos);
-        if (targetNode != null && targetNode.id != _edgeSourceNodeId) {
-          // Show relationship type dialog
-          _showRelationDialog(_edgeSourceNodeId!, targetNode.id);
+        // Check if we hit a field anchor on another node
+        final targetFieldAnchor = ERGraphPainter.hitTestFieldAnchor(graphState, scenePos);
+
+        if (targetFieldAnchor != null) {
+          final (targetNode, targetFieldIndex, targetIsLeft) = targetFieldAnchor;
+
+          // Don't connect to same node
+          if (targetNode.id != _edgeSourceNodeId) {
+            // Get source and target field names
+            final sourceNode = graphState.getNode(_edgeSourceNodeId!);
+            final sourceFieldName = _getFieldName(sourceNode, _edgeSourceFieldIndex!);
+            final targetFieldName = _getFieldName(targetNode, targetFieldIndex);
+
+            // Show relationship dialog with field info
+            _showRelationDialogWithFields(
+              _edgeSourceNodeId!,
+              sourceFieldName,
+              targetNode.id,
+              targetFieldName,
+            );
+          } else {
+            graphNotifier.cancelEdgeCreation();
+          }
         } else {
           // No valid target, cancel
           graphNotifier.cancelEdgeCreation();
@@ -447,12 +454,41 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
     _resetToIdle();
   }
 
-  void _showRelationDialog(String sourceId, String targetId) {
+  /// Get field name from node and field index
+  String? _getFieldName(ERGraphNode? node, int fieldIndex) {
+    if (node == null || node.entity == null) return null;
+    if (fieldIndex < 0 || fieldIndex >= node.entity!.fields.length) return null;
+    return node.entity!.fields[fieldIndex].name;
+  }
+
+  /// Reset to idle state
+  void _resetToIdle() {
+    _draggedNodeId = null;
+    _edgeSourceNodeId = null;
+    _edgeSourceFieldIndex = null;
+    _edgeDragStart = null;
+    _edgeCurrentPos = Offset.zero;
+    _gestureClaimed = false;
+    _transitionTo(InteractionState.idle);
+  }
+
+  void _showRelationDialogWithFields(
+    String sourceId,
+    String? sourceFieldName,
+    String targetId,
+    String? targetFieldName,
+  ) {
     final graphNotifier = ref.read(erGraphProvider(widget.moduleId).notifier);
     final graphState = ref.read(erGraphProvider(widget.moduleId));
 
     final sourceNode = graphState.getNode(sourceId);
     final targetNode = graphState.getNode(targetId);
+
+    final sourceTableName = sourceNode?.data.title.split(':').first ?? sourceId;
+    final targetTableName = targetNode?.data.title.split(':').first ?? targetId;
+
+    final sourceFieldDisplay = sourceFieldName ?? 'Unknown';
+    final targetFieldDisplay = targetFieldName ?? 'Unknown';
 
     showDialog(
       context: context,
@@ -460,10 +496,83 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
         title: const Text('Create Relation'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${sourceNode?.data.title.split(':').first ?? sourceId} → ${targetNode?.data.title.split(':').first ?? targetId}'),
+            // Connection info
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.table_chart, size: 16, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '$sourceTableName.$sourceFieldDisplay',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.arrow_downward, size: 16),
+                      const SizedBox(width: 8),
+                      Text('relation'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.table_chart, size: 16, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '$targetTableName.$targetFieldDisplay',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
-            const Text('Relation type:'),
+            // Relation type selection
+            const Text('Relation type:', style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('1:1'),
+                  selected: false,
+                  onSelected: (selected) {},
+                ),
+                ChoiceChip(
+                  label: const Text('1:N'),
+                  selected: false,
+                  onSelected: (selected) {},
+                ),
+                ChoiceChip(
+                  label: const Text('N:1'),
+                  selected: false,
+                  onSelected: (selected) {},
+                ),
+                ChoiceChip(
+                  label: const Text('N:M'),
+                  selected: false,
+                  onSelected: (selected) {},
+                ),
+              ],
+            ),
           ],
         ),
         actions: [
@@ -473,7 +582,12 @@ class _ERDiagramWidgetState extends ConsumerState<ERDiagramWidget> {
           ),
           FilledButton(
             onPressed: () {
-              graphNotifier.completeEdgeCreation(targetId);
+              graphNotifier.addEdgeWithFields(
+                sourceId,
+                targetId,
+                sourceField: sourceFieldName,
+                targetField: targetFieldName,
+              );
               Navigator.pop(ctx);
             },
             child: const Text('Create'),

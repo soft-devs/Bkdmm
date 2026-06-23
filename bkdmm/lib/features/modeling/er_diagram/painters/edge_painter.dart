@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../../shared/models/models.dart';
 import '../providers/graph_provider.dart';
 import 'node_painter.dart';
 
@@ -24,16 +25,38 @@ class EdgePainter {
     required bool isDarkMode,
     required bool isHighlighted,
   }) {
-    // Get connection points
     final sourceRect = NodePainter.getNodeRect(sourceNode);
     final targetRect = NodePainter.getNodeRect(targetNode);
 
-    final sourceCenter = sourceRect.center;
-    final targetCenter = targetRect.center;
+    // Get connection points based on whether we have field info
+    Offset sourcePoint;
+    Offset targetPoint;
 
-    // Calculate edge points (from edge of nodes, not centers)
-    final sourcePoint = _getEdgePoint(sourceRect, targetCenter);
-    final targetPoint = _getEdgePoint(targetRect, sourceCenter);
+    // Determine source point
+    if (edge.sourceField != null && sourceNode.entity != null) {
+      final sourceFieldIndex = _findFieldIndex(sourceNode.entity!, edge.sourceField!);
+      if (sourceFieldIndex != null) {
+        // Use left anchor for source (outgoing connection)
+        sourcePoint = NodePainter.getLeftFieldAnchor(sourceRect, sourceFieldIndex);
+      } else {
+        sourcePoint = _getEdgePoint(sourceRect, targetRect.center);
+      }
+    } else {
+      sourcePoint = _getEdgePoint(sourceRect, targetRect.center);
+    }
+
+    // Determine target point
+    if (edge.targetField != null && targetNode.entity != null) {
+      final targetFieldIndex = _findFieldIndex(targetNode.entity!, edge.targetField!);
+      if (targetFieldIndex != null) {
+        // Use right anchor for target (incoming connection)
+        targetPoint = NodePainter.getRightFieldAnchor(targetRect, targetFieldIndex);
+      } else {
+        targetPoint = _getEdgePoint(targetRect, sourceRect.center);
+      }
+    } else {
+      targetPoint = _getEdgePoint(targetRect, sourceRect.center);
+    }
 
     // Draw the edge line
     _drawEdgeLine(
@@ -44,13 +67,25 @@ class EdgePainter {
       isHighlighted,
     );
 
-    // Draw arrow head at target
-    _drawArrowHead(
+    // Draw relationship markers
+    _drawRelationshipMarker(
+      canvas,
+      sourcePoint,
+      targetPoint,
+      isDarkMode,
+      isHighlighted,
+      edge.relationType,
+      isSource: true,
+    );
+
+    _drawRelationshipMarker(
       canvas,
       targetPoint,
       sourcePoint,
       isDarkMode,
       isHighlighted,
+      edge.relationType,
+      isSource: false,
     );
 
     // Draw label if present
@@ -63,6 +98,16 @@ class EdgePainter {
         isDarkMode,
       );
     }
+  }
+
+  /// Find field index by name
+  static int? _findFieldIndex(Entity entity, String fieldName) {
+    for (var i = 0; i < entity.fields.length; i++) {
+      if (entity.fields[i].name == fieldName) {
+        return i;
+      }
+    }
+    return null;
   }
 
   /// Get the point on the edge of a rect towards a target point
@@ -151,41 +196,145 @@ class EdgePainter {
     return path;
   }
 
-  /// Draw arrow head at target point
-  static void _drawArrowHead(
+  /// Draw relationship marker (1, N, M) at endpoint
+  static void _drawRelationshipMarker(
     Canvas canvas,
-    Offset target,
-    Offset source,
+    Offset point,
+    Offset otherPoint,
     bool isDarkMode,
     bool isHighlighted,
+    String? relationType,
+    {required bool isSource}
   ) {
     final color = isHighlighted
         ? Colors.orange.shade400
         : (isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600);
 
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
+    // Determine marker based on relation type
+    String? marker;
+    if (relationType != null) {
+      // Parse relation type: "1:1", "1:N", "N:1", "N:M"
+      final parts = relationType.split(':');
+      if (parts.length == 2) {
+        marker = isSource ? parts[0] : parts[1];
+      }
+    }
 
-    // Calculate arrow direction
-    final dx = target.dx - source.dx;
-    final dy = target.dy - source.dy;
+    if (marker == null) return;
+
+    // Calculate direction away from the other point
+    final dx = point.dx - otherPoint.dx;
+    final dy = point.dy - otherPoint.dy;
+    final distance = math.sqrt(dx * dx + dy * dy);
+    if (distance == 0) return;
+
+    // Normalize direction
+    final dirX = dx / distance;
+    final dirY = dy / distance;
+
+    // Position marker slightly away from the endpoint
+    final markerOffset = 12.0;
+    final markerPos = Offset(
+      point.dx + dirX * markerOffset,
+      point.dy + dirY * markerOffset,
+    );
+
+    // Draw marker text
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: marker,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    textPainter.paint(
+      canvas,
+      Offset(
+        markerPos.dx - textPainter.width / 2,
+        markerPos.dy - textPainter.height / 2,
+      ),
+    );
+
+    // Draw crow's foot for N/M
+    if (marker == 'N' || marker == 'M') {
+      _drawCrowsFoot(canvas, point, otherPoint, color);
+    } else if (marker == '1') {
+      // Draw single line for 1
+      _drawOneMarker(canvas, point, otherPoint, color);
+    }
+  }
+
+  /// Draw crow's foot marker (for "many" relationship)
+  static void _drawCrowsFoot(Canvas canvas, Offset point, Offset otherPoint, Color color) {
+    final dx = point.dx - otherPoint.dx;
+    final dy = point.dy - otherPoint.dy;
     final angle = math.atan2(dy, dx);
 
-    // Create arrow head path
-    final path = Path();
-    path.moveTo(target.dx, target.dy);
-    path.lineTo(
-      target.dx - arrowSize * math.cos(angle - math.pi / 6),
-      target.dy - arrowSize * math.sin(angle - math.pi / 6),
-    );
-    path.lineTo(
-      target.dx - arrowSize * math.cos(angle + math.pi / 6),
-      target.dy - arrowSize * math.sin(angle + math.pi / 6),
-    );
-    path.close();
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
 
-    canvas.drawPath(path, paint);
+    final size = 8.0;
+
+    // Draw three lines forming crow's foot
+    canvas.drawLine(
+      point,
+      Offset(
+        point.dx - size * math.cos(angle - math.pi / 6),
+        point.dy - size * math.sin(angle - math.pi / 6),
+      ),
+      paint,
+    );
+    canvas.drawLine(
+      point,
+      Offset(
+        point.dx - size * math.cos(angle + math.pi / 6),
+        point.dy - size * math.sin(angle + math.pi / 6),
+      ),
+      paint,
+    );
+    canvas.drawLine(
+      point,
+      Offset(
+        point.dx - size * math.cos(angle),
+        point.dy - size * math.sin(angle),
+      ),
+      paint,
+    );
+  }
+
+  /// Draw "one" marker (single vertical line)
+  static void _drawOneMarker(Canvas canvas, Offset point, Offset otherPoint, Color color) {
+    final dx = point.dx - otherPoint.dx;
+    final dy = point.dy - otherPoint.dy;
+    final angle = math.atan2(dy, dx);
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    final size = 6.0;
+    // Perpendicular line
+    canvas.drawLine(
+      Offset(
+        point.dx + size * math.cos(angle + math.pi / 2),
+        point.dy + size * math.sin(angle + math.pi / 2),
+      ),
+      Offset(
+        point.dx + size * math.cos(angle - math.pi / 2),
+        point.dy + size * math.sin(angle - math.pi / 2),
+      ),
+      paint,
+    );
   }
 
   /// Draw relationship label

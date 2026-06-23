@@ -24,9 +24,89 @@ class NodePainter {
   static const double padding = 12.0;
 
   /// Anchor point size for edge creation
-  static const double anchorSize = 8.0;
+  static const double anchorSize = 6.0;
 
-  /// Anchor point positions (relative to node rect)
+  /// Field anchor size (smaller, on field rows)
+  static const double fieldAnchorSize = 6.0;
+
+  /// Anchor offset from node edge
+  static const double anchorOffset = 8.0;
+
+  /// Get left field anchor position for a specific field (for outgoing connections)
+  static Offset getLeftFieldAnchor(Rect rect, int fieldIndex) {
+    final rowY = rect.top + headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
+    return Offset(rect.left - anchorOffset, rowY);
+  }
+
+  /// Get right field anchor position for a specific field (for incoming connections)
+  static Offset getRightFieldAnchor(Rect rect, int fieldIndex) {
+    final rowY = rect.top + headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
+    return Offset(rect.right + anchorOffset, rowY);
+  }
+
+  /// Get all left field anchor positions
+  static List<(int, Offset)> getLeftFieldAnchors(Rect rect, Entity entity) {
+    final positions = <(int, Offset)>[];
+    for (var i = 0; i < entity.fields.length; i++) {
+      positions.add((i, getLeftFieldAnchor(rect, i)));
+    }
+    return positions;
+  }
+
+  /// Get all right field anchor positions
+  static List<(int, Offset)> getRightFieldAnchors(Rect rect, Entity entity) {
+    final positions = <(int, Offset)>[];
+    for (var i = 0; i < entity.fields.length; i++) {
+      positions.add((i, getRightFieldAnchor(rect, i)));
+    }
+    return positions;
+  }
+
+  /// Hit test for field anchor
+  /// Returns (fieldIndex, isLeftAnchor) if hit, null otherwise
+  static (int, bool)? hitTestFieldAnchor(ERGraphNode node, Offset point, InteractionMode mode) {
+    if (mode != InteractionMode.edit) return null;
+
+    final entity = node.entity;
+    if (entity == null) return null;
+
+    final rect = getNodeRect(node);
+
+    // Check left anchors (outgoing)
+    for (var i = 0; i < entity.fields.length; i++) {
+      final anchorPos = getLeftFieldAnchor(rect, i);
+      final anchorRect = Rect.fromCenter(
+        center: anchorPos,
+        width: fieldAnchorSize * 2.5,
+        height: fieldAnchorSize * 2.5,
+      );
+      if (anchorRect.contains(point)) {
+        return (i, true); // Left anchor (outgoing)
+      }
+    }
+
+    // Check right anchors (incoming)
+    for (var i = 0; i < entity.fields.length; i++) {
+      final anchorPos = getRightFieldAnchor(rect, i);
+      final anchorRect = Rect.fromCenter(
+        center: anchorPos,
+        width: fieldAnchorSize * 2.5,
+        height: fieldAnchorSize * 2.5,
+      );
+      if (anchorRect.contains(point)) {
+        return (i, false); // Right anchor (incoming)
+      }
+    }
+
+    return null;
+  }
+
+  /// Get the Y position for a specific field
+  static double getFieldYPosition(Rect rect, int fieldIndex) {
+    return rect.top + headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
+  }
+
+  /// Anchor point positions (node-level, kept for compatibility)
   static List<Offset> getAnchorPositions(Rect rect) {
     return [
       Offset(rect.left + rect.width / 2, rect.top), // Top center
@@ -69,6 +149,7 @@ class NodePainter {
 
     // If in edit mode, check if point is on an anchor first
     if (mode == InteractionMode.edit) {
+      // Check node-level anchors
       final anchors = getAnchorPositions(rect);
       for (final anchor in anchors) {
         final anchorRect = Rect.fromCenter(
@@ -78,6 +159,33 @@ class NodePainter {
         );
         if (anchorRect.contains(point)) {
           return false; // Point is on anchor, not node body
+        }
+      }
+
+      // Check field-level anchors
+      final entity = node.entity;
+      if (entity != null) {
+        for (var i = 0; i < entity.fields.length; i++) {
+          final leftAnchor = getLeftFieldAnchor(rect, i);
+          final rightAnchor = getRightFieldAnchor(rect, i);
+
+          final leftRect = Rect.fromCenter(
+            center: leftAnchor,
+            width: fieldAnchorSize * 2.5,
+            height: fieldAnchorSize * 2.5,
+          );
+          if (leftRect.contains(point)) {
+            return false;
+          }
+
+          final rightRect = Rect.fromCenter(
+            center: rightAnchor,
+            width: fieldAnchorSize * 2.5,
+            height: fieldAnchorSize * 2.5,
+          );
+          if (rightRect.contains(point)) {
+            return false;
+          }
         }
       }
     }
@@ -122,9 +230,9 @@ class NodePainter {
       _drawHighlightBorder(canvas, rect);
     }
 
-    // Draw anchors in edit mode
+    // Draw field anchors in edit mode (primary way to create edges)
     if (showAnchors) {
-      _drawAnchors(canvas, rect, isDarkMode);
+      _drawFieldAnchors(canvas, rect, entity, isDarkMode);
     }
   }
 
@@ -380,41 +488,83 @@ class NodePainter {
     return type;
   }
 
-  /// Draw anchor points for edge creation
-  static void _drawAnchors(Canvas canvas, Rect rect, bool isDarkMode) {
-    final anchors = getAnchorPositions(rect);
-    final anchorColor = isDarkMode ? Colors.blue.shade300 : Colors.blue.shade500;
+  /// Draw field anchor points for edge creation
+  static void _drawFieldAnchors(Canvas canvas, Rect rect, Entity entity, bool isDarkMode) {
+    final anchorColor = isDarkMode ? Colors.green.shade300 : Colors.green.shade600;
+    final pkColor = Colors.amber.shade600;
 
-    for (final anchor in anchors) {
-      // Anchor background
-      final anchorPaint = Paint()
-        ..color = anchorColor.withValues(alpha: 0.3)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(anchor, anchorSize, anchorPaint);
+    // Draw anchors for each field
+    for (var i = 0; i < entity.fields.length; i++) {
+      final field = entity.fields[i];
+      final leftAnchor = getLeftFieldAnchor(rect, i);
+      final rightAnchor = getRightFieldAnchor(rect, i);
 
-      // Anchor border
-      final borderPaint = Paint()
-        ..color = anchorColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-      canvas.drawCircle(anchor, anchorSize, borderPaint);
+      // Use different color for primary key fields
+      final color = field.pk ? pkColor : anchorColor;
 
-      // Plus icon in center
-      final plusPaint = Paint()
-        ..color = anchorColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round;
-      canvas.drawLine(
-        Offset(anchor.dx - 3, anchor.dy),
-        Offset(anchor.dx + 3, anchor.dy),
-        plusPaint,
-      );
-      canvas.drawLine(
-        Offset(anchor.dx, anchor.dy - 3),
-        Offset(anchor.dx, anchor.dy + 3),
-        plusPaint,
-      );
+      // Left anchor (outgoing connection)
+      _drawSingleAnchor(canvas, leftAnchor, color, field.pk, true);
+
+      // Right anchor (incoming connection)
+      _drawSingleAnchor(canvas, rightAnchor, color, field.pk, false);
     }
   }
+
+  /// Draw a single anchor point
+  static void _drawSingleAnchor(Canvas canvas, Offset position, Color color, bool isPk, bool isLeft) {
+    // Anchor background
+    final anchorPaint = Paint()
+      ..color = color.withValues(alpha: 0.4)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(position, fieldAnchorSize, anchorPaint);
+
+    // Anchor border
+    final borderPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawCircle(position, fieldAnchorSize, borderPaint);
+
+    // Draw direction indicator (arrow)
+    final arrowPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    if (isLeft) {
+      // Left anchor: arrow pointing left (outgoing)
+      canvas.drawLine(
+        Offset(position.dx + 2, position.dy - 2),
+        Offset(position.dx - 2, position.dy),
+        arrowPaint,
+      );
+      canvas.drawLine(
+        Offset(position.dx + 2, position.dy + 2),
+        Offset(position.dx - 2, position.dy),
+        arrowPaint,
+      );
+    } else {
+      // Right anchor: arrow pointing right (incoming)
+      canvas.drawLine(
+        Offset(position.dx - 2, position.dy - 2),
+        Offset(position.dx + 2, position.dy),
+        arrowPaint,
+      );
+      canvas.drawLine(
+        Offset(position.dx - 2, position.dy + 2),
+        Offset(position.dx + 2, position.dy),
+        arrowPaint,
+      );
+    }
+
+    // Draw PK indicator (small circle inside)
+    if (isPk) {
+      final pkPaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(position, 2, pkPaint);
+    }
+  }
+
 }

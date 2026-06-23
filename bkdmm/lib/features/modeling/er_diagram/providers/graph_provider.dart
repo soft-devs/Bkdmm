@@ -84,6 +84,9 @@ class ERGraphEdge {
   String get source => data.source;
   String get target => data.target;
   String? get label => data.label;
+  String? get sourceField => data.sourceField;
+  String? get targetField => data.targetField;
+  String? get relationType => data.relationType;
 }
 
 /// ER Diagram graph state
@@ -549,6 +552,29 @@ class ERGraphNotifier extends StateNotifier<ERGraphState> {
   void addEdge(String source, String target, {String? label}) {
     final newEdge = ERGraphEdge(
       data: GraphEdge(source: source, target: target, label: label),
+    );
+    state = state.copyWith(edges: [...state.edges, newEdge]);
+    _syncToProject();
+  }
+
+  /// Add a new edge with field info (field-to-field connection)
+  void addEdgeWithFields(
+    String source,
+    String target, {
+    String? sourceField,
+    String? targetField,
+    String? label,
+    String? relationType,
+  }) {
+    final newEdge = ERGraphEdge(
+      data: GraphEdge(
+        source: source,
+        target: target,
+        sourceField: sourceField,
+        targetField: targetField,
+        label: label,
+        relationType: relationType,
+      ),
     );
     state = state.copyWith(edges: [...state.edges, newEdge]);
     _syncToProject();
