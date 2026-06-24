@@ -120,21 +120,30 @@ class _FieldTableState extends State<FieldTable> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
-        // Calculate flexible column widths based on available space
-        // Fixed columns: PK(50), Not Null(70), Auto Inc(70) = 190
-        // Flexible columns: Field Name, Data Type, Chinese Name, Remark
-        final fixedWidth = 50.0 + 70.0 + 70.0;
-        final flexibleWidth = (availableWidth - fixedWidth).clamp(300.0, availableWidth);
-        final nameWidth = flexibleWidth * 0.30;  // 30% for field name
-        final typeWidth = flexibleWidth * 0.20;  // 20% for type
-        final chnnameWidth = flexibleWidth * 0.20;  // 20% for chinese name
-        final remarkWidth = flexibleWidth * 0.30;  // 30% for remark
+        // Account for table padding/borders
+        final usableWidth = availableWidth - 2; // 1px border on each side
+
+        // Calculate column widths - use percentage of usable width
+        // Fixed width columns for checkboxes
+        final pkWidth = 48.0;
+        final notNullWidth = 68.0;
+        final autoIncWidth = 68.0;
+
+        // Flexible columns take remaining space
+        final fixedTotal = pkWidth + notNullWidth + autoIncWidth;
+        final flexibleTotal = usableWidth - fixedTotal;
+
+        // Ensure minimum widths for flexible columns
+        final nameWidth = (flexibleTotal * 0.35).clamp(100.0, flexibleTotal);
+        final typeWidth = (flexibleTotal * 0.20).clamp(80.0, flexibleTotal);
+        final chnnameWidth = (flexibleTotal * 0.20).clamp(80.0, flexibleTotal);
+        final remarkWidth = (flexibleTotal * 0.25).clamp(80.0, flexibleTotal);
 
         final columns = [
           TDTableCol(
             title: 'PK',
             colKey: 'pk',
-            width: 50,
+            width: pkWidth,
             align: TDTableColAlign.center,
             cellBuilder: (context, index) => _buildCheckboxCell(index, 'pk', tdTheme),
           ),
@@ -161,14 +170,14 @@ class _FieldTableState extends State<FieldTable> {
           TDTableCol(
             title: 'Not Null',
             colKey: 'notNull',
-            width: 70,
+            width: notNullWidth,
             align: TDTableColAlign.center,
             cellBuilder: (context, index) => _buildCheckboxCell(index, 'notNull', tdTheme),
           ),
           TDTableCol(
             title: 'Auto Inc',
             colKey: 'autoIncrement',
-            width: 70,
+            width: autoIncWidth,
             align: TDTableColAlign.center,
             cellBuilder: (context, index) => _buildCheckboxCell(index, 'autoIncrement', tdTheme),
           ),
@@ -199,23 +208,34 @@ class _FieldTableState extends State<FieldTable> {
             border: Border.all(color: tdTheme.componentBorderColor),
             borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
           ),
-          child: TDTable(
-            columns: columns,
-            data: data,
-            bordered: true,
-            stripe: true,
-            rowHeight: 44,
-            backgroundColor: tdTheme.bgColorContainer,
-            onCellTap: (rowIndex, row, col) {
-              // Toggle row selection
-              setState(() {
-                if (_selectedRows.contains(rowIndex)) {
-                  _selectedRows.remove(rowIndex);
-                } else {
-                  _selectedRows.add(rowIndex);
-                }
-              });
-            },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: usableWidth),
+                child: IntrinsicWidth(
+                  child: TDTable(
+                    columns: columns,
+                    data: data,
+                    bordered: true,
+                    stripe: true,
+                    rowHeight: 44,
+                    backgroundColor: tdTheme.bgColorContainer,
+                    onCellTap: (rowIndex, row, col) {
+                      // Toggle row selection
+                      setState(() {
+                        if (_selectedRows.contains(rowIndex)) {
+                          _selectedRows.remove(rowIndex);
+                        } else {
+                          _selectedRows.add(rowIndex);
+                        }
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },
@@ -284,34 +304,29 @@ class _FieldTableState extends State<FieldTable> {
     final field = widget.fields[index];
     final currentType = field.type;
 
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: GestureDetector(
-        onTap: () => _showTypeSelector(index, currentType, tdTheme),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: tdTheme.bgColorSecondaryContainer,
-            borderRadius: BorderRadius.circular(tdTheme.radiusSmall),
-            border: Border.all(color: tdTheme.componentBorderColor),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TDText(
+    return InkWell(
+      onTap: () => _showTypeSelector(index, currentType, tdTheme),
+      child: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: TDText(
                 currentType,
                 font: tdTheme.fontBodySmall,
                 textColor: tdTheme.textColorPrimary,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 4),
-              Icon(
-                TDIcons.chevron_down,
-                size: 14,
-                color: tdTheme.textColorSecondary,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              TDIcons.chevron_down,
+              size: 12,
+              color: tdTheme.textColorSecondary,
+            ),
+          ],
         ),
       ),
     );

@@ -212,7 +212,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         title: 'Select Database',
         content: '',
         contentWidget: SizedBox(
-          width: 300,
+          width: 390, // 300 * 1.3
           child: ListView.builder(
             shrinkWrap: true,
             itemCount: databases.length,
@@ -316,7 +316,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         title: 'Select DDL Type',
         content: '',
         contentWidget: SizedBox(
-          width: 300,
+          width: 390, // 300 * 1.3
           child: ListView.builder(
             shrinkWrap: true,
             itemCount: ddlTypes.length,
