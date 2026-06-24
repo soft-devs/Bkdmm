@@ -36,6 +36,18 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 节点双击回调
   final VoidCallback? onDoubleTap;
 
+  /// 节点拖动开始回调
+  final void Function(DragStartDetails)? onDragStart;
+
+  /// 节点拖动更新回调
+  final void Function(DragUpdateDetails)? onDragUpdate;
+
+  /// 节点拖动结束回调
+  final VoidCallback? onDragEnd;
+
+  /// 是否可拖动（编辑模式）
+  final bool isDraggable;
+
   /// 布局常量（与 ERNodeRenderer 保持一致）
   static const double defaultWidth = 200.0;
   static const double headerHeight = 40.0;
@@ -53,20 +65,25 @@ class ERTableNodeWidget extends StatelessWidget {
     this.isHovered = false,
     this.showAnchors = false,
     this.isDarkMode = false,
+    this.isDraggable = false,
     this.onAnchorTap,
     this.onTap,
     this.onDoubleTap,
+    this.onDragStart,
+    this.onDragUpdate,
+    this.onDragEnd,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = isDarkMode || Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
+    // 根据是否可拖动选择不同的手势处理
+    Widget content = GestureDetector(
       onTap: onTap,
       onDoubleTap: onDoubleTap,
       child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+        cursor: isDraggable ? SystemMouseCursors.grab : SystemMouseCursors.click,
         child: Container(
           width: defaultWidth,
           decoration: BoxDecoration(
@@ -107,6 +124,18 @@ class ERTableNodeWidget extends StatelessWidget {
         ),
       ),
     );
+
+    // 如果可拖动，用 GestureDetector 包裹处理拖动
+    if (isDraggable) {
+      return GestureDetector(
+        onPanStart: onDragStart,
+        onPanUpdate: onDragUpdate,
+        onPanEnd: (_) => onDragEnd?.call(),
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   /// 构建表头

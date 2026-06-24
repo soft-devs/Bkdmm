@@ -10,6 +10,7 @@ import '../core/graph_sync.dart';
 import '../layout/layout_adapter.dart';
 import '../models/er_diagram_models.dart';
 import '../providers/er_diagram_provider.dart';
+import '../renderers/er_edge_renderer.dart';
 import 'er_node_builder.dart';
 
 /// ER 图画布（基于 graphview）
@@ -67,6 +68,11 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   /// 交互模式
   InteractionMode _interactionMode = InteractionMode.move;
 
+  /// 拖动状态
+  String? _draggedNodeId;
+  Offset _dragStartPos = Offset.zero;
+  Offset _nodeStartPos = Offset.zero;
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +81,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     _transformController = TransformationController();
     _graphSync = ERDiagramGraphSync();
     _layoutAdapter = GraphViewLayoutAdapter();
+    _layoutAdapter.anchorRegistry = _graphSync.anchorRegistry;
 
     // 延迟初始化
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,6 +99,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   void _syncFromState() {
     final state = ref.read(erDiagramProvider(widget.moduleId));
     _graphSync.syncFromState(state);
+
     setState(() {});
   }
 
@@ -100,12 +108,12 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(erDiagramProvider(widget.moduleId));
 
-    // 同步状态
+    // 同步状态（但不重新布局）
     _graphSync.syncFromState(state);
 
     return Stack(
       children: [
-        // 主画布
+        // 主画布（包含背景网格）
         _buildGraphView(state, isDark),
 
         // 工具栏
@@ -137,6 +145,9 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
   /// 构建 GraphView
   Widget _buildGraphView(ERDiagramState state, bool isDark) {
+    // 更新边渲染器的暗色模式
+    _layoutAdapter.isDarkMode = isDark;
+
     // 创建节点构建器
     final entityMap = <String, Entity>{};
     for (final entry in state.nodes.entries) {
@@ -149,6 +160,9 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       hoveredNodeId: _hoveredNodeId,
       interactionMode: _interactionMode,
       isDarkMode: isDark,
+      onNodeDragStart: _onNodeDragStart,
+      onNodeDragUpdate: _onNodeDragUpdate,
+      onNodeDragEnd: _onNodeDragEnd,
     ).createBuilder(
       entityMap: entityMap,
       onAnchorTap: _onAnchorTap,
@@ -156,17 +170,22 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       onNodeDoubleTap: _onNodeDoubleTap,
     );
 
-    // 设置布局算法
-    _layoutAdapter.setConfig(const HierarchicalLayoutConfig(
-      nodeSpacing: 60,
-      rankSpacing: 120,
-    ));
+    // 使用固定位置布局（保持节点现有位置，不自动布局）
+    _layoutAdapter.useFixedPositionLayout();
 
-    return GraphView.builder(
-      graph: _graphSync.graph,
-      algorithm: _layoutAdapter.algorithm ?? SugiyamaAlgorithm(SugiyamaConfiguration()),
-      controller: _graphViewController,
-      builder: builder.build(),
+    // 使用 RepaintBoundary 优化性能
+    return RepaintBoundary(
+      child: ClipRect(
+        child: CustomPaint(
+          painter: _BackgroundGridPainter(isDark: isDark),
+          child: GraphView.builder(
+            graph: _graphSync.graph,
+            algorithm: _layoutAdapter.algorithm ?? NoOpLayoutAlgorithm(),
+            controller: _graphViewController,
+            builder: builder.build(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -364,15 +383,134 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
   /// 自动布局
   void _autoLayout() {
-    _layoutAdapter.runLayout(_graphSync.graph);
+    // 临时使用 Sugiyama 算法进行布局
+    final config = SugiyamaConfiguration()
+      ..nodeSeparation = 60
+      ..levelSeparation = 120
+      ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM
+      ..iterations = 24;
+
+    final algorithm = SugiyamaAlgorithm(config);
+
+    // 使用自定义边渲染器
+    algorithm.renderer = ERRelationEdgeRenderer(
+      anchorRegistry: _graphSync.anchorRegistry,
+      isDarkMode: Theme.of(context).brightness == Brightness.dark,
+    );
+
+    // 运行布局
+    const centerX = 100000.0;
+    const centerY = 100000.0;
+    algorithm.run(_graphSync.graph, centerX, centerY);
 
     // 获取布局后的位置并更新状态
-    final positions = _layoutAdapter.getNodePositions(_graphSync.graph);
+    final positions = <String, Offset>{};
+    for (final node in _graphSync.graph.nodes) {
+      final nodeId = node.key?.value.toString() ?? '';
+      positions[nodeId] = Offset(node.x, node.y);
+    }
 
     final notifier = ref.read(erDiagramProvider(widget.moduleId).notifier);
     notifier.applyLayout(positions);
 
+    // 重新同步
+    _graphSync.syncFromState(ref.read(erDiagramProvider(widget.moduleId)));
+
     setState(() {});
+  }
+
+  /// 节点拖动开始
+  void _onNodeDragStart(String nodeId, DragStartDetails details) {
+    if (_interactionMode != InteractionMode.edit) return;
+
+    final state = ref.read(erDiagramProvider(widget.moduleId));
+    final erNode = state.getERNode(nodeId);
+    if (erNode == null) return;
+
+    setState(() {
+      _draggedNodeId = nodeId;
+      _dragStartPos = details.localPosition;
+      _nodeStartPos = erNode.position;
+    });
+  }
+
+  /// 节点拖动更新
+  void _onNodeDragUpdate(String nodeId, DragUpdateDetails details) {
+    if (_draggedNodeId != nodeId) return;
+
+    final state = ref.read(erDiagramProvider(widget.moduleId));
+    final erNode = state.getERNode(nodeId);
+    if (erNode == null) return;
+
+    // 计算新位置
+    final delta = details.localPosition - _dragStartPos;
+    final newX = _nodeStartPos.dx + delta.dx;
+    final newY = _nodeStartPos.dy + delta.dy;
+
+    // 更新 graphview 节点位置（实时更新）
+    final graphNode = _graphSync.getNode(nodeId);
+    if (graphNode != null) {
+      graphNode.position = Offset(newX, newY);
+    }
+
+    // 更新锚点位置
+    _graphSync.anchorRegistry.updateNodeAnchors(
+      nodeId,
+      erNode.entity,
+      Offset(newX, newY),
+    );
+
+    setState(() {});
+  }
+
+  /// 节点拖动结束
+  void _onNodeDragEnd(String nodeId) {
+    if (_draggedNodeId != nodeId) return;
+
+    // 获取最终位置并保存到状态
+    final graphNode = _graphSync.getNode(nodeId);
+    if (graphNode != null) {
+      final notifier = ref.read(erDiagramProvider(widget.moduleId).notifier);
+      notifier.moveNode(nodeId, graphNode.x, graphNode.y);
+    }
+
+    setState(() {
+      _draggedNodeId = null;
+    });
+  }
+}
+
+/// 背景网格绘制器（绘制在 graphview 下层）
+class _BackgroundGridPainter extends CustomPainter {
+  final bool isDark;
+
+  _BackgroundGridPainter({required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+
+    const gridSize = 20.0;
+    final gridPaint = Paint()
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.black.withValues(alpha: 0.05)
+      ..strokeWidth = 0.5;
+
+    // 绘制垂直线
+    for (var x = 0.0; x <= size.width; x += gridSize) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+
+    // 绘制水平线
+    for (var y = 0.0; y <= size.height; y += gridSize) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BackgroundGridPainter old) {
+    return isDark != old.isDark;
   }
 }
 

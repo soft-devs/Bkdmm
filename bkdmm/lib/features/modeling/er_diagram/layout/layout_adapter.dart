@@ -1,5 +1,59 @@
 import 'dart:ui';
 import 'package:graphview/graphview.dart';
+import '../core/field_anchor_registry.dart';
+import '../renderers/er_edge_renderer.dart';
+
+/// 无操作布局算法（保持节点现有位置）
+class NoOpLayoutAlgorithm extends Algorithm {
+  @override
+  EdgeRenderer? renderer;
+
+  NoOpLayoutAlgorithm({FieldAnchorRegistry? anchorRegistry, bool isDarkMode = false}) {
+    // 使用自定义边渲染器
+    if (anchorRegistry != null) {
+      renderer = ERRelationEdgeRenderer(
+        anchorRegistry: anchorRegistry,
+        isDarkMode: isDarkMode,
+      );
+    } else {
+      // 使用默认的箭头渲染器
+      renderer = ArrowEdgeRenderer(noArrow: true);
+    }
+  }
+
+  @override
+  void init(Graph? graph) {
+    // 不需要初始化
+  }
+
+  @override
+  void setDimensions(double width, double height) {
+    // 不需要设置尺寸
+  }
+
+  @override
+  Size run(Graph? graph, double shiftX, double shiftY) {
+    // 不进行任何布局计算，保持节点现有位置
+    if (graph == null) return Size.zero;
+
+    // 计算图的大小
+    double minX = double.infinity;
+    double minY = double.infinity;
+    double maxX = double.negativeInfinity;
+    double maxY = double.negativeInfinity;
+
+    for (final node in graph.nodes) {
+      minX = minX < node.x ? minX : node.x;
+      minY = minY < node.y ? minY : node.y;
+      maxX = maxX > node.x + node.width ? maxX : node.x + node.width;
+      maxY = maxY > node.y + node.height ? maxY : node.y + node.height;
+    }
+
+    if (minX == double.infinity) return Size.zero;
+
+    return Size(maxX - minX, maxY - minY);
+  }
+}
 
 /// graphview 布局算法适配器
 ///
@@ -12,8 +66,26 @@ class GraphViewLayoutAdapter {
   /// 当前布局配置
   LayoutConfig _config = const HierarchicalLayoutConfig();
 
+  /// 字段锚点注册表（用于边渲染）
+  FieldAnchorRegistry? anchorRegistry;
+
+  /// 是否暗色模式
+  bool isDarkMode = false;
+
+  /// 是否使用固定位置布局（不自动布局）
+  bool useFixedLayout = true;
+
   /// 获取当前算法
-  Algorithm? get algorithm => _algorithm;
+  Algorithm? get algorithm {
+    // 如果使用固定布局，返回 NoOp 算法
+    if (useFixedLayout && anchorRegistry != null) {
+      return NoOpLayoutAlgorithm(
+        anchorRegistry: anchorRegistry!,
+        isDarkMode: isDarkMode,
+      );
+    }
+    return _algorithm;
+  }
 
   /// 获取当前配置
   LayoutConfig get config => _config;
@@ -21,7 +93,13 @@ class GraphViewLayoutAdapter {
   /// 设置布局配置
   void setConfig(LayoutConfig config) {
     _config = config;
+    useFixedLayout = false; // 用户明确设置了布局配置，启用自动布局
     _updateAlgorithm();
+  }
+
+  /// 使用固定位置布局（保持节点现有位置）
+  void useFixedPositionLayout() {
+    useFixedLayout = true;
   }
 
   /// 更新布局算法
@@ -44,7 +122,17 @@ class GraphViewLayoutAdapter {
       ..orientation = _mapOrientation(config.direction)
       ..iterations = config.maxIterations;
 
-    return SugiyamaAlgorithm(sugiyamaConfig);
+    final algorithm = SugiyamaAlgorithm(sugiyamaConfig);
+
+    // 使用自定义边渲染器
+    if (anchorRegistry != null) {
+      algorithm.renderer = ERRelationEdgeRenderer(
+        anchorRegistry: anchorRegistry!,
+        isDarkMode: isDarkMode,
+      );
+    }
+
+    return algorithm;
   }
 
   /// 创建 Fruchterman-Reingold 力导向布局算法

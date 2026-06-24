@@ -33,14 +33,30 @@ class ERNodeWidgetBuilder {
   /// 节点双击回调
   final void Function(String nodeId)? onNodeDoubleTap;
 
+  /// 节点拖动开始回调
+  final void Function(String nodeId, DragStartDetails details)? onNodeDragStart;
+
+  /// 节点拖动更新回调
+  final void Function(String nodeId, DragUpdateDetails details)? onNodeDragUpdate;
+
+  /// 节点拖动结束回调
+  final void Function(String nodeId)? onNodeDragEnd;
+
+  /// 是否可拖动（编辑模式）
+  final bool isDraggable;
+
   ERNodeWidgetBuilder({
     this.showAnchors = false,
     this.isDarkMode = false,
     this.selectedNodeIds = const {},
     this.hoveredNodeId,
+    this.isDraggable = false,
     this.onAnchorTap,
     this.onNodeTap,
     this.onNodeDoubleTap,
+    this.onNodeDragStart,
+    this.onNodeDragUpdate,
+    this.onNodeDragEnd,
   });
 
   /// 注册实体
@@ -86,9 +102,13 @@ class ERNodeWidgetBuilder {
         isHovered: hoveredNodeId == nodeId,
         showAnchors: showAnchors,
         isDarkMode: isDarkMode,
+        isDraggable: isDraggable,
         onAnchorTap: onAnchorTap,
         onTap: () => onNodeTap?.call(nodeId),
         onDoubleTap: () => onNodeDoubleTap?.call(nodeId),
+        onDragStart: (details) => onNodeDragStart?.call(nodeId, details),
+        onDragUpdate: (details) => onNodeDragUpdate?.call(nodeId, details),
+        onDragEnd: () => onNodeDragEnd?.call(nodeId),
       );
     };
   }
@@ -117,18 +137,26 @@ class ERNodeWidgetBuilder {
     bool? isDarkMode,
     Set<String>? selectedNodeIds,
     String? hoveredNodeId,
+    bool? isDraggable,
     void Function(FieldAnchor)? onAnchorTap,
     void Function(String)? onNodeTap,
     void Function(String)? onNodeDoubleTap,
+    void Function(String, DragStartDetails)? onNodeDragStart,
+    void Function(String, DragUpdateDetails)? onNodeDragUpdate,
+    void Function(String)? onNodeDragEnd,
   }) {
     final builder = ERNodeWidgetBuilder(
       showAnchors: showAnchors ?? this.showAnchors,
       isDarkMode: isDarkMode ?? this.isDarkMode,
       selectedNodeIds: selectedNodeIds ?? this.selectedNodeIds,
       hoveredNodeId: hoveredNodeId ?? this.hoveredNodeId,
+      isDraggable: isDraggable ?? this.isDraggable,
       onAnchorTap: onAnchorTap ?? this.onAnchorTap,
       onNodeTap: onNodeTap ?? this.onNodeTap,
       onNodeDoubleTap: onNodeDoubleTap ?? this.onNodeDoubleTap,
+      onNodeDragStart: onNodeDragStart ?? this.onNodeDragStart,
+      onNodeDragUpdate: onNodeDragUpdate ?? this.onNodeDragUpdate,
+      onNodeDragEnd: onNodeDragEnd ?? this.onNodeDragEnd,
     );
     builder._entityMap.addAll(_entityMap);
     return builder;
@@ -151,15 +179,30 @@ class ERNodeWidgetBuilderState {
   /// 是否暗色模式
   final bool isDarkMode;
 
+  /// 节点拖动开始回调
+  final void Function(String nodeId, DragStartDetails details)? onNodeDragStart;
+
+  /// 节点拖动更新回调
+  final void Function(String nodeId, DragUpdateDetails details)? onNodeDragUpdate;
+
+  /// 节点拖动结束回调
+  final void Function(String nodeId)? onNodeDragEnd;
+
   const ERNodeWidgetBuilderState({
     this.selectedNodeIds = const {},
     this.hoveredNodeId,
     this.interactionMode = InteractionMode.move,
     this.isDarkMode = false,
+    this.onNodeDragStart,
+    this.onNodeDragUpdate,
+    this.onNodeDragEnd,
   });
 
   /// 是否显示锚点（仅在编辑模式下显示）
   bool get showAnchors => interactionMode == InteractionMode.edit;
+
+  /// 是否可拖动（仅在编辑模式下可拖动）
+  bool get isDraggable => interactionMode == InteractionMode.edit;
 
   /// 创建 ERNodeWidgetBuilder
   ERNodeWidgetBuilder createBuilder({
@@ -167,15 +210,22 @@ class ERNodeWidgetBuilderState {
     void Function(FieldAnchor)? onAnchorTap,
     void Function(String)? onNodeTap,
     void Function(String)? onNodeDoubleTap,
+    void Function(String, DragStartDetails)? onNodeDragStart,
+    void Function(String, DragUpdateDetails)? onNodeDragUpdate,
+    void Function(String)? onNodeDragEnd,
   }) {
     final builder = ERNodeWidgetBuilder(
       showAnchors: showAnchors,
       isDarkMode: isDarkMode,
       selectedNodeIds: selectedNodeIds,
       hoveredNodeId: hoveredNodeId,
+      isDraggable: isDraggable,
       onAnchorTap: onAnchorTap,
       onNodeTap: onNodeTap,
       onNodeDoubleTap: onNodeDoubleTap,
+      onNodeDragStart: onNodeDragStart,
+      onNodeDragUpdate: onNodeDragUpdate,
+      onNodeDragEnd: onNodeDragEnd,
     );
     builder.registerEntities(entityMap);
     return builder;
@@ -186,12 +236,18 @@ class ERNodeWidgetBuilderState {
     String? hoveredNodeId,
     InteractionMode? interactionMode,
     bool? isDarkMode,
+    void Function(String, DragStartDetails)? onNodeDragStart,
+    void Function(String, DragUpdateDetails)? onNodeDragUpdate,
+    void Function(String)? onNodeDragEnd,
   }) {
     return ERNodeWidgetBuilderState(
       selectedNodeIds: selectedNodeIds ?? this.selectedNodeIds,
       hoveredNodeId: hoveredNodeId ?? this.hoveredNodeId,
       interactionMode: interactionMode ?? this.interactionMode,
       isDarkMode: isDarkMode ?? this.isDarkMode,
+      onNodeDragStart: onNodeDragStart ?? this.onNodeDragStart,
+      onNodeDragUpdate: onNodeDragUpdate ?? this.onNodeDragUpdate,
+      onNodeDragEnd: onNodeDragEnd ?? this.onNodeDragEnd,
     );
   }
 }
