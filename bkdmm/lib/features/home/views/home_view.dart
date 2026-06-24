@@ -118,7 +118,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
             ],
           ),
           child: Icon(
-            TDIcons.database,
+            TDIcons.data_base,
             size: 40,
             color: Colors.white,
           ),
@@ -435,7 +435,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
       await ref.read(historyNotifierProvider.notifier).remove(path);
 
       if (mounted) {
-        TDToast.showSuccessToast('Removed from recent projects', context: context);
+        TDToast.showSuccess('Removed from recent projects', context: context);
       }
     } catch (e) {
       if (mounted) {
@@ -447,12 +447,9 @@ class _HomeViewState extends ConsumerState<HomeView> {
   void _showAllHistory(List<ProjectHistory> historyList) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text(
-          'All Recent Projects',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        content: SizedBox(
+      builder: (dialogContext) => TDAlertDialog(
+        title: 'All Recent Projects',
+        contentWidget: SizedBox(
           width: 500,
           height: 400,
           child: ListView.builder(
@@ -474,14 +471,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
             },
           ),
         ),
-        actions: [
-          TDButton(
-            text: 'Close',
-            theme: TDButtonTheme.defaultTheme,
-            type: TDButtonType.text,
-            onTap: () => Navigator.of(dialogContext).pop(),
-          ),
-        ],
+        leftBtn: TDDialogButtonOptions(
+          title: 'Close',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.of(dialogContext).pop(),
+        ),
+        rightBtn: null,
       ),
     );
   }
