@@ -535,35 +535,32 @@ class _ThemeModeDialog extends StatelessWidget {
     return TDAlertDialog(
       title: 'Theme Mode',
       content: '',
-      contentWidget: TDRadioGroup(
-        selectId: currentValue,
-        onRadioGroupChange: (value) {
-          if (value != null) {
-            onChanged(value);
-            Navigator.pop(context);
-          }
-        },
-        directionalTdRadios: [
-          TDRadio(
+      contentWidget: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildThemeOption(
+            context: context,
+            tdTheme: tdTheme,
             id: 'system',
             title: 'System',
-            subTitle: 'Follow system settings',
-            titleColor: tdTheme.textColorPrimary,
-            subTitleColor: tdTheme.textColorSecondary,
+            subtitle: 'Follow system settings',
+            icon: TDIcons.brightness,
           ),
-          TDRadio(
+          _buildThemeOption(
+            context: context,
+            tdTheme: tdTheme,
             id: 'light',
             title: 'Light',
-            subTitle: 'Always use light theme',
-            titleColor: tdTheme.textColorPrimary,
-            subTitleColor: tdTheme.textColorSecondary,
+            subtitle: 'Always use light theme',
+            icon: TDIcons.sun_rising,
           ),
-          TDRadio(
+          _buildThemeOption(
+            context: context,
+            tdTheme: tdTheme,
             id: 'dark',
             title: 'Dark',
-            subTitle: 'Always use dark theme',
-            titleColor: tdTheme.textColorPrimary,
-            subTitleColor: tdTheme.textColorSecondary,
+            subtitle: 'Always use dark theme',
+            icon: TDIcons.moon,
           ),
         ],
       ),
@@ -573,6 +570,32 @@ class _ThemeModeDialog extends StatelessWidget {
         type: TDButtonType.text,
         action: () => Navigator.pop(context),
       ),
+    );
+  }
+
+  Widget _buildThemeOption({
+    required BuildContext context,
+    required TDThemeData tdTheme,
+    required String id,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    final isSelected = currentValue == id;
+
+    return TDCell(
+      leftIcon: icon,
+      title: title,
+      description: subtitle,
+      arrow: false,
+      style: TDCellStyle(context: context)
+        ..leftIconColor = isSelected ? tdTheme.brandNormalColor : tdTheme.textColorSecondary
+        ..rightIconColor = tdTheme.brandNormalColor,
+      rightIcon: isSelected ? TDIcons.check : null,
+      onClick: (_) {
+        onChanged(id);
+        Navigator.pop(context);
+      },
     );
   }
 }

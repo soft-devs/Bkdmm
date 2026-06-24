@@ -5,7 +5,7 @@
       "cron": "*/30 * * * *",
       "prompt": "检查代码变更并提交：运行 git status 查看更改，如果有未提交的更改，运行 git add . 和 git commit -m \"自动提交: [描述更改内容]\"",
       "createdAt": 1782274084791,
-      "lastFiredAt": 1782286375428,
+      "lastFiredAt": 1782288175582,
       "recurring": true,
       "createdBySessionId": "59f427ff-7cea-44e9-becc-dcb3718f14dc",
       "createdByPid": 22000,
