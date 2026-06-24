@@ -11,7 +11,7 @@ void main() async {
   await StorageService.init();
 
   runApp(
-    const ProviderScope(
+    ProviderScope(
       child: TDTheme(
         data: TDThemeData.defaultData(),
         child: BkdmmApp(),

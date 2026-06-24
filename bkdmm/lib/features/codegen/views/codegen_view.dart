@@ -137,7 +137,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           // Copy button
           TDButton(
             icon: TDIcons.file_copy,
-            onPressed: state.hasOutput ? _copyToClipboard : null,
+            onTap: state.hasOutput ? _copyToClipboard : null,
             theme: TDButtonTheme.defaultTheme,
             type: TDButtonType.outline,
             size: TDButtonSize.small,
@@ -147,7 +147,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
           // Download button
           TDButton(
-            onPressed: state.hasOutput ? _downloadSql : null,
+            onTap: state.hasOutput ? _downloadSql : null,
             icon: TDIcons.download,
             text: 'Download .sql',
             theme: TDButtonTheme.primary,
@@ -159,7 +159,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
           // Export all button
           TDButton(
-            onPressed: project != null ? _exportAll : null,
+            onTap: project != null ? _exportAll : null,
             icon: TDIcons.download,
             text: 'Export All',
             theme: TDButtonTheme.defaultTheme,
@@ -194,7 +194,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(TDIcons.storage, size: 18),
+                Icon(TDIcons.data_base, size: 18),
                 const SizedBox(width: 8),
                 Text(db.name),
               ],
@@ -279,7 +279,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             ),
             child: Row(
               children: [
-                Icon(TDIcons.tree, size: 20, color: colorScheme.primary),
+                Icon(TDIcons.tree_square_dot, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Select Target',
@@ -351,7 +351,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     return ExpansionTile(
       leading: Icon(
-        TDIcons.books,
+        TDIcons.book,
         size: 20,
         color: isModuleSelected
             ? colorScheme.primary
@@ -622,7 +622,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            TDIcons.touch_app,
+            TDIcons.gesture_click,
             size: 64,
             color: colorScheme.onSurfaceVariant,
           ),
@@ -672,7 +672,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           ),
           const SizedBox(height: 16),
           TDButton(
-            onPressed: () => ref.read(codegenProvider.notifier).refresh(),
+            onTap: () => ref.read(codegenProvider.notifier).refresh(),
             text: 'Retry',
             theme: TDButtonTheme.primary,
             type: TDButtonType.fill,
