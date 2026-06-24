@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
+import '../../../utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 import '../providers/layout_provider.dart';
 import '../widgets/tab_bar.dart';
@@ -27,15 +28,16 @@ import '../../modeling/er_diagram/widgets/er_diagram_canvas.dart';
 /// │左视│         Tab Content Area                       │
 /// │图控│                                                │
 /// │制  │                                                │
-/// │────│                                                │
-/// │底视│                                                │
+/// │────├────────────────────────────────────────────────┤
+/// │底视│ BottomViewContainer (控制台/日志/输出)         │
 /// │图控│                                                │
 /// │制  │                                                │
 /// ├────┴────────────────────────────────────────────────┤
-/// │ BottomViewContainer (控制台/日志/输出)              │
-/// ├─────────────────────────────────────────────────────┤
 /// │ StatusBar                                           │
 /// └─────────────────────────────────────────────────────┘
+///
+/// IconBar is fixed and spans the full height, controlling both
+/// left views (upper section) and bottom views (lower section).
 class WorkspaceView extends ConsumerStatefulWidget {
   const WorkspaceView({super.key});
 
@@ -86,43 +88,57 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             Expanded(
               child: Row(
                 children: [
-                  // 左侧图标栏
+                  // 左侧图标栏 - 固定独占整个高度
                   const IconBar(),
 
-                  // 左侧视图容器 (模块树/数据类型)
-                  const LeftViewContainer(),
-
-                  // 主内容区
+                  // 内容区域（包含左侧视图、主内容、右侧面板、底部视图）
                   Expanded(
                     child: Column(
                       children: [
-                        // 标签栏
-                        WorkspaceTabBar(
-                          onNewTab: () => _showAddModuleDialog(),
-                          onSettingsTab: () =>
-                              ref.read(tabProvider.notifier).openSettings(),
+                        // 上部区域：左侧视图 + 主内容 + 右侧面板
+                        Expanded(
+                          child: Row(
+                            children: [
+                              // 左侧视图容器 (模块树/数据类型)
+                              const LeftViewContainer(),
+
+                              // 主内容区
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    // 标签栏
+                                    WorkspaceTabBar(
+                                      onNewTab: () => _showAddModuleDialog(),
+                                      onSettingsTab: () =>
+                                          ref.read(tabProvider.notifier).openSettings(),
+                                    ),
+
+                                    // 标签内容区
+                                    Expanded(
+                                      child: _buildTabContent(project, tdTheme),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // 右侧属性面板 (根据布局状态显示)
+                              if (layoutState.rightViewVisible)
+                                SizedBox(
+                                  width: layoutState.rightViewWidth,
+                                  child: _buildPropertiesPanel(project, tdTheme),
+                                ),
+                            ],
+                          ),
                         ),
 
-                        // 标签内容区
-                        Expanded(
-                          child: _buildTabContent(project, tdTheme),
-                        ),
+                        // 底部视图容器 (控制台/日志/输出)
+                        const BottomViewContainer(),
                       ],
                     ),
                   ),
-
-                  // 右侧属性面板 (根据布局状态显示)
-                  if (layoutState.rightViewVisible)
-                    SizedBox(
-                      width: layoutState.rightViewWidth,
-                      child: _buildPropertiesPanel(project, tdTheme),
-                    ),
                 ],
               ),
             ),
-
-            // 底部视图容器 (控制台/日志/输出)
-            const BottomViewContainer(),
 
             // 状态栏
             _buildStatusBar(project, projectState, tdTheme),
@@ -632,11 +648,180 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   }
 
   Future<void> _showAddModuleDialog() async {
-    // TODO: 实现添加模块对话框
+    final nameController = TextEditingController();
+    final chnnameController = TextEditingController();
+    final descController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: '创建模块',
+        contentWidget: SizedBox(
+          width: 450,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TDInput(
+                controller: nameController,
+                leftLabel: '模块名称 (英文)',
+                hintText: '例如: user',
+                leftIcon: const Icon(TDIcons.code),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: chnnameController,
+                leftLabel: '中文名称',
+                hintText: '例如: 用户模块',
+                leftIcon: const Icon(TDIcons.translate),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: descController,
+                leftLabel: '描述',
+                hintText: '模块描述 (可选)',
+                leftIcon: const Icon(TDIcons.edit),
+                backgroundColor: Colors.transparent,
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        leftBtn: TDDialogButtonOptions(
+          title: '取消',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context, false),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: '创建',
+          theme: TDButtonTheme.primary,
+          type: TDButtonType.fill,
+          action: () {
+            if (nameController.text.trim().isEmpty) {
+              TDToast.showText('请输入模块名称', context: context);
+              return;
+            }
+            Navigator.pop(context, true);
+          },
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      final now = DateTime.now();
+      final module = Module(
+        id: IdGenerator.generate(),
+        name: nameController.text.trim(),
+        chnname: chnnameController.text.trim().isNotEmpty
+            ? chnnameController.text.trim()
+            : nameController.text.trim(),
+        description: descController.text.trim().isNotEmpty
+            ? descController.text.trim()
+            : null,
+        entities: [],
+        graphCanvas: GraphCanvas(),
+        createdAt: now,
+        updatedAt: now,
+      );
+      ref.read(projectNotifierProvider.notifier).addModule(module);
+      TDToast.showText('模块已创建', context: context);
+    }
   }
 
   Future<void> _showAddEntityDialog(Module module) async {
-    // TODO: 实现添加实体对话框
+    final titleController = TextEditingController();
+    final chnnameController = TextEditingController();
+    final remarkController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: '在 "${module.chnname}" 中创建表',
+        contentWidget: SizedBox(
+          width: 450,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TDInput(
+                controller: titleController,
+                leftLabel: '表名称 (英文)',
+                hintText: '例如: user_info',
+                leftIcon: const Icon(TDIcons.code),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: chnnameController,
+                leftLabel: '中文名称',
+                hintText: '例如: 用户信息表',
+                leftIcon: const Icon(TDIcons.translate),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: remarkController,
+                leftLabel: '备注',
+                hintText: '表描述 (可选)',
+                leftIcon: const Icon(TDIcons.edit),
+                backgroundColor: Colors.transparent,
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        leftBtn: TDDialogButtonOptions(
+          title: '取消',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context, false),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: '创建',
+          theme: TDButtonTheme.primary,
+          type: TDButtonType.fill,
+          action: () {
+            if (titleController.text.trim().isEmpty) {
+              TDToast.showText('请输入表名称', context: context);
+              return;
+            }
+            Navigator.pop(context, true);
+          },
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      final now = DateTime.now();
+      final entity = Entity(
+        id: IdGenerator.generate(),
+        title: titleController.text.trim(),
+        chnname: chnnameController.text.trim().isNotEmpty
+            ? chnnameController.text.trim()
+            : titleController.text.trim(),
+        remark: remarkController.text.trim().isNotEmpty
+            ? remarkController.text.trim()
+            : null,
+        fields: [],
+        indexes: [],
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      final updatedModule = module.copyWith(
+        entities: [...module.entities, entity],
+        updatedAt: now,
+      );
+      ref.read(projectNotifierProvider.notifier).updateModule(
+        module.id,
+        updatedModule,
+      );
+      TDToast.showText('表已创建', context: context);
+
+      // 打开新创建的表编辑器
+      ref.read(tabProvider.notifier).openEntity(entity, module.id);
+    }
   }
 }
 

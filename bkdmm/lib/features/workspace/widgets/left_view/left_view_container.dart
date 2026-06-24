@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../providers/layout_provider.dart';
+import '../../providers/tab_provider.dart';
 import '../module_tree.dart';
 import '../../../datatype/views/datatype_view.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/models/models.dart';
+import '../../../../utils/id_generator.dart';
 
 /// 左侧视图容器
 class LeftViewContainer extends ConsumerWidget {
@@ -157,14 +160,187 @@ class _ModuleTreePanel extends ConsumerWidget {
     return ModuleTree(
       project: project,
       onAddModule: () {
-        // TODO: 添加模块
+        _showAddModuleDialog(context, ref);
       },
       onAddEntity: (module) {
-        // TODO: 添加实体
+        _showAddEntityDialog(context, ref, module);
       },
       onSelectModule: (module) {
-        // TODO: 选择模块
+        ref.read(tabProvider.notifier).openModule(module);
       },
+    );
+  }
+
+  void _showAddModuleDialog(BuildContext context, WidgetRef ref) {
+    final nameController = TextEditingController();
+    final chnnameController = TextEditingController();
+    final descController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: '创建模块',
+        contentWidget: SizedBox(
+          width: 450,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TDInput(
+                controller: nameController,
+                leftLabel: '模块名称 (英文)',
+                hintText: '例如: user',
+                leftIcon: const Icon(TDIcons.code),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: chnnameController,
+                leftLabel: '中文名称',
+                hintText: '例如: 用户模块',
+                leftIcon: const Icon(TDIcons.translate),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: descController,
+                leftLabel: '描述',
+                hintText: '模块描述 (可选)',
+                leftIcon: const Icon(TDIcons.edit),
+                backgroundColor: Colors.transparent,
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        leftBtn: TDDialogButtonOptions(
+          title: '取消',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: '创建',
+          theme: TDButtonTheme.primary,
+          type: TDButtonType.fill,
+          action: () {
+            if (nameController.text.trim().isEmpty) {
+              TDToast.showText('请输入模块名称', context: context);
+              return;
+            }
+            Navigator.pop(context);
+
+            final now = DateTime.now();
+            final module = Module(
+              id: IdGenerator.generate(),
+              name: nameController.text.trim(),
+              chnname: chnnameController.text.trim().isNotEmpty
+                  ? chnnameController.text.trim()
+                  : nameController.text.trim(),
+              description: descController.text.trim().isNotEmpty
+                  ? descController.text.trim()
+                  : null,
+              entities: [],
+              graphCanvas: GraphCanvas(),
+              createdAt: now,
+              updatedAt: now,
+            );
+            ref.read(projectNotifierProvider.notifier).addModule(module);
+            TDToast.showText('模块已创建', context: context);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showAddEntityDialog(BuildContext context, WidgetRef ref, Module module) {
+    final titleController = TextEditingController();
+    final chnnameController = TextEditingController();
+    final remarkController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: '在 "${module.chnname}" 中创建表',
+        contentWidget: SizedBox(
+          width: 450,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TDInput(
+                controller: titleController,
+                leftLabel: '表名称 (英文)',
+                hintText: '例如: user_info',
+                leftIcon: const Icon(TDIcons.code),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: chnnameController,
+                leftLabel: '中文名称',
+                hintText: '例如: 用户信息表',
+                leftIcon: const Icon(TDIcons.translate),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: remarkController,
+                leftLabel: '备注',
+                hintText: '表描述 (可选)',
+                leftIcon: const Icon(TDIcons.edit),
+                backgroundColor: Colors.transparent,
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        leftBtn: TDDialogButtonOptions(
+          title: '取消',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: '创建',
+          theme: TDButtonTheme.primary,
+          type: TDButtonType.fill,
+          action: () {
+            if (titleController.text.trim().isEmpty) {
+              TDToast.showText('请输入表名称', context: context);
+              return;
+            }
+            Navigator.pop(context);
+
+            final now = DateTime.now();
+            final entity = Entity(
+              id: IdGenerator.generate(),
+              title: titleController.text.trim(),
+              chnname: chnnameController.text.trim().isNotEmpty
+                  ? chnnameController.text.trim()
+                  : titleController.text.trim(),
+              remark: remarkController.text.trim().isNotEmpty
+                  ? remarkController.text.trim()
+                  : null,
+              fields: [],
+              indexes: [],
+              createdAt: now,
+              updatedAt: now,
+            );
+
+            final updatedModule = module.copyWith(
+              entities: [...module.entities, entity],
+              updatedAt: now,
+            );
+            ref.read(projectNotifierProvider.notifier).updateModule(
+              module.id,
+              updatedModule,
+            );
+            TDToast.showText('表已创建', context: context);
+
+            // 打开新创建的表编辑器
+            ref.read(tabProvider.notifier).openEntity(entity, module.id);
+          },
+        ),
+      ),
     );
   }
 }

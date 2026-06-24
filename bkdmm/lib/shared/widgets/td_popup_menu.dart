@@ -170,11 +170,13 @@ class TDPopupMenuButton extends StatelessWidget {
           final size = renderBox.size;
           final screenSize = MediaQuery.of(context).size;
 
-          // Calculate menu position - show below button, align to right edge if needed
+          // Calculate menu position - show below button, ensure within screen bounds
           final menuWidth = 180.0;
           final left = (offset.dx + size.width / 2 + menuWidth / 2 > screenSize.width)
               ? screenSize.width - menuWidth - 8  // Align to right edge
-              : offset.dx + size.width / 2 - menuWidth / 2;  // Center under button
+              : (offset.dx + size.width / 2 - menuWidth / 2 < 0)
+                  ? 8.0  // Align to left edge with padding
+                  : offset.dx + size.width / 2 - menuWidth / 2;  // Center under button
           final top = offset.dy + size.height + 4;
 
           // Show menu
