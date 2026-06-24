@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'dart:io';
 
 import '../../../shared/models/models.dart';
@@ -53,9 +54,9 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     final colorScheme = theme.colorScheme;
     final recentProjects = widget.recentProjects ?? <ProjectHistory>[];
 
-    return AlertDialog(
-      title: const Text('Open Project'),
-      content: SizedBox(
+    return TDAlertDialog(
+      title: 'Open Project',
+      contentWidget: SizedBox(
         width: 600,
         height: 400,
         child: Column(
@@ -64,16 +65,15 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
             // Browse button
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: FilledButton.icon(
-                onPressed: _isLoading ? null : _browseForProject,
+              child: TDButton(
+                text: 'Browse for Project File',
                 icon: _isLoading && _validatingPath != null
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.folder_open_outlined),
-                label: const Text('Browse for Project File'),
+                    ? null
+                    : TDIcons.folder_open,
+                theme: TDButtonTheme.primary,
+                type: TDButtonType.fill,
+                onTap: _isLoading ? null : _browseForProject,
+                isBlock: true,
               ),
             ),
 
@@ -89,7 +89,7 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.error_outline,
+                      TDIcons.close_circle,
                       color: colorScheme.onErrorContainer,
                       size: 20,
                     ),
@@ -102,15 +102,12 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
                         ),
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.close,
-                        color: colorScheme.onErrorContainer,
-                        size: 18,
-                      ),
-                      onPressed: () => setState(() => _error = null),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    TDButton(
+                      icon: TDIcons.close,
+                      type: TDButtonType.text,
+                      theme: TDButtonTheme.defaultTheme,
+                      size: TDButtonSize.small,
+                      onTap: () => setState(() => _error = null),
                     ),
                   ],
                 ),
@@ -160,7 +157,7 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.folder_open_outlined,
+                      TDIcons.folder_open,
                       size: 64,
                       color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                     ),
@@ -186,25 +183,18 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton.icon(
-          onPressed: _selectedPath != null && !_isLoading
-              ? _openSelectedProject
-              : null,
-          icon: _isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.open_in_new),
-          label: const Text('Open'),
-        ),
-      ],
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: _isLoading ? null : () => Navigator.of(context).pop(),
+      ),
+      rightBtn: TDDialogButtonOptions(
+        title: 'Open',
+        theme: TDButtonTheme.primary,
+        type: TDButtonType.fill,
+        action: _selectedPath != null && !_isLoading ? _openSelectedProject : null,
+      ),
     );
   }
 
@@ -371,7 +361,7 @@ class _RecentProjectTile extends StatelessWidget {
                   ),
                 )
               : Icon(
-                  Icons.description_outlined,
+                  TDIcons.file,
                   color: isSelected
                       ? colorScheme.primaryContainer
                       : colorScheme.primary,
@@ -409,11 +399,12 @@ class _RecentProjectTile extends StatelessWidget {
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.close),
-          iconSize: 18,
-          onPressed: onDelete,
-          tooltip: 'Remove from list',
+        trailing: TDButton(
+          icon: TDIcons.close,
+          type: TDButtonType.text,
+          theme: TDButtonTheme.defaultTheme,
+          size: TDButtonSize.small,
+          onTap: onDelete,
         ),
         onTap: isValidating ? null : onTap,
       ),
@@ -448,8 +439,11 @@ class QuickOpenProjectButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () async {
+    return TDButton(
+      icon: TDIcons.folder_open,
+      type: TDButtonType.text,
+      theme: TDButtonTheme.defaultTheme,
+      onTap: () async {
         final result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
           allowedExtensions: ['bkdmm.json'],
@@ -463,8 +457,6 @@ class QuickOpenProjectButton extends StatelessWidget {
           }
         }
       },
-      icon: const Icon(Icons.folder_open_outlined),
-      tooltip: 'Open Project',
     );
   }
 }
@@ -519,20 +511,20 @@ class _ProjectFilePickerState extends State<ProjectFilePicker> {
     return Row(
       children: [
         Expanded(
-          child: TextField(
+          child: TDInput(
             controller: _controller,
-            decoration: InputDecoration(
-              labelText: widget.label,
-              prefixIcon: const Icon(Icons.description_outlined),
-            ),
+            leftLabel: widget.label,
+            leftIcon: const Icon(TDIcons.file),
+            backgroundColor: Colors.transparent,
             readOnly: true,
           ),
         ),
         const SizedBox(width: 8),
-        IconButton.outlined(
-          onPressed: _pickFile,
-          icon: const Icon(Icons.folder_open_outlined),
-          tooltip: 'Browse',
+        TDButton(
+          icon: TDIcons.folder_open,
+          type: TDButtonType.outline,
+          theme: TDButtonTheme.defaultTheme,
+          onTap: _pickFile,
         ),
       ],
     );
@@ -589,7 +581,7 @@ class RecentProjectsList extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.history,
+              TDIcons.history,
               size: 48,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
@@ -611,17 +603,19 @@ class RecentProjectsList extends StatelessWidget {
       itemBuilder: (context, index) {
         final project = displayProjects[index];
         return ListTile(
-          leading: const Icon(Icons.description_outlined),
+          leading: const Icon(TDIcons.file),
           title: Text(project.name),
           subtitle: Text(
             project.path,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          trailing: IconButton(
-            icon: const Icon(Icons.close),
-            iconSize: 18,
-            onPressed: () => onRemove?.call(project),
+          trailing: TDButton(
+            icon: TDIcons.close,
+            type: TDButtonType.text,
+            theme: TDButtonTheme.defaultTheme,
+            size: TDButtonSize.small,
+            onTap: () => onRemove?.call(project),
           ),
           onTap: () => onProjectTap?.call(project),
         );

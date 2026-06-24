@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 /// Create project dialog - Dialog for creating new projects
 ///
@@ -72,9 +73,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AlertDialog(
-      title: const Text('Create New Project'),
-      content: SizedBox(
+    return TDAlertDialog(
+      title: 'Create New Project',
+      contentWidget: SizedBox(
         width: 500,
         child: Form(
           key: _formKey,
@@ -83,35 +84,24 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Project name field
-              TextFormField(
+              TDInput(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Project Name *',
-                  hintText: 'Enter project name',
-                  prefixIcon: Icon(Icons.folder_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Project name is required';
-                  }
-                  if (value.contains(RegExp(r'[<>:"/\\|?*]'))) {
-                    return 'Project name contains invalid characters';
-                  }
-                  return null;
-                },
+                leftLabel: 'Project Name *',
+                hintText: 'Enter project name',
+                backgroundColor: Colors.transparent,
+                leftIcon: const Icon(TDIcons.folder),
                 onChanged: (_) => _clearError(),
                 autofocus: true,
               ),
               const SizedBox(height: 16),
 
               // Description field (multiline)
-              TextFormField(
+              TDInput(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  hintText: 'Enter project description (optional)',
-                  prefixIcon: Icon(Icons.description_outlined),
-                ),
+                leftLabel: 'Description',
+                hintText: 'Enter project description (optional)',
+                backgroundColor: Colors.transparent,
+                leftIcon: const Icon(TDIcons.edit),
                 maxLines: 3,
                 onChanged: (_) => _clearError(),
               ),
@@ -121,30 +111,21 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: TDInput(
                       controller: _pathController,
-                      decoration: const InputDecoration(
-                        labelText: 'Save Location *',
-                        hintText: 'Choose save location',
-                        prefixIcon: Icon(Icons.save_outlined),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Save location is required';
-                        }
-                        if (!value.endsWith('.bkdmm.json')) {
-                          return 'File must end with .bkdmm.json';
-                        }
-                        return null;
-                      },
+                      leftLabel: 'Save Location *',
+                      hintText: 'Choose save location',
+                      backgroundColor: Colors.transparent,
+                      leftIcon: const Icon(TDIcons.save),
                       onChanged: (_) => _clearError(),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  IconButton.outlined(
-                    onPressed: _pickSaveLocation,
-                    icon: const Icon(Icons.folder_open_outlined),
-                    tooltip: 'Browse',
+                  TDButton(
+                    onTap: _pickSaveLocation,
+                    icon: TDIcons.folder_open,
+                    type: TDButtonType.outline,
+                    theme: TDButtonTheme.defaultTheme,
                   ),
                 ],
               ),
@@ -154,15 +135,21 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               Wrap(
                 spacing: 8,
                 children: [
-                  TextButton.icon(
-                    onPressed: () => _setQuickLocation('Documents'),
-                    icon: const Icon(Icons.description, size: 16),
-                    label: const Text('Documents'),
+                  TDButton(
+                    onTap: () => _setQuickLocation('Documents'),
+                    icon: TDIcons.file,
+                    text: 'Documents',
+                    type: TDButtonType.text,
+                    theme: TDButtonTheme.defaultTheme,
+                    size: TDButtonSize.small,
                   ),
-                  TextButton.icon(
-                    onPressed: () => _setQuickLocation('Desktop'),
-                    icon: const Icon(Icons.desktop_windows, size: 16),
-                    label: const Text('Desktop'),
+                  TDButton(
+                    onTap: () => _setQuickLocation('Desktop'),
+                    icon: TDIcons.desktop,
+                    text: 'Desktop',
+                    type: TDButtonType.text,
+                    theme: TDButtonTheme.defaultTheme,
+                    size: TDButtonSize.small,
                   ),
                 ],
               ),
@@ -179,7 +166,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.error_outline,
+                        TDIcons.close_circle,
                         color: colorScheme.onErrorContainer,
                         size: 20,
                       ),
@@ -200,23 +187,18 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isCreating ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton.icon(
-          onPressed: _isCreating ? null : _createProject,
-          icon: _isCreating
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.add),
-          label: const Text('Create'),
-        ),
-      ],
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: _isCreating ? null : () => Navigator.of(context).pop(),
+      ),
+      rightBtn: TDDialogButtonOptions(
+        title: 'Create',
+        theme: TDButtonTheme.primary,
+        type: TDButtonType.fill,
+        action: _isCreating ? null : _createProject,
+      ),
     );
   }
 
@@ -277,7 +259,21 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   }
 
   Future<void> _createProject() async {
-    if (!_formKey.currentState!.validate()) {
+    // Manual validation since TDInput doesn't have built-in validator
+    if (_nameController.text.trim().isEmpty) {
+      setState(() => _error = 'Project name is required');
+      return;
+    }
+    if (_nameController.text.contains(RegExp(r'[<>:"/\\|?*]'))) {
+      setState(() => _error = 'Project name contains invalid characters');
+      return;
+    }
+    if (_pathController.text.trim().isEmpty) {
+      setState(() => _error = 'Save location is required');
+      return;
+    }
+    if (!_pathController.text.endsWith('.bkdmm.json')) {
+      setState(() => _error = 'File must end with .bkdmm.json');
       return;
     }
 
@@ -372,35 +368,29 @@ class _CreateProjectFormState extends State<CreateProjectForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextFormField(
+          TDInput(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Project Name',
-              hintText: 'Enter project name',
-              prefixIcon: Icon(Icons.folder_outlined),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Project name is required';
-              }
-              return null;
-            },
+            leftLabel: 'Project Name',
+            hintText: 'Enter project name',
+            backgroundColor: Colors.transparent,
+            leftIcon: const Icon(TDIcons.folder),
             autofocus: true,
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          TDInput(
             controller: _descriptionController,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
-              hintText: 'Enter project description',
-              prefixIcon: Icon(Icons.description_outlined),
-            ),
+            leftLabel: 'Description (optional)',
+            hintText: 'Enter project description',
+            backgroundColor: Colors.transparent,
+            leftIcon: const Icon(TDIcons.edit),
             maxLines: 2,
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _submit,
-            child: const Text('Create Project'),
+          TDButton(
+            text: 'Create Project',
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            onTap: _submit,
           ),
         ],
       ),
@@ -408,7 +398,7 @@ class _CreateProjectFormState extends State<CreateProjectForm> {
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
+    if (_nameController.text.trim().isNotEmpty) {
       final name = _nameController.text.trim();
       final description = _descriptionController.text.trim();
       widget.onSubmit?.call(name, description.isEmpty ? null : description);
@@ -428,15 +418,17 @@ class QuickCreateProjectButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton.extended(
-      onPressed: () async {
+    return TDButton(
+      onTap: () async {
         final result = await CreateProjectDialog.show(context);
         if (result != null) {
           onCreated?.call(result);
         }
       },
-      icon: const Icon(Icons.add),
-      label: const Text('New Project'),
+      icon: TDIcons.add,
+      text: 'New Project',
+      theme: TDButtonTheme.primary,
+      type: TDButtonType.fill,
     );
   }
 }
