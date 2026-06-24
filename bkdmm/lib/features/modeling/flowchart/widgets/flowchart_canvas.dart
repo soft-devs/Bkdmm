@@ -216,14 +216,40 @@ class _FlowchartCanvasState extends ConsumerState<FlowchartCanvas> {
   void _autoLayout() {
     final state = ref.read(flowDiagramProvider);
 
-    // 配置树形布局
-    _layoutEngine.setConfig(const TreeLayoutConfig(
+    // 简单的树形布局实现
+    const config = TreeLayoutConfig(
       nodeSpacing: 80,
       rankSpacing: 100,
       direction: LayoutDirection.topToBottom,
-    ));
+    );
 
-    final positions = _layoutEngine.layout(state);
+    // 使用 LayoutHelper 计算层级
+    final ranks = LayoutHelper.calculateRanks(state);
+
+    // 按层级分组节点
+    final nodesByRank = <int, List<String>>{};
+    for (final entry in ranks.entries) {
+      nodesByRank.putIfAbsent(entry.value, () => []).add(entry.key);
+    }
+
+    // 计算每层的 Y 坐标
+    final positions = <String, Offset>{};
+    final maxRank = ranks.values.fold(0, (a, b) => a > b ? a : b);
+
+    for (var rank = 0; rank <= maxRank; rank++) {
+      final nodesAtRank = nodesByRank[rank] ?? [];
+      final y = 50.0 + rank * config.rankSpacing;
+
+      // 从左到右排列
+      var x = 50.0;
+      for (final nodeId in nodesAtRank) {
+        final node = state.nodes[nodeId];
+        if (node != null) {
+          positions[nodeId] = Offset(x, y);
+          x += node.size.width + config.nodeSpacing;
+        }
+      }
+    }
 
     // 应用布局
     final newNodes = <String, DiagramNode>{};
@@ -310,8 +336,8 @@ class FlowchartPainter extends CustomPainter {
     const gridSize = 20.0;
     final gridPaint = Paint()
       ..color = isDarkMode
-          ? Colors.white.withOpacity(0.03)
-          : Colors.black.withOpacity(0.03)
+          ? Colors.white.withValues(alpha: 0.03)
+          : Colors.black.withValues(alpha: 0.03)
       ..strokeWidth = 0.5;
 
     final visibleRect = Rect.fromLTWH(

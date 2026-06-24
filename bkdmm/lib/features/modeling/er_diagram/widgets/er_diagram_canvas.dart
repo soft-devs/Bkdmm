@@ -1,12 +1,10 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphview/graphview.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import 'package:bkdmm/shared/models/models.dart';
-import '../core/er_graph_edge.dart';
 import '../core/field_anchor_registry.dart';
 import '../core/graph_sync.dart';
 import '../layout/layout_adapter.dart';
@@ -93,20 +91,14 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   /// 从状态同步到 graphview
   void _syncFromState() {
     final state = ref.read(erDiagramProvider(widget.moduleId));
-    if (state is ERDiagramState) {
-      _graphSync.syncFromState(state);
-      setState(() {});
-    }
+    _graphSync.syncFromState(state);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(erDiagramProvider(widget.moduleId));
-
-    if (state is! ERDiagramState) {
-      return const Center(child: Text('无法加载 ER 图'));
-    }
 
     // 同步状态
     _graphSync.syncFromState(state);
@@ -347,11 +339,9 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   /// 节点双击处理
   void _onNodeDoubleTap(String nodeId) {
     final state = ref.read(erDiagramProvider(widget.moduleId));
-    if (state is ERDiagramState) {
-      final erNode = state.getERNode(nodeId);
-      if (erNode != null) {
-        widget.onEntityEdit?.call(erNode.entity);
-      }
+    final erNode = state.getERNode(nodeId);
+    if (erNode != null) {
+      widget.onEntityEdit?.call(erNode.entity);
     }
   }
 
@@ -491,9 +481,6 @@ class _RelationDialog extends StatefulWidget {
 }
 
 class _RelationDialogState extends State<_RelationDialog> {
-  String _relationType = '1:N';
-  String? _label;
-
   @override
   Widget build(BuildContext context) {
     return TDAlertDialog(

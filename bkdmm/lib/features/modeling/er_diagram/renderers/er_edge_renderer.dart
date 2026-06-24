@@ -78,7 +78,7 @@ class ERRelationEdgeRenderer extends EdgeRenderer {
       }
     }
     // 默认使用节点右侧中点
-    return Offset(node.x + node.width!, node.y + node.height! / 2);
+    return Offset(node.x + node.width, node.y + node.height / 2);
   }
 
   /// 获取目标端连接位置
@@ -94,7 +94,7 @@ class ERRelationEdgeRenderer extends EdgeRenderer {
       }
     }
     // 默认使用节点左侧中点
-    return Offset(node.x, node.y + node.height! / 2);
+    return Offset(node.x, node.y + node.height / 2);
   }
 
   /// 绘制关系标记
