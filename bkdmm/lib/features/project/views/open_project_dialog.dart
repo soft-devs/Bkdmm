@@ -54,11 +54,19 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     final colorScheme = theme.colorScheme;
     final recentProjects = widget.recentProjects ?? <ProjectHistory>[];
 
+    // Responsive dialog dimensions
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    const double baseWidth = 600.0;
+    const double baseHeight = 400.0;
+    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+    final dialogHeight = (screenHeight * 0.7).clamp(baseHeight, baseHeight * 1.3);
+
     return TDAlertDialog(
       title: 'Open Project',
       contentWidget: SizedBox(
-        width: 780, // 600 * 1.3
-        height: 520, // 400 * 1.3
+        width: dialogWidth,
+        height: dialogHeight,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

@@ -170,9 +170,11 @@ class _IndexEditorState extends State<IndexEditor> {
           Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: index.fields.map((fieldName) {
+            children: index.fieldIds.map((fieldId) {
+              final field = widget.availableFields.where((f) => f.id == fieldId).firstOrNull;
+              final displayName = field?.name ?? fieldId;
               return TDTag(
-                fieldName,
+                displayName,
                 theme: TDTagTheme.primary,
                 size: TDTagSize.small,
               );
@@ -240,17 +242,23 @@ class _IndexEditorState extends State<IndexEditor> {
     );
     final remarkController = TextEditingController(text: existingIndex?.remark ?? '');
     IndexType selectedType = existingIndex?.type ?? IndexType.normal;
-    Set<String> selectedFields = existingIndex?.fields.toSet() ?? {};
+    Set<String> selectedFieldIds = existingIndex?.fieldIds.toSet() ?? {};
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
+      builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) {
           final tdTheme = TDTheme.of(context);
+          // Responsive dialog width calculation
+          final screenWidth = MediaQuery.of(context).size.width;
+          const baseMinWidth = 500.0;
+          final maxWidth = baseMinWidth * 1.3; // 650
+          final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
+
           return TDAlertDialog(
             title: existingIndex == null ? 'Add Index' : 'Edit Index',
             contentWidget: SizedBox(
-              width: 650, // 500 * 1.3
+              width: dialogWidth,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -305,7 +313,7 @@ class _IndexEditorState extends State<IndexEditor> {
                                 itemCount: widget.availableFields.length,
                                 itemBuilder: (ctx, index) {
                                   final field = widget.availableFields[index];
-                                  final isSelected = selectedFields.contains(field.name);
+                                  final isSelected = selectedFieldIds.contains(field.id);
                                   return TDCheckbox(
                                     title: field.name,
                                     subTitle: '${field.chnname} (${field.type})',
@@ -313,9 +321,9 @@ class _IndexEditorState extends State<IndexEditor> {
                                     onCheckBoxChanged: (checked) {
                                       setState(() {
                                         if (checked) {
-                                          selectedFields.add(field.name);
+                                          selectedFieldIds.add(field.id);
                                         } else {
-                                          selectedFields.remove(field.name);
+                                          selectedFieldIds.remove(field.id);
                                         }
                                       });
                                     },
@@ -351,7 +359,7 @@ class _IndexEditorState extends State<IndexEditor> {
                   TDToast.showText('Index name is required', context: context);
                   return;
                 }
-                if (selectedFields.isEmpty) {
+                if (selectedFieldIds.isEmpty) {
                   TDToast.showText('Select at least one field', context: context);
                   return;
                 }
@@ -359,7 +367,7 @@ class _IndexEditorState extends State<IndexEditor> {
                 final index = Index(
                   id: existingIndex?.id ?? '',
                   name: nameController.text.trim(),
-                  fields: selectedFields.toList(),
+                  fieldIds: selectedFieldIds.toList(),
                   type: selectedType,
                   remark: remarkController.text.trim().isNotEmpty
                       ? remarkController.text.trim()

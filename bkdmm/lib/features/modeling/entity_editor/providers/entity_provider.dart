@@ -146,14 +146,14 @@ class EntityEditNotifier extends StateNotifier<EntityEditState> {
   /// Add a new index
   void addIndex({
     String? name,
-    List<String>? fields,
+    List<String>? fieldIds,
     IndexType type = IndexType.normal,
     String? remark,
   }) {
     final newIndex = Index(
       id: IdGenerator.generate(),
       name: name ?? 'idx_${state.entity.indexes.length + 1}',
-      fields: fields ?? [],
+      fieldIds: fieldIds ?? [],
       type: type,
       remark: remark,
     );

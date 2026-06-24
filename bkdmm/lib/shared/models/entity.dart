@@ -160,8 +160,8 @@ class Index {
   /// 索引名称
   final String name;
 
-  /// 索引字段列表
-  final List<String> fields;
+  /// 索引字段ID列表
+  final List<String> fieldIds;
 
   /// 索引类型
   final IndexType type;
@@ -172,13 +172,21 @@ class Index {
   Index({
     required this.id,
     required this.name,
-    required this.fields,
+    required this.fieldIds,
     this.type = IndexType.normal,
     this.remark,
   });
 
   factory Index.fromJson(Map<String, dynamic> json) => _$IndexFromJson(json);
   Map<String, dynamic> toJson() => _$IndexToJson(this);
+
+  /// Get field names from field IDs (for backward compatibility and code generation)
+  List<String> getFieldNames(List<Field> fields) {
+    return fieldIds.map((id) {
+      final field = fields.where((f) => f.id == id).firstOrNull;
+      return field?.name ?? id;
+    }).toList();
+  }
 }
 
 /// 索引类型枚举

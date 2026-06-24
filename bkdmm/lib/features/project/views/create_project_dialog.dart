@@ -73,16 +73,23 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Responsive width calculation
+    final screenWidth = MediaQuery.of(context).size.width;
+    const double minDialogWidth = 600.0;
+    const double maxDialogWidth = 780.0; // 600 * 1.3
+    final dialogWidth = (screenWidth * 0.85).clamp(minDialogWidth, maxDialogWidth);
+
     return TDAlertDialog(
       title: 'Create New Project',
       contentWidget: SizedBox(
-        width: 780, // 600 * 1.3
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        width: dialogWidth,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Project name field
               TDInput(
                 controller: _nameController,

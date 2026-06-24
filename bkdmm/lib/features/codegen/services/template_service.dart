@@ -26,7 +26,7 @@ class TemplateService {
     final indexes = entity.indexes.map((index) {
       return {
         'name': index.name,
-        'fields': index.fields.join(', '),
+        'fields': index.getFieldNames(entity.fields).join(', '),
         'isUnique': index.type == IndexType.unique,
         'isFulltext': index.type == IndexType.fulltext,
         'isNormal': index.type == IndexType.normal,

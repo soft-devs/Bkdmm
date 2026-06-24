@@ -164,7 +164,7 @@ class CodegenService {
     final data = {
       'tableName': entity.title,
       'indexName': index.name,
-      'fields': index.fields.join(', '),
+      'fields': index.getFieldNames(entity.fields).join(', '),
       'isUnique': index.type == IndexType.unique,
       'isFulltext': index.type == IndexType.fulltext,
       'isNormal': index.type == IndexType.normal,

@@ -65,8 +65,8 @@ Map<String, dynamic> _$FieldToJson(Field instance) => <String, dynamic>{
 Index _$IndexFromJson(Map<String, dynamic> json) => Index(
       id: json['id'] as String,
       name: json['name'] as String,
-      fields:
-          (json['fields'] as List<dynamic>).map((e) => e as String).toList(),
+      fieldIds:
+          (json['fieldIds'] as List<dynamic>).map((e) => e as String).toList(),
       type: $enumDecodeNullable(_$IndexTypeEnumMap, json['type']) ??
           IndexType.normal,
       remark: json['remark'] as String?,
@@ -75,7 +75,7 @@ Index _$IndexFromJson(Map<String, dynamic> json) => Index(
 Map<String, dynamic> _$IndexToJson(Index instance) => <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'fields': instance.fields,
+      'fieldIds': instance.fieldIds,
       'type': _$IndexTypeEnumMap[instance.type]!,
       'remark': instance.remark,
     };

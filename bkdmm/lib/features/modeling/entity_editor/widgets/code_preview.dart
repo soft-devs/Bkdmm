@@ -320,7 +320,7 @@ class _CodePreviewState extends State<CodePreview> {
     var sql = 'CREATE ';
     if (isUnique) sql += 'UNIQUE ';
     if (isFulltext && widget.selectedDatabase == 'MYSQL') sql += 'FULLTEXT ';
-    sql += 'INDEX ${index.name} ON ${widget.entity.title}(${index.fields.join(', ')});';
+    sql += 'INDEX ${index.name} ON ${widget.entity.title}(${index.getFieldNames(widget.entity.fields).join(', ')});';
 
     return sql;
   }

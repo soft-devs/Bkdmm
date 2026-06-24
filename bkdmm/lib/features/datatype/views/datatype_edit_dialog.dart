@@ -125,11 +125,17 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Responsive width calculation
+    const double baseMinWidth = 600.0;
+    final double maxWidth = baseMinWidth * 1.3; // 780
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
+
     return TDAlertDialog(
       title: widget.existingType != null ? 'Edit Data Type' : 'Add Data Type',
       content: '',
       contentWidget: SizedBox(
-        width: 780, // 600 * 1.3
+        width: dialogWidth,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

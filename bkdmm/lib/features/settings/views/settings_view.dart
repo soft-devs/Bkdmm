@@ -622,12 +622,15 @@ class _AccentColorDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    const baseWidth = 280.0;
+    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
 
     return TDAlertDialog(
       title: 'Accent Color',
       content: '',
       contentWidget: SizedBox(
-        width: 364, // 280 * 1.3
+        width: dialogWidth,
         child: GridView.builder(
           shrinkWrap: true,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -789,12 +792,15 @@ class _DatabaseTypeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    const baseWidth = 300.0;
+    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
 
     return TDAlertDialog(
       title: 'Default Database Type',
       content: '',
       contentWidget: SizedBox(
-        width: 390, // 300 * 1.3
+        width: dialogWidth,
         child: ListView.builder(
           shrinkWrap: true,
           itemCount: AppConstants.supportedDatabases.length + 1,
@@ -879,12 +885,15 @@ class _AutoSaveDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    const baseWidth = 300.0;
+    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
 
     return TDAlertDialog(
       title: 'Auto-save Interval',
       content: '',
       contentWidget: SizedBox(
-        width: 390, // 300 * 1.3
+        width: dialogWidth,
         child: ListView.builder(
           shrinkWrap: true,
           itemCount: _intervals.length,

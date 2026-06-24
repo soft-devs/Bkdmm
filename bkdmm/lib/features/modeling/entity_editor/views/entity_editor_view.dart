@@ -421,26 +421,94 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     ),
                   )
                 else
-                  DataTable(
-                    headingRowColor: WidgetStateProperty.all(tdTheme.bgColorSecondaryContainer),
-                    columns: const [
-                      DataColumn(label: Text('PK')),
-                      DataColumn(label: Text('Name')),
-                      DataColumn(label: Text('Type')),
-                      DataColumn(label: Text('Chinese Name')),
-                    ],
-                    rows: entity.fields.take(10).map((field) {
-                      return DataRow(
-                        cells: [
-                          DataCell(field.pk
-                              ? Icon(TDIcons.lock_on, size: 16, color: tdTheme.brandNormalColor)
-                              : const SizedBox()),
-                          DataCell(TDText(field.name, font: tdTheme.fontBodySmall)),
-                          DataCell(TDText(field.type, font: tdTheme.fontBodySmall)),
-                          DataCell(TDText(field.chnname, font: tdTheme.fontBodySmall)),
-                        ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final availableWidth = constraints.maxWidth - 48; // Account for padding
+                      final pkWidth = 48.0;
+                      final typeWidth = (availableWidth * 0.20).clamp(80.0, 150.0);
+                      final chnnameWidth = (availableWidth * 0.25).clamp(80.0, 150.0);
+                      final nameWidth = availableWidth - pkWidth - typeWidth - chnnameWidth;
+
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minWidth: availableWidth),
+                            child: DataTable(
+                              headingRowColor: WidgetStateProperty.all(tdTheme.bgColorSecondaryContainer),
+                              dataRowMinHeight: 36,
+                              dataRowMaxHeight: 44,
+                              columnSpacing: 12,
+                              horizontalMargin: 12,
+                              columns: [
+                                DataColumn(
+                                  label: SizedBox(
+                                    width: pkWidth,
+                                    child: TDText('PK', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: SizedBox(
+                                    width: nameWidth,
+                                    child: TDText('Name', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: SizedBox(
+                                    width: typeWidth,
+                                    child: TDText('Type', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: SizedBox(
+                                    width: chnnameWidth,
+                                    child: TDText('Chinese Name', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                              rows: entity.fields.take(10).map((field) {
+                                return DataRow(
+                                  cells: [
+                                    DataCell(SizedBox(
+                                      width: pkWidth,
+                                      child: field.pk
+                                          ? Icon(TDIcons.check, size: 16, color: tdTheme.brandNormalColor)
+                                          : const SizedBox(),
+                                    )),
+                                    DataCell(SizedBox(
+                                      width: nameWidth,
+                                      child: TDText(
+                                        field.name,
+                                        font: tdTheme.fontBodySmall,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )),
+                                    DataCell(SizedBox(
+                                      width: typeWidth,
+                                      child: TDText(
+                                        field.type,
+                                        font: tdTheme.fontBodySmall,
+                                        textColor: tdTheme.textColorSecondary,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )),
+                                    DataCell(SizedBox(
+                                      width: chnnameWidth,
+                                      child: TDText(
+                                        field.chnname,
+                                        font: tdTheme.fontBodySmall,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )),
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
                       );
-                    }).toList(),
+                    },
                   ),
                 if (entity.fields.length > 10)
                   Padding(
