@@ -203,7 +203,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   }
 
   /// Show database selector dialog
-  void _showDatabaseSelectorDialog(List<DatabaseInfo> databases, String currentSelection) {
+  void _showDatabaseSelectorDialog(List<DatabaseTemplate> databases, String currentSelection) {
     final tdTheme = TDTheme.of(context);
 
     showDialog(
@@ -290,6 +290,12 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         return 'CREATE INDEX';
       case DdlType.dropIndex:
         return 'DROP INDEX';
+      case DdlType.alterTableAddColumn:
+        return 'ALTER TABLE ADD';
+      case DdlType.alterTableDropColumn:
+        return 'ALTER TABLE DROP';
+      case DdlType.alterTableModifyColumn:
+        return 'ALTER TABLE MODIFY';
     }
   }
 
@@ -416,7 +422,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: isSelected ? tdTheme.brandColorLight : null,
+        color: isSelected ? tdTheme.brandLightColor : null,
         child: Row(
           children: [
             Icon(
@@ -496,7 +502,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
       },
       child: Container(
         padding: const EdgeInsets.only(left: 56, right: 16, top: 8, bottom: 8),
-        color: isSelected ? tdTheme.brandColorLight : null,
+        color: isSelected ? tdTheme.brandLightColor : null,
         child: Row(
           children: [
             Icon(
@@ -567,7 +573,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: tdTheme.bgColorSecondarycontainer,
+              color: tdTheme.bgColorSecondaryContainer,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(tdTheme.radiusDefault),
                 topRight: Radius.circular(tdTheme.radiusDefault),
@@ -611,12 +617,13 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
   /// Build SQL content with syntax highlighting
   Widget _buildSqlContent(TDThemeData tdTheme, CodegenState state) {
+    final fontSize = tdTheme.fontBodyMedium?.size ?? 14;
     return SelectableText.rich(
       TextSpan(
         children: _highlightSql(state.generatedDdl, tdTheme),
         style: TextStyle(
           fontFamily: 'RobotoMono',
-          fontSize: tdTheme.fontBodyMedium.fontSize,
+          fontSize: fontSize,
           color: tdTheme.textColorPrimary,
         ),
       ),
@@ -656,7 +663,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           // String/comment
           spans.add(TextSpan(
             text: word,
-            style: TextStyle(color: tdTheme.warningColor),
+            style: TextStyle(color: tdTheme.warningNormalColor),
           ));
         } else if (word.startsWith('--') || word.startsWith('/*')) {
           // Comment
@@ -668,7 +675,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           // Quoted identifier
           spans.add(TextSpan(
             text: word,
-            style: TextStyle(color: tdTheme.successColor),
+            style: TextStyle(color: tdTheme.successNormalColor),
           ));
         } else {
           spans.add(TextSpan(text: word));
@@ -767,19 +774,19 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           Icon(
             TDIcons.close_circle,
             size: 64,
-            color: tdTheme.errorColor,
+            color: tdTheme.errorNormalColor,
           ),
           const SizedBox(height: 16),
           TDText(
             'Generation Error',
             font: tdTheme.fontTitleMedium,
-            textColor: tdTheme.errorColor,
+            textColor: tdTheme.errorNormalColor,
           ),
           const SizedBox(height: 8),
           TDText(
             state.error ?? 'Unknown error',
             font: tdTheme.fontBodyMedium,
-            textColor: tdTheme.errorColor,
+            textColor: tdTheme.errorNormalColor,
           ),
           const SizedBox(height: 16),
           TDButton(

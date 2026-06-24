@@ -182,7 +182,7 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              TDIcons.view_module_outlined,
+              TDIcons.view_module,
               size: 48,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
