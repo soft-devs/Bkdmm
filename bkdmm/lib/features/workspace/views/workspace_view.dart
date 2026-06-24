@@ -156,7 +156,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             child: Row(
               children: [
                 Icon(
-                  Icons.folder_open,
+                  TDIcons.folder_open,
                   size: 20,
                   color: colorScheme.primary,
                 ),
@@ -189,6 +189,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               icon: TDIcons.save,
               size: TDButtonSize.small,
               type: TDButtonType.text,
+              theme: TDButtonTheme.primary,
               onTap: _saveProject,
             ),
 
@@ -197,6 +198,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             icon: _showPropertiesPanel ? TDIcons.fullscreen_exit : TDIcons.fullscreen,
             size: TDButtonSize.small,
             type: TDButtonType.text,
+            theme: TDButtonTheme.defaultTheme,
             onTap: () {
               setState(() {
                 _showPropertiesPanel = !_showPropertiesPanel;
@@ -206,13 +208,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
           // More actions menu
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(TDIcons.more),
             onSelected: (action) => _handleMenuAction(action),
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'save',
                 child: ListTile(
-                  leading: Icon(Icons.save),
+                  leading: Icon(TDIcons.save),
                   title: Text('Save'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -220,7 +222,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               const PopupMenuItem(
                 value: 'save_as',
                 child: ListTile(
-                  leading: Icon(Icons.save_as),
+                  leading: Icon(TDIcons.folder),
                   title: Text('Save As...'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -229,7 +231,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               const PopupMenuItem(
                 value: 'close',
                 child: ListTile(
-                  leading: Icon(Icons.close),
+                  leading: Icon(TDIcons.close),
                   title: Text('Close Project'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -238,7 +240,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               const PopupMenuItem(
                 value: 'settings',
                 child: ListTile(
-                  leading: Icon(Icons.settings),
+                  leading: Icon(TDIcons.setting),
                   title: Text('Project Settings'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -246,7 +248,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               const PopupMenuItem(
                 value: 'datatype',
                 child: ListTile(
-                  leading: Icon(Icons.data_object),
+                  leading: Icon(TDIcons.code),
                   title: Text('Data Types'),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -296,7 +298,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.tab_outlined,
+              TDIcons.browser,
               size: 64,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
@@ -381,7 +383,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             child: Row(
               children: [
                 Icon(
-                  Icons.view_module,
+                  TDIcons.view_module,
                   color: colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
@@ -429,7 +431,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.account_tree_outlined,
+              TDIcons.view_module,
               size: 64,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
@@ -477,7 +479,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           const PopupMenuItem(
             value: 'edit',
             child: ListTile(
-              leading: Icon(Icons.edit),
+              leading: Icon(TDIcons.edit),
               title: Text('Edit Entity'),
               contentPadding: EdgeInsets.zero,
             ),
@@ -485,7 +487,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           const PopupMenuItem(
             value: 'delete',
             child: ListTile(
-              leading: Icon(Icons.delete, color: Colors.red),
+              leading: Icon(TDIcons.delete, color: Colors.red),
               title: Text('Delete Entity', style: TextStyle(color: Colors.red)),
               contentPadding: EdgeInsets.zero,
             ),
@@ -494,7 +496,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           const PopupMenuItem(
             value: 'add_entity',
             child: ListTile(
-              leading: Icon(Icons.add),
+              leading: Icon(TDIcons.add),
               title: Text('Add Entity'),
               contentPadding: EdgeInsets.zero,
             ),
@@ -536,7 +538,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.table_chart,
+                      TDIcons.table,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 8),
@@ -551,6 +553,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                       icon: TDIcons.close,
                       size: TDButtonSize.small,
                       type: TDButtonType.text,
+                      theme: TDButtonTheme.defaultTheme,
                       onTap: () => Navigator.pop(context),
                     ),
                   ],
@@ -574,31 +577,29 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   void _confirmDeleteEntity(Module module, Entity entity) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Entity'),
-        content: Text('Are you sure you want to delete "${entity.title}"?'),
-        actions: [
-          TDButton(
-            text: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            type: TDButtonType.text,
-            onTap: () => Navigator.pop(context),
-          ),
-          TDButton(
-            text: 'Delete',
-            theme: TDButtonTheme.danger,
-            type: TDButtonType.fill,
-            onTap: () {
-              final updatedEntities = module.entities.where((e) => e.id != entity.id).toList();
-              final updatedModule = module.copyWith(
-                entities: updatedEntities,
-                updatedAt: DateTime.now(),
-              );
-              ref.read(projectProvider.notifier).updateModule(module.id, updatedModule);
-              Navigator.pop(context);
-            },
-          ),
-        ],
+      builder: (context) => TDAlertDialog(
+        title: 'Delete Entity',
+        content: 'Are you sure you want to delete "${entity.title}"?',
+        leftBtn: TDButton(
+          text: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          onTap: () => Navigator.pop(context),
+        ),
+        rightBtn: TDButton(
+          text: 'Delete',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          onTap: () {
+            final updatedEntities = module.entities.where((e) => e.id != entity.id).toList();
+            final updatedModule = module.copyWith(
+              entities: updatedEntities,
+              updatedAt: DateTime.now(),
+            );
+            ref.read(projectProvider.notifier).updateModule(module.id, updatedModule);
+            Navigator.pop(context);
+          },
+        ),
       ),
     );
   }
@@ -634,7 +635,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             child: Row(
               children: [
                 Icon(
-                  Icons.account_tree,
+                  TDIcons.relation,
                   color: colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
@@ -656,7 +657,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.account_tree_outlined,
+                          TDIcons.view_module,
                           size: 64,
                           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                         ),
@@ -676,7 +677,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                     itemBuilder: (context, index) {
                       final edge = module.graphCanvas.edges[index];
                       return ListTile(
-                        leading: const Icon(Icons.arrow_forward),
+                        leading: const Icon(TDIcons.arrow_right),
                         title: Text('${edge.source} -> ${edge.target}'),
                         subtitle: Text(edge.label ?? 'No label'),
                       );
@@ -708,7 +709,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             child: Row(
               children: [
                 Icon(
-                  Icons.settings,
+                  TDIcons.setting,
                   color: colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
@@ -749,7 +750,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.error_outline,
+            TDIcons.info_circle,
             size: 64,
             color: colorScheme.error,
           ),
@@ -814,6 +815,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   icon: TDIcons.close,
                   size: TDButtonSize.small,
                   type: TDButtonType.text,
+                  theme: TDButtonTheme.defaultTheme,
                   onTap: () {
                     setState(() {
                       _showPropertiesPanel = false;
@@ -885,9 +887,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         _PropertyField(label: 'ID', value: entity.id),
         const SizedBox(height: 16),
         _PropertySection(title: 'Statistics'),
-        _StatTile(icon: Icons.list_alt, label: 'Fields', value: '${entity.fields.length}'),
-        _StatTile(icon: Icons.key, label: 'Primary Keys', value: '${entity.primaryKeys.length}'),
-        _StatTile(icon: Icons.sort, label: 'Indexes', value: '${entity.indexes.length}'),
+        _StatTile(icon: TDIcons.unordered_list, label: 'Fields', value: '${entity.fields.length}'),
+        _StatTile(icon: TDIcons.key, label: 'Primary Keys', value: '${entity.primaryKeys.length}'),
+        _StatTile(icon: TDIcons.chart, label: 'Indexes', value: '${entity.indexes.length}'),
         const SizedBox(height: 16),
         _PropertySection(title: 'Timestamps'),
         _PropertyField(label: 'Created', value: _formatDateTime(entity.createdAt)),
@@ -918,8 +920,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         _PropertyField(label: 'ID', value: module.id),
         const SizedBox(height: 16),
         _PropertySection(title: 'Statistics'),
-        _StatTile(icon: Icons.table_chart, label: 'Entities', value: '${module.entities.length}'),
-        _StatTile(icon: Icons.account_tree, label: 'Relations', value: '${module.graphCanvas.edges.length}'),
+        _StatTile(icon: TDIcons.table, label: 'Entities', value: '${module.entities.length}'),
+        _StatTile(icon: TDIcons.relation, label: 'Relations', value: '${module.graphCanvas.edges.length}'),
         const SizedBox(height: 16),
         _PropertySection(title: 'Timestamps'),
         _PropertyField(label: 'Created', value: _formatDateTime(module.createdAt)),
@@ -943,14 +945,14 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         _PropertyField(label: 'ID', value: project.id),
         const SizedBox(height: 16),
         _PropertySection(title: 'Statistics'),
-        _StatTile(icon: Icons.view_module, label: 'Modules', value: '${project.modules.length}'),
+        _StatTile(icon: TDIcons.view_module, label: 'Modules', value: '${project.modules.length}'),
         _StatTile(
-          icon: Icons.table_chart,
+          icon: TDIcons.table,
           label: 'Entities',
           value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.length)}',
         ),
         _StatTile(
-          icon: Icons.list_alt,
+          icon: TDIcons.unordered_list,
           label: 'Fields',
           value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.fold<int>(0, (s, e) => s + e.fields.length))}',
         ),
@@ -989,7 +991,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             child: Row(
               children: [
                 Icon(
-                  Icons.folder,
+                  TDIcons.folder,
                   size: 14,
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -1017,7 +1019,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             child: Row(
               children: [
                 Icon(
-                  Icons.tab,
+                  TDIcons.browser,
                   size: 14,
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -1041,7 +1043,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.circle,
+                    TDIcons.circle,
                     size: 8,
                     color: colorScheme.primary,
                   ),
@@ -1061,7 +1063,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.check,
+                    TDIcons.check,
                     size: 14,
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -1090,11 +1092,11 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       await ref.read(projectProvider.notifier).saveProject();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project saved'), backgroundColor: Colors.green));
+        TDToast.showText('Project saved', context: context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red));
+        TDToast.showText('Failed to save: $e', context: context);
       }
     }
   }
@@ -1121,7 +1123,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
   Future<void> _saveProjectAs() async {
     // TODO: Implement save as dialog
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save As coming soon')));
+    TDToast.showText('Save As coming soon', context: context);
   }
 
   Future<void> _closeProject() async {
@@ -1134,25 +1136,21 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     if (projectState.isDirty) {
       final shouldSave = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Save changes?'),
-          content: const Text(
-            'The project has unsaved changes. Do you want to save before closing?',
+        builder: (context) => TDAlertDialog(
+          title: 'Save changes?',
+          content: 'The project has unsaved changes. Do you want to save before closing?',
+          leftBtn: TDButton(
+            text: 'Discard',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            onTap: () => Navigator.pop(context, false),
           ),
-          actions: [
-            TDButton(
-              text: 'Discard',
-              theme: TDButtonTheme.defaultTheme,
-              type: TDButtonType.text,
-              onTap: () => Navigator.pop(context, false),
-            ),
-            TDButton(
-              text: 'Save',
-              theme: TDButtonTheme.primary,
-              type: TDButtonType.fill,
-              onTap: () => Navigator.pop(context, true),
-            ),
-          ],
+          rightBtn: TDButton(
+            text: 'Save',
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            onTap: () => Navigator.pop(context, true),
+          ),
         ),
       );
 
@@ -1180,76 +1178,25 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.view_module),
-            SizedBox(width: 8),
-            Text('Create New Module'),
-          ],
+      builder: (context) => TDAlertDialog(
+        title: 'Create New Module',
+        content: 'A module is a container for related database tables/entities.',
+        leftBtn: TDButton(
+          text: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          onTap: () => Navigator.pop(context, false),
         ),
-        content: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'A module is a container for related database tables/entities.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Module Name *',
-                  hintText: 'e.g., user_management, order_system',
-                  prefixIcon: Icon(Icons.folder_outlined),
-                ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: chnnameController,
-                decoration: const InputDecoration(
-                  labelText: 'Chinese Name',
-                  hintText: 'e.g., 用户管理模块',
-                  prefixIcon: Icon(Icons.translate),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  hintText: 'Brief description of this module',
-                  prefixIcon: Icon(Icons.description_outlined),
-                ),
-                maxLines: 2,
-              ),
-            ],
-          ),
+        rightBtn: TDButton(
+          text: 'Create Module',
+          theme: TDButtonTheme.primary,
+          type: TDButtonType.fill,
+          onTap: () {
+            if (nameController.text.trim().isNotEmpty) {
+              Navigator.pop(context, true);
+            }
+          },
         ),
-        actions: [
-          TDButton(
-            text: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            type: TDButtonType.text,
-            onTap: () => Navigator.pop(context, false),
-          ),
-          TDButton(
-            text: 'Create Module',
-            icon: TDIcons.add,
-            theme: TDButtonTheme.primary,
-            type: TDButtonType.fill,
-            onTap: () {
-              if (nameController.text.trim().isNotEmpty) {
-                Navigator.pop(context, true);
-              }
-            },
-          ),
-        ],
       ),
     );
 
@@ -1274,77 +1221,25 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.table_chart),
-            const SizedBox(width: 8),
-            Expanded(child: Text('Create Table in "${module.name}"')),
-          ],
+      builder: (context) => TDAlertDialog(
+        title: 'Create Table in "${module.name}"',
+        content: 'Create a new database table/entity in module "${module.chnname}".',
+        leftBtn: TDButton(
+          text: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          onTap: () => Navigator.pop(context, false),
         ),
-        content: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Create a new database table/entity in module "${module.chnname}".',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Table Name *',
-                  hintText: 'e.g., user_info, order_detail',
-                  prefixIcon: Icon(Icons.table_chart_outlined),
-                  helperText: 'Use snake_case for database naming',
-                ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: chnnameController,
-                decoration: const InputDecoration(
-                  labelText: 'Chinese Name',
-                  hintText: 'e.g., 用户信息表',
-                  prefixIcon: Icon(Icons.translate),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: remarkController,
-                decoration: const InputDecoration(
-                  labelText: 'Remark',
-                  hintText: 'Table description',
-                  prefixIcon: Icon(Icons.notes_outlined),
-                ),
-                maxLines: 2,
-              ),
-            ],
-          ),
+        rightBtn: TDButton(
+          text: 'Create Table',
+          theme: TDButtonTheme.primary,
+          type: TDButtonType.fill,
+          onTap: () {
+            if (titleController.text.trim().isNotEmpty) {
+              Navigator.pop(context, true);
+            }
+          },
         ),
-        actions: [
-          TDButton(
-            text: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            type: TDButtonType.text,
-            onTap: () => Navigator.pop(context, false),
-          ),
-          TDButton(
-            text: 'Create Table',
-            icon: TDIcons.add,
-            theme: TDButtonTheme.primary,
-            type: TDButtonType.fill,
-            onTap: () {
-              if (titleController.text.trim().isNotEmpty) {
-                Navigator.pop(context, true);
-              }
-            },
-          ),
-        ],
       ),
     );
 
