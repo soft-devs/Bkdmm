@@ -679,7 +679,7 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
     return TDAlertDialog(
       title: 'Font Size',
       content: '',
-      customContent: Column(
+      contentWidget: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 /// A loading overlay widget that blocks interaction and shows a progress indicator.
 ///
@@ -47,8 +48,10 @@ class LoadingOverlay extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(
-                      color: colorScheme.primary,
+                    TDLoading(
+                      size: TDLoadingSize.large,
+                      icon: TDLoadingIcon.circle,
+                      iconColor: colorScheme.primary,
                     ),
                     if (message != null) ...[
                       const SizedBox(height: 16),
@@ -96,9 +99,10 @@ class LoadingIndicator extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CircularProgressIndicator(
-        strokeWidth: strokeWidth,
-        color: color ?? colorScheme.primary,
+      child: TDLoading(
+        size: TDLoadingSize.small,
+        icon: TDLoadingIcon.circle,
+        iconColor: color ?? colorScheme.primary,
       ),
     );
   }
@@ -256,7 +260,7 @@ class LoadingStateBuilder<T> extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.error_outline,
+                    TDIcons.close_circle,
                     size: 48,
                     color: Theme.of(context).colorScheme.error,
                   ),
@@ -264,10 +268,12 @@ class LoadingStateBuilder<T> extends StatelessWidget {
                   Text(error ?? 'An error occurred'),
                   if (onRetry != null) ...[
                     const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: onRetry,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                    TDButton(
+                      theme: TDButtonTheme.primary,
+                      type: TDButtonType.fill,
+                      onTap: onRetry,
+                      icon: TDIcons.refresh,
+                      text: 'Retry',
                     ),
                   ],
                 ],
