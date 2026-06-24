@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:graphview/graphview.dart';
-import '../../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 import '../models/er_diagram_models.dart';
 import 'field_anchor_registry.dart';
 import 'er_graph_edge.dart';

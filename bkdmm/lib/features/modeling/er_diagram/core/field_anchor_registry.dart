@@ -1,5 +1,5 @@
 import 'dart:ui';
-import '../../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 
 /// 字段锚点方向
 enum FieldAnchorDirection {
