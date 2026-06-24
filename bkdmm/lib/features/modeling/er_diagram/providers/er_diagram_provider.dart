@@ -10,9 +10,17 @@ import '../models/er_diagram_models.dart';
 /// ER 图状态 Notifier
 ///
 /// 管理 ER 图的状态，包括节点、边、选择、交互等
+///
+/// 刷新机制：
+/// - 构造函数中初始化加载
+/// - 监听 projectNotifierProvider 变化自动刷新
+/// - 提供 reload() 方法手动刷新
 class ERDiagramNotifier extends StateNotifier<ERDiagramState> {
   final Ref ref;
   final String moduleId;
+
+  /// 是否已初始化
+  bool _initialized = false;
 
   ERDiagramNotifier(this.ref, this.moduleId)
       : super(ERDiagramState(
@@ -20,7 +28,79 @@ class ERDiagramNotifier extends StateNotifier<ERDiagramState> {
           nodes: const {},
           edges: const {},
         )) {
+    _init();
+  }
+
+  /// 初始化：加载数据并设置监听
+  void _init() {
+    // 首次加载
     _loadFromModule();
+
+    // 监听项目状态变化
+    ref.listen<ProjectState>(
+      projectNotifierProvider,
+      (previous, next) {
+        // 当项目数据变化时重新加载
+        if (_shouldReload(previous, next)) {
+          _loadFromModule();
+        }
+      },
+    );
+
+    _initialized = true;
+  }
+
+  /// 判断是否需要重新加载
+  bool _shouldReload(ProjectState? previous, ProjectState? next) {
+    // next没有项目，不需要重新加载
+    if (next?.project == null) {
+      return false;
+    }
+
+    // 项目从无到有
+    if (previous?.project == null && next!.project != null) {
+      return true;
+    }
+
+    // 项目变化
+    if (previous?.project != null && next!.project != null) {
+      // 检查模块列表是否变化
+      final prevModuleIds = previous!.project!.modules.map((m) => m.id).toSet();
+      final nextModuleIds = next.project!.modules.map((m) => m.id).toSet();
+
+      // 模块数量或ID变化
+      if (prevModuleIds != nextModuleIds) {
+        return true;
+      }
+
+      // 当前模块内容变化
+      try {
+        final prevModule = previous.project!.modules.firstWhere((m) => m.id == moduleId);
+        final nextModule = next.project!.modules.firstWhere((m) => m.id == moduleId);
+
+        // 实体数量变化
+        if (prevModule.entities.length != nextModule.entities.length) {
+          return true;
+        }
+
+        // 图谱边数量变化
+        if (prevModule.graphCanvas.edges.length != nextModule.graphCanvas.edges.length) {
+          return true;
+        }
+
+        // 检查实体内容变化（字段数量）
+        for (var i = 0; i < prevModule.entities.length; i++) {
+          if (prevModule.entities[i].fields.length != nextModule.entities[i].fields.length) {
+            return true;
+          }
+        }
+      } catch (_) {
+        // 模块未找到，需要重新加载
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /// 从模块加载数据
@@ -32,11 +112,19 @@ class ERDiagramNotifier extends StateNotifier<ERDiagramState> {
       final module = project.modules.firstWhere((m) => m.id == moduleId);
       state = ERDiagramState.fromModule(module);
     } catch (_) {
-      // 模块未找到
+      // 模块未找到，保持当前状态（可能是新模块尚未添加到项目中）
+      // 如果已初始化，设置为空状态
+      if (_initialized) {
+        state = ERDiagramState(
+          moduleId: moduleId,
+          nodes: const {},
+          edges: const {},
+        );
+      }
     }
   }
 
-  /// 重新加载
+  /// 重新加载（外部调用）
   void reload() {
     _loadFromModule();
   }

@@ -210,10 +210,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     for (final module in project.modules) {
       if (module.id == tab.moduleId) {
         moduleId = module.id;
-        entity = module.entities.firstWhere(
-          (e) => e.id == tab.entityId,
-          orElse: () => throw StateError('Entity not found'),
-        );
+        final found = module.entities.where((e) => e.id == tab.entityId);
+        if (found.isNotEmpty) {
+          entity = found.first;
+        }
         break;
       }
     }
@@ -233,10 +233,11 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     Project project,
     TDThemeData tdTheme,
   ) {
-    final module = project.modules.firstWhere(
-      (m) => m.id == tab.moduleId,
-      orElse: () => throw StateError('Module not found'),
-    );
+    final modules = project.modules.where((m) => m.id == tab.moduleId);
+    if (modules.isEmpty) {
+      return _buildNotFoundContent('模块', tab.title, tdTheme);
+    }
+    final module = modules.first;
 
     return Container(
       color: tdTheme.bgColorContainer,
@@ -335,11 +336,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     Project project,
     TDThemeData tdTheme,
   ) {
-    // Find module to verify it exists
-    project.modules.firstWhere(
-      (m) => m.id == tab.moduleId,
-      orElse: () => throw StateError('Module not found'),
-    );
+    final modules = project.modules.where((m) => m.id == tab.moduleId);
+    if (modules.isEmpty) {
+      return _buildNotFoundContent('模块', tab.title, tdTheme);
+    }
 
     return Container(
       color: tdTheme.bgColorContainer,
@@ -475,10 +475,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     Entity? entity;
     for (final module in project.modules) {
       if (module.id == tab.moduleId) {
-        entity = module.entities.firstWhere(
-          (e) => e.id == tab.entityId,
-          orElse: () => throw StateError('Entity not found'),
-        );
+        final found = module.entities.where((e) => e.id == tab.entityId);
+        if (found.isNotEmpty) {
+          entity = found.first;
+        }
         break;
       }
     }
@@ -511,10 +511,11 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     Project project,
     TDThemeData tdTheme,
   ) {
-    final module = project.modules.firstWhere(
-      (m) => m.id == tab.moduleId,
-      orElse: () => throw StateError('Module not found'),
-    );
+    final modules = project.modules.where((m) => m.id == tab.moduleId);
+    if (modules.isEmpty) {
+      return _buildProjectProperties(project, tdTheme);
+    }
+    final module = modules.first;
 
     return ListView(
       padding: const EdgeInsets.all(16),

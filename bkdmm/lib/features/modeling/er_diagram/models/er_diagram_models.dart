@@ -22,7 +22,7 @@ class ERNode implements DiagramNode {
   });
 
   @override
-  String get id => graphNode.title;
+  String get id => entity.id; // 使用 entity.id 作为节点唯一标识
 
   @override
   String get type => 'er_table';
@@ -269,30 +269,93 @@ class ERDiagramState extends DiagramState {
 
   /// 从模块创建
   factory ERDiagramState.fromModule(Module module) {
-    // 创建实体映射
-    final entityMap = <String, Entity>{};
-    for (final entity in module.entities) {
-      entityMap[entity.title] = entity;
-    }
-
-    // 创建节点映射
+    // 创建节点映射（使用 entity.id 作为 key）
     final nodes = <String, DiagramNode>{};
+    final usedEntityIds = <String>{}; // 记录已创建节点的实体ID
+
+    // 首先从 graphCanvas.nodes 创建已存在的节点
     for (final graphNode in module.graphCanvas.nodes) {
-      final entityTitle = graphNode.title.split(':').first;
-      final entity = entityMap[entityTitle];
-      if (entity != null) {
-        nodes[graphNode.title] = ERNode(
+      // 通过 moduleName 查找实体（moduleName 存储的是 entity.id）
+      Entity? entity;
+      if (graphNode.moduleName != null) {
+        entity = module.entities.where((e) => e.id == graphNode.moduleName).firstOrNull;
+      }
+
+      // 如果按 moduleName 找不到，尝试按标题查找（兼容旧数据）
+      if (entity == null) {
+        final entityTitle = graphNode.title.split(':').first;
+        entity = module.entities.where((e) => e.title == entityTitle).firstOrNull;
+      }
+
+      if (entity != null && !usedEntityIds.contains(entity.id)) {
+        // 使用 entity.id 作为节点 key
+        nodes[entity.id] = ERNode(
           entity: entity,
           graphNode: graphNode,
         );
+        usedEntityIds.add(entity.id);
+      }
+    }
+
+    // 为没有 GraphNode 的实体自动创建节点
+    const double startX = 100.0;
+    const double startY = 100.0;
+    const double offsetX = 250.0;
+    const double offsetY = 300.0;
+    int col = 0;
+    int row = 0;
+    const int maxCols = 4;
+
+    for (final entity in module.entities) {
+      if (!usedEntityIds.contains(entity.id)) {
+        // 为新实体创建 GraphNode
+        final graphNode = GraphNode(
+          title: '${entity.title}:0', // 显示标题
+          x: startX + (col * offsetX),
+          y: startY + (row * offsetY),
+          moduleName: entity.id, // 存储实体ID以便后续查找
+        );
+
+        // 使用 entity.id 作为节点 key
+        nodes[entity.id] = ERNode(
+          entity: entity,
+          graphNode: graphNode,
+        );
+
+        col++;
+        if (col >= maxCols) {
+          col = 0;
+          row++;
+        }
       }
     }
 
     // 创建边映射
+    // 需要将边的 source/target 转换为 entity.id
     final edges = <String, DiagramEdge>{};
     for (final graphEdge in module.graphCanvas.edges) {
-      final edgeId = '${graphEdge.source}:${graphEdge.target}';
-      edges[edgeId] = ERRelationEdge(graphEdge: graphEdge);
+      // 解析 source 和 target，获取对应的 entity.id
+      String? sourceEntityId;
+      String? targetEntityId;
+
+      // 尝试从 moduleName 获取（如果边节点有此属性）
+      // 否则从标题解析
+      final sourceTitle = graphEdge.source.split(':').first;
+      final targetTitle = graphEdge.target.split(':').first;
+
+      final sourceEntity = module.entities.where((e) => e.title == sourceTitle).firstOrNull;
+      final targetEntity = module.entities.where((e) => e.title == targetTitle).firstOrNull;
+
+      if (sourceEntity != null) sourceEntityId = sourceEntity.id;
+      if (targetEntity != null) targetEntityId = targetEntity.id;
+
+      if (sourceEntityId != null && targetEntityId != null) {
+        final edgeId = '$sourceEntityId:$targetEntityId';
+        edges[edgeId] = ERRelationEdge(graphEdge: graphEdge.copyWith(
+          source: sourceEntityId,
+          target: targetEntityId,
+        ));
+      }
     }
 
     return ERDiagramState(
