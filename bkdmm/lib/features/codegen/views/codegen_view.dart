@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
 import '../providers/codegen_provider.dart';
@@ -134,28 +135,36 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           const Spacer(),
 
           // Copy button
-          IconButton(
-            icon: const Icon(Icons.copy),
+          TDButton(
+            icon: TDIcons.file_copy,
             onPressed: state.hasOutput ? _copyToClipboard : null,
-            tooltip: 'Copy to Clipboard',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.outline,
+            size: TDButtonSize.small,
           ),
 
           const SizedBox(width: 8),
 
           // Download button
-          FilledButton.icon(
+          TDButton(
             onPressed: state.hasOutput ? _downloadSql : null,
-            icon: const Icon(Icons.download, size: 18),
-            label: const Text('Download .sql'),
+            icon: TDIcons.download,
+            text: 'Download .sql',
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            size: TDButtonSize.small,
           ),
 
           const SizedBox(width: 8),
 
           // Export all button
-          OutlinedButton.icon(
+          TDButton(
             onPressed: project != null ? _exportAll : null,
-            icon: const Icon(Icons.file_download, size: 18),
-            label: const Text('Export All'),
+            icon: TDIcons.download,
+            text: 'Export All',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.outline,
+            size: TDButtonSize.small,
           ),
         ],
       ),
@@ -185,7 +194,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.storage, size: 18),
+                Icon(TDIcons.storage, size: 18),
                 const SizedBox(width: 8),
                 Text(db.name),
               ],
@@ -270,7 +279,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             ),
             child: Row(
               children: [
-                Icon(Icons.account_tree, size: 20, color: colorScheme.primary),
+                Icon(TDIcons.tree, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Select Target',
@@ -312,7 +321,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     return ListTile(
       leading: Icon(
-        Icons.folder_outlined,
+        TDIcons.folder,
         size: 20,
         color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
       ),
@@ -342,7 +351,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     return ExpansionTile(
       leading: Icon(
-        Icons.library_books,
+        TDIcons.books,
         size: 20,
         color: isModuleSelected
             ? colorScheme.primary
@@ -380,7 +389,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     return ListTile(
       leading: Icon(
-        Icons.table_chart,
+        TDIcons.table,
         size: 18,
         color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
       ),
@@ -447,7 +456,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             ),
             child: Row(
               children: [
-                Icon(Icons.code, size: 16, color: colorScheme.primary),
+                Icon(TDIcons.code, size: 16, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   _getFileName(state),
@@ -583,7 +592,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.folder_open_outlined,
+            TDIcons.folder_open,
             size: 64,
             color: colorScheme.onSurfaceVariant,
           ),
@@ -613,7 +622,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.touch_app_outlined,
+            TDIcons.touch_app,
             size: 64,
             color: colorScheme.onSurfaceVariant,
           ),
@@ -643,7 +652,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.error_outline,
+            TDIcons.close_circle,
             size: 64,
             color: colorScheme.error,
           ),
@@ -662,9 +671,11 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             ),
           ),
           const SizedBox(height: 16),
-          FilledButton(
+          TDButton(
             onPressed: () => ref.read(codegenProvider.notifier).refresh(),
-            child: const Text('Retry'),
+            text: 'Retry',
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
           ),
         ],
       ),
@@ -675,7 +686,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   void _copyToClipboard() {
     final state = ref.read(codegenProvider);
     Clipboard.setData(ClipboardData(text: state.generatedDdl));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('DDL copied to clipboard'), backgroundColor: Colors.green));
+    TDToast.showSuccess('DDL copied to clipboard', context: context);
   }
 
   /// Download SQL file (placeholder - would use file_picker in real implementation)
@@ -683,7 +694,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     final state = ref.read(codegenProvider);
     final fileName = _getFileName(state);
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ready to download: $fileName'), backgroundColor: Colors.green));
+    TDToast.showText('Ready to download: $fileName', context: context);
   }
 
   /// Export all DDL for the project
@@ -693,6 +704,6 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     ref.read(codegenProvider.notifier).selectProject();
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Generating DDL for ${project.modules.length} modules...'), backgroundColor: Colors.green));
+    TDToast.showText('Generating DDL for ${project.modules.length} modules...', context: context);
   }
 }

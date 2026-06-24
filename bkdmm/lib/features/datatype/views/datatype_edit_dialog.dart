@@ -128,7 +128,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     return TDAlertDialog(
       title: widget.existingType != null ? 'Edit Data Type' : 'Add Data Type',
       content: '',
-      customContent: SizedBox(
+      contentWidget: SizedBox(
         width: 600,
         child: SingleChildScrollView(
           child: Column(

@@ -162,7 +162,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           Expanded(
             child: TDInput(
               hintText: 'Search types...',
-              leftIcon: TDIcons.search,
+              leftIcon: const Icon(TDIcons.search),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
