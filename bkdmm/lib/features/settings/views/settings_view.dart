@@ -23,8 +23,7 @@ class SettingsView extends ConsumerStatefulWidget {
 class _SettingsViewState extends ConsumerState<SettingsView> {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
     final settings = ref.watch(settingsProvider);
 
     return AppScaffold(
@@ -43,7 +42,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: _getThemeModeLabel(settings.themeMode),
                 leading: Icon(
                   _getThemeModeIcon(settings.themeMode),
-                  color: colorScheme.primary,
+                  size: 24,
+                  color: tdTheme.brandNormalColor,
                 ),
                 onTap: () => _showThemeModeDialog(),
               ),
@@ -53,24 +53,20 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: 'Customize the app accent color',
                 leading: Icon(
                   TDIcons.color_invert,
-                  color: colorScheme.primary,
+                  size: 24,
+                  color: tdTheme.brandNormalColor,
                 ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colorScheme.outline,
-                          width: 1,
-                        ),
-                      ),
+                trailing: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: tdTheme.brandNormalColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: tdTheme.componentStrokeColor,
+                      width: 1,
                     ),
-                  ],
+                  ),
                 ),
                 onTap: () => _showAccentColorDialog(),
               ),
@@ -80,7 +76,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: 'Editor font size: ${settings.editorFontSize.toInt()}',
                 leading: Icon(
                   TDIcons.textformat_bold,
-                  color: colorScheme.primary,
+                  size: 24,
+                  color: tdTheme.brandNormalColor,
                 ),
                 onTap: () => _showFontSizeDialog(),
               ),
@@ -100,7 +97,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: settings.defaultDatabase ?? 'Not set',
                 leading: Icon(
                   TDIcons.data_base,
-                  color: colorScheme.primary,
+                  size: 24,
+                  color: tdTheme.brandNormalColor,
                 ),
                 onTap: () => _showDatabaseTypeDialog(),
               ),
@@ -110,7 +108,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: _getAutoSaveLabel(settings.autoSaveInterval),
                 leading: Icon(
                   TDIcons.time,
-                  color: colorScheme.primary,
+                  size: 24,
+                  color: tdTheme.brandNormalColor,
                 ),
                 onTap: () => _showAutoSaveDialog(),
               ),
@@ -189,7 +188,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: 'Configure custom data types',
                 leading: Icon(
                   TDIcons.chevron_right,
-                  color: colorScheme.primary,
+                  size: 24,
+                  color: tdTheme.brandNormalColor,
                 ),
                 onTap: () => _navigateToDataTypes(),
               ),
@@ -208,7 +208,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: 'Restore all settings to default values',
                 leading: Icon(
                   TDIcons.close_circle,
-                  color: colorScheme.error,
+                  size: 24,
+                  color: tdTheme.errorNormalColor,
                 ),
                 onTap: () => _showResetConfirmation(),
               ),
@@ -313,7 +314,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   void _navigateToDataTypes() {
     // TODO: Navigate to data type management page
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data type management coming soon')));
+    TDToast.showText('Data type management coming soon', context: context);
   }
 
   void _showResetConfirmation() {
@@ -335,7 +336,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           action: () {
             ref.read(settingsProvider.notifier).resetToDefaults();
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings reset to defaults'), backgroundColor: Colors.green));
+            TDToast.showSuccess('Settings reset to defaults', context: context);
           },
         ),
       ),
@@ -343,7 +344,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   }
 }
 
-/// Settings section widget
+/// Settings section widget with TDesign styling
 class _SettingsSection extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -359,12 +360,17 @@ class _SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
-    return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerHighest,
+    return Container(
+      decoration: BoxDecoration(
+        color: tdTheme.bgColorContainer,
+        borderRadius: BorderRadius.circular(tdTheme.radiusLarge),
+        border: Border.all(
+          color: tdTheme.componentStrokeColor,
+          width: 1,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -373,13 +379,12 @@ class _SettingsSection extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(icon, size: 20, color: colorScheme.primary),
+                Icon(icon, size: 20, color: tdTheme.brandNormalColor),
                 const SizedBox(width: 12),
-                Text(
+                TDText(
                   title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  font: tdTheme.fontTitleMedium,
+                  fontWeight: FontWeight.w600,
                 ),
               ],
             ),
@@ -387,14 +392,15 @@ class _SettingsSection extends StatelessWidget {
           if (description != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
+              child: TDText(
                 description!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                font: tdTheme.fontBodySmall,
+                textColor: tdTheme.textColorSecondary,
               ),
             ),
-          const Divider(height: 1),
+          TDDivider(
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: description != null ? 8 : 0),
+          ),
           // Settings items
           ...children,
         ],
@@ -403,7 +409,7 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-/// Settings tile widget
+/// Settings tile widget with TDesign styling
 class _SettingsTile extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -421,8 +427,7 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return InkWell(
       onTap: onTap,
@@ -436,18 +441,16 @@ class _SettingsTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TDText(
                     title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                    font: tdTheme.fontBodyMedium,
+                    fontWeight: FontWeight.w500,
                   ),
                   const SizedBox(height: 2),
-                  Text(
+                  TDText(
                     subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    font: tdTheme.fontBodySmall,
+                    textColor: tdTheme.textColorSecondary,
                   ),
                 ],
               ),
@@ -460,7 +463,7 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
-/// Settings switch tile widget
+/// Settings switch tile widget with TDesign styling
 class _SettingsSwitchTile extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -476,8 +479,7 @@ class _SettingsSwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -488,24 +490,23 @@ class _SettingsSwitchTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TDText(
                   title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  font: tdTheme.fontBodyMedium,
+                  fontWeight: FontWeight.w500,
                 ),
                 const SizedBox(height: 2),
-                Text(
+                TDText(
                   subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontBodySmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ],
             ),
           ),
           TDSwitch(
             isOn: value,
+            size: TDSwitchSize.medium,
             onChanged: (newValue) {
               onChanged(newValue);
               return false; // Return false to let internal state update automatically
@@ -517,7 +518,7 @@ class _SettingsSwitchTile extends StatelessWidget {
   }
 }
 
-/// Theme mode selection dialog
+/// Theme mode selection dialog with TDesign styling
 class _ThemeModeDialog extends StatelessWidget {
   final String currentValue;
   final ValueChanged<String> onChanged;
@@ -529,6 +530,8 @@ class _ThemeModeDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tdTheme = TDTheme.of(context);
+
     return TDAlertDialog(
       title: 'Theme Mode',
       content: '',
@@ -545,16 +548,22 @@ class _ThemeModeDialog extends StatelessWidget {
             id: 'system',
             title: 'System',
             subTitle: 'Follow system settings',
+            titleColor: tdTheme.textColorPrimary,
+            subTitleColor: tdTheme.textColorSecondary,
           ),
           TDRadio(
             id: 'light',
             title: 'Light',
             subTitle: 'Always use light theme',
+            titleColor: tdTheme.textColorPrimary,
+            subTitleColor: tdTheme.textColorSecondary,
           ),
           TDRadio(
             id: 'dark',
             title: 'Dark',
             subTitle: 'Always use dark theme',
+            titleColor: tdTheme.textColorPrimary,
+            subTitleColor: tdTheme.textColorSecondary,
           ),
         ],
       ),
@@ -568,7 +577,7 @@ class _ThemeModeDialog extends StatelessWidget {
   }
 }
 
-/// Accent color selection dialog
+/// Accent color selection dialog with TDesign styling
 class _AccentColorDialog extends StatelessWidget {
   final ValueChanged<Color> onChanged;
 
@@ -577,19 +586,19 @@ class _AccentColorDialog extends StatelessWidget {
   });
 
   static const List<Color> _accentColors = [
-    Color(0xFF6750A4), // Purple (default M3)
-    Color(0xFF0061A4), // Blue
-    Color(0xFF006E1C), // Green
-    Color(0xFFBA1A1A), // Red
-    Color(0xFF984061), // Pink
-    Color(0xFF7C5800), // Orange
-    Color(0xFF006A6A), // Teal
+    Color(0xFF0052D9), // TDesign brand blue
+    Color(0xFF366EF4), // TDesign brand hover blue
+    Color(0xFF618DFF), // TDesign brand lighter blue
+    Color(0xFF2BA471), // TDesign success green
+    Color(0xFF008858), // TDesign success normal green
+    Color(0xFFE37318), // TDesign warning orange
+    Color(0xFFD54941), // TDesign error red
+    Color(0xFFAD352F), // TDesign error normal red
   ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return TDAlertDialog(
       title: 'Accent Color',
@@ -606,7 +615,7 @@ class _AccentColorDialog extends StatelessWidget {
           itemCount: _accentColors.length,
           itemBuilder: (context, index) {
             final color = _accentColors[index];
-            final isSelected = color.toARGB32 == colorScheme.primary.toARGB32;
+            final isSelected = color.toARGB32 == tdTheme.brandNormalColor.toARGB32;
 
             return InkWell(
               onTap: () {
@@ -620,7 +629,7 @@ class _AccentColorDialog extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: isSelected
                       ? Border.all(
-                          color: colorScheme.onSurface,
+                          color: tdTheme.textColorPrimary,
                           width: 3,
                         )
                       : null,
@@ -628,10 +637,11 @@ class _AccentColorDialog extends StatelessWidget {
                 child: isSelected
                     ? Icon(
                         TDIcons.check,
+                        size: 16,
                         color: ThemeData.estimateBrightnessForColor(color) ==
                                 Brightness.dark
-                            ? Colors.white
-                            : Colors.black,
+                            ? tdTheme.textColorAnti
+                            : tdTheme.textColorPrimary,
                       )
                     : null,
               ),
@@ -649,7 +659,7 @@ class _AccentColorDialog extends StatelessWidget {
   }
 }
 
-/// Font size selection dialog
+/// Font size selection dialog with TDesign styling
 class _FontSizeDialog extends StatefulWidget {
   final double currentValue;
   final ValueChanged<double> onChanged;
@@ -674,7 +684,7 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tdTheme = TDTheme.of(context);
 
     return TDAlertDialog(
       title: 'Font Size',
@@ -682,14 +692,20 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
       contentWidget: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
+          TDText(
             'Sample Text',
-            style: theme.textTheme.bodyLarge?.copyWith(fontSize: _value),
+            font: tdTheme.fontBodyLarge,
+            textColor: tdTheme.textColorPrimary,
+            style: TextStyle(fontSize: _value),
           ),
           const SizedBox(height: 24),
           Row(
             children: [
-              const Text('A', style: TextStyle(fontSize: 12)),
+              TDText(
+                'A',
+                font: tdTheme.fontMarkSmall,
+                textColor: tdTheme.textColorSecondary,
+              ),
               Expanded(
                 child: TDSlider(
                   value: _value,
@@ -703,12 +719,18 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
                   },
                 ),
               ),
-              const Text('A', style: TextStyle(fontSize: 24)),
+              TDText(
+                'A',
+                font: tdTheme.fontMarkMedium,
+                textColor: tdTheme.textColorSecondary,
+              ),
             ],
           ),
-          Text(
+          const SizedBox(height: 8),
+          TDText(
             '${_value.toInt()} pt',
-            style: theme.textTheme.bodyMedium,
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.textColorPrimary,
           ),
         ],
       ),
@@ -731,7 +753,7 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
   }
 }
 
-/// Database type selection dialog
+/// Database type selection dialog with TDesign styling
 class _DatabaseTypeDialog extends StatelessWidget {
   final String? currentValue;
   final ValueChanged<String?> onChanged;
@@ -743,8 +765,7 @@ class _DatabaseTypeDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return TDAlertDialog(
       title: 'Default Database Type',
@@ -757,36 +778,38 @@ class _DatabaseTypeDialog extends StatelessWidget {
           itemBuilder: (context, index) {
             if (index == 0) {
               // Option to clear selection
-              return ListTile(
-                leading: const Icon(TDIcons.close),
-                title: const Text('Not Set'),
-                subtitle: const Text('No default database'),
-                trailing: currentValue == null
-                    ? Icon(TDIcons.check, color: colorScheme.primary)
-                    : null,
-                onTap: () {
+              return TDCell(
+                leftIcon: TDIcons.close,
+                title: 'Not Set',
+                description: 'No default database',
+                arrow: false,
+                onClick: (_) {
                   onChanged(null);
                   Navigator.pop(context);
                 },
+                rightIcon: currentValue == null ? TDIcons.check : null,
+                style: TDCellStyle.cellStyle(context).copyWith(
+                  rightIconColor: currentValue == null ? tdTheme.brandNormalColor : null,
+                ),
               );
             }
 
             final db = AppConstants.supportedDatabases[index - 1];
-            return ListTile(
-              leading: Icon(
-                TDIcons.data_base,
-                color: currentValue == db
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-              ),
-              title: Text(db),
-              trailing: currentValue == db
-                  ? Icon(TDIcons.check, color: colorScheme.primary)
-                  : null,
-              onTap: () {
+            return TDCell(
+              leftIcon: TDIcons.data_base,
+              title: db,
+              arrow: false,
+              onClick: (_) {
                 onChanged(db);
                 Navigator.pop(context);
               },
+              rightIcon: currentValue == db ? TDIcons.check : null,
+              style: TDCellStyle.cellStyle(context).copyWith(
+                leftIconColor: currentValue == db
+                    ? tdTheme.brandNormalColor
+                    : tdTheme.textColorSecondary,
+                rightIconColor: currentValue == db ? tdTheme.brandNormalColor : null,
+              ),
             );
           },
         ),
@@ -801,7 +824,7 @@ class _DatabaseTypeDialog extends StatelessWidget {
   }
 }
 
-/// Auto-save interval selection dialog
+/// Auto-save interval selection dialog with TDesign styling
 class _AutoSaveDialog extends StatelessWidget {
   final int currentValue;
   final ValueChanged<int> onChanged;
@@ -826,8 +849,7 @@ class _AutoSaveDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return TDAlertDialog(
       title: 'Auto-save Interval',
@@ -839,21 +861,23 @@ class _AutoSaveDialog extends StatelessWidget {
           itemCount: _intervals.length,
           itemBuilder: (context, index) {
             final interval = _intervals[index];
-            return ListTile(
-              leading: Icon(
-                interval == 0 ? TDIcons.time : TDIcons.time,
-                color: currentValue == interval
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-              ),
-              title: Text(_getLabel(interval)),
-              trailing: currentValue == interval
-                  ? Icon(TDIcons.check, color: colorScheme.primary)
-                  : null,
-              onTap: () {
+            final isSelected = currentValue == interval;
+
+            return TDCell(
+              leftIcon: TDIcons.time,
+              title: _getLabel(interval),
+              arrow: false,
+              onClick: (_) {
                 onChanged(interval);
                 Navigator.pop(context);
               },
+              rightIcon: isSelected ? TDIcons.check : null,
+              style: TDCellStyle.cellStyle(context).copyWith(
+                leftIconColor: isSelected
+                    ? tdTheme.brandNormalColor
+                    : tdTheme.textColorSecondary,
+                rightIconColor: isSelected ? tdTheme.brandNormalColor : null,
+              ),
             );
           },
         ),

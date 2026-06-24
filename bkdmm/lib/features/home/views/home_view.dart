@@ -34,6 +34,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           icon: TDIcons.setting,
           size: TDButtonSize.small,
           type: TDButtonType.text,
+          theme: TDButtonTheme.defaultTheme,
           onTap: () {
             // TODO: Navigate to settings
           },
@@ -42,19 +43,18 @@ class _HomeViewState extends ConsumerState<HomeView> {
           icon: TDIcons.user_circle,
           size: TDButtonSize.small,
           type: TDButtonType.text,
+          theme: TDButtonTheme.defaultTheme,
           onTap: () {
             // TODO: Navigate to profile
           },
         ),
       ],
-      // Remove FAB - quick actions are available in the body
       body: _buildBody(context, historyList),
     );
   }
 
   Widget _buildBody(BuildContext context, List<ProjectHistory> historyList) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -74,17 +74,17 @@ class _HomeViewState extends ConsumerState<HomeView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Welcome section
-                  _buildWelcomeSection(context, theme, colorScheme),
+                  _buildWelcomeSection(context, tdTheme),
                   const SizedBox(height: 32),
 
                   // Quick actions section
-                  _buildQuickActionsSection(context, theme, colorScheme),
+                  _buildQuickActionsSection(context, tdTheme),
                   const SizedBox(height: 32),
 
                   // Recent projects section
-                  _buildRecentProjectsSection(context, historyList, theme, colorScheme),
+                  _buildRecentProjectsSection(context, historyList, tdTheme),
 
-                  // Bottom padding for FAB
+                  // Bottom padding
                   const SizedBox(height: 100),
                 ],
               ),
@@ -97,8 +97,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
   Widget _buildWelcomeSection(
     BuildContext context,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Column(
       children: [
@@ -107,11 +106,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: colorScheme.primary,
-            borderRadius: BorderRadius.circular(20),
+            color: tdTheme.brandNormalColor,
+            borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.primary.withValues(alpha: 0.3),
+                color: tdTheme.brandNormalColor.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -120,24 +119,21 @@ class _HomeViewState extends ConsumerState<HomeView> {
           child: Icon(
             TDIcons.data_base,
             size: 40,
-            color: Colors.white,
+            color: tdTheme.textColorAnti,
           ),
         ),
         const SizedBox(height: 24),
-        Text(
+        TDText(
           'Welcome to Bkdmm',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
+          font: tdTheme.fontHeadlineMedium,
+          fontWeight: FontWeight.w600,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        Text(
+        TDText(
           'Database model modeling tool',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          font: tdTheme.fontBodyLarge,
+          textColor: tdTheme.textColorSecondary,
           textAlign: TextAlign.center,
         ),
       ],
@@ -146,18 +142,15 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
   Widget _buildQuickActionsSection(
     BuildContext context,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TDText(
           'Quick Actions',
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
+          font: tdTheme.fontTitleMedium,
+          fontWeight: FontWeight.w600,
         ),
         const SizedBox(height: 16),
         LayoutBuilder(
@@ -173,6 +166,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       icon: TDIcons.add,
                       label: 'New Project',
                       description: 'Create a new project',
+                      tdTheme: tdTheme,
                       onTap: _isCreating ? null : _showCreateProjectDialog,
                     ),
                   ),
@@ -182,6 +176,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       icon: TDIcons.folder_open,
                       label: 'Open Project',
                       description: 'Open an existing project',
+                      tdTheme: tdTheme,
                       onTap: _showOpenProjectDialog,
                     ),
                   ),
@@ -191,8 +186,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       icon: TDIcons.download,
                       label: 'Import',
                       description: 'Import from file',
+                      tdTheme: tdTheme,
                       onTap: () {
-                        // TODO: Import project
                         TDToast.showText('Import feature coming soon', context: context);
                       },
                     ),
@@ -210,18 +205,21 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   icon: TDIcons.add,
                   label: 'New Project',
                   description: 'Create a new project',
+                  tdTheme: tdTheme,
                   onTap: _isCreating ? null : _showCreateProjectDialog,
                 ),
                 _QuickActionCard(
                   icon: TDIcons.folder_open,
                   label: 'Open Project',
                   description: 'Open an existing project',
+                  tdTheme: tdTheme,
                   onTap: _showOpenProjectDialog,
                 ),
                 _QuickActionCard(
                   icon: TDIcons.download,
                   label: 'Import',
                   description: 'Import from file',
+                  tdTheme: tdTheme,
                   onTap: () {
                     TDToast.showText('Import feature coming soon', context: context);
                   },
@@ -237,8 +235,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
   Widget _buildRecentProjectsSection(
     BuildContext context,
     List<ProjectHistory> historyList,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,12 +243,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            TDText(
               'Recent Projects',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
+              font: tdTheme.fontTitleMedium,
+              fontWeight: FontWeight.w600,
             ),
             if (historyList.isNotEmpty)
               TDButton(
@@ -266,24 +261,23 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ),
         const SizedBox(height: 12),
         historyList.isEmpty
-            ? _buildEmptyState(context, theme, colorScheme)
-            : _buildHistoryList(context, historyList, theme, colorScheme),
+            ? _buildEmptyState(context, tdTheme)
+            : _buildHistoryList(context, historyList),
       ],
     );
   }
 
   Widget _buildEmptyState(
     BuildContext context,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Container(
       padding: const EdgeInsets.all(48),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
+        color: tdTheme.bgColorComponent.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
         border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.2),
+          color: tdTheme.componentBorderColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -292,21 +286,19 @@ class _HomeViewState extends ConsumerState<HomeView> {
           Icon(
             TDIcons.folder_open,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
-          Text(
+          TDText(
             'No recent projects',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            font: tdTheme.fontTitleMedium,
+            textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 8),
-          Text(
+          TDText(
             'Create a new project or open an existing one to get started',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            ),
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.textColorSecondary.withValues(alpha: 0.7),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -326,8 +318,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
   Widget _buildHistoryList(
     BuildContext context,
     List<ProjectHistory> historyList,
-    ThemeData theme,
-    ColorScheme colorScheme,
   ) {
     // Show only first 5 items
     final displayList = historyList.take(5).toList();
@@ -341,7 +331,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
             onTap: () => _openFromHistory(history),
             onDelete: () => _deleteHistory(history.path),
             onFavorite: () {
-              // TODO: Implement favorite
               TDToast.showText('Favorite feature coming soon', context: context);
             },
           ),
@@ -408,7 +397,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
       ref.read(historyNotifierProvider.notifier).refresh();
 
       if (mounted) {
-        // Navigate to workspace
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const WorkspaceView(),
@@ -483,18 +471,20 @@ class _HomeViewState extends ConsumerState<HomeView> {
   }
 }
 
-/// Quick action card widget with proper InkWell and visual feedback.
+/// Quick action card widget using TDTheme colors and TDText.
 class _QuickActionCard extends StatefulWidget {
   const _QuickActionCard({
     required this.icon,
     required this.label,
     required this.description,
+    required this.tdTheme,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final String description;
+  final TDThemeData tdTheme;
   final VoidCallback? onTap;
 
   @override
@@ -506,26 +496,25 @@ class _QuickActionCardState extends State<_QuickActionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = widget.tdTheme;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
-      child: AnimatedContainer(
+      child: AnimatedScale(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        transform: Matrix4.identity()..scale(_isHovered ? 1.02 : 1.0),
+        scale: _isHovered ? 1.02 : 1.0,
         child: Material(
           color: _isHovered
-              ? colorScheme.surfaceContainerHighest
-              : colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(16),
+              ? tdTheme.bgColorContainerHover
+              : tdTheme.bgColorSecondaryContainer,
+          borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -535,29 +524,26 @@ class _QuickActionCardState extends State<_QuickActionCard> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
+                      color: tdTheme.brandLightColor,
+                      borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
                     ),
                     child: Icon(
                       widget.icon,
                       size: 24,
-                      color: colorScheme.onPrimaryContainer,
+                      color: tdTheme.brandNormalColor,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
+                  TDText(
                     widget.label,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    font: tdTheme.fontTitleSmall,
+                    fontWeight: FontWeight.w600,
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  TDText(
                     widget.description,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    font: tdTheme.fontBodySmall,
+                    textColor: tdTheme.textColorSecondary,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

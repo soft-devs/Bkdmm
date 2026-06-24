@@ -67,16 +67,15 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return TabShortcuts(
       child: Scaffold(
-        backgroundColor: colorScheme.surface,
+        backgroundColor: tdTheme.bgColorPage,
         body: Column(
           children: [
             // Menu bar
-            _buildMenuBar(project, projectState, theme, colorScheme),
+            _buildMenuBar(project, projectState, tdTheme),
 
             // Main content area
             Expanded(
@@ -106,7 +105,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
                         // Tab content area
                         Expanded(
-                          child: _buildTabContent(project, theme, colorScheme),
+                          child: _buildTabContent(project, tdTheme),
                         ),
                       ],
                     ),
@@ -116,17 +115,16 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   if (_showPropertiesPanel)
                     SizedBox(
                       width: _propertiesPanelWidth,
-                      child: _buildPropertiesPanel(project, theme, colorScheme),
+                      child: _buildPropertiesPanel(project, tdTheme),
                     ),
                 ],
               ),
             ),
 
             // Status bar
-            _buildStatusBar(project, projectState, theme, colorScheme),
+            _buildStatusBar(project, projectState, tdTheme),
           ],
         ),
-        // Remove FAB - functionality is available from menu and module tree
       ),
     );
   }
@@ -134,16 +132,15 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildMenuBar(
     Project project,
     ProjectState projectState,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: tdTheme.bgColorContainer,
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentStrokeColor,
             width: 1,
           ),
         ),
@@ -158,23 +155,22 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 Icon(
                   TDIcons.folder_open,
                   size: 20,
-                  color: colorScheme.primary,
+                  color: tdTheme.brandNormalColor,
                 ),
                 const SizedBox(width: 8),
-                Text(
+                TDText(
                   project.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  font: tdTheme.fontTitleMedium,
+                  fontWeight: FontWeight.w600,
                 ),
                 if (projectState.isDirty)
                   Padding(
                     padding: const EdgeInsets.only(left: 4),
-                    child: Text(
+                    child: TDText(
                       '*',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: colorScheme.primary,
-                      ),
+                      font: tdTheme.fontTitleMedium,
+                      fontWeight: FontWeight.w600,
+                      textColor: tdTheme.brandNormalColor,
                     ),
                   ),
               ],
@@ -208,79 +204,100 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
           // More actions menu
           PopupMenuButton<String>(
-            icon: const Icon(TDIcons.more),
+            icon: Icon(TDIcons.more, color: tdTheme.textColorPrimary),
             onSelected: (action) => _handleMenuAction(action),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'save',
-                child: ListTile(
-                  leading: Icon(TDIcons.save),
-                  title: Text('Save'),
-                  contentPadding: EdgeInsets.zero,
+            itemBuilder: (context) {
+              final menuTheme = TDTheme.of(context);
+              return [
+                PopupMenuItem(
+                  value: 'save',
+                  child: _buildMenuItem(
+                    icon: TDIcons.save,
+                    label: 'Save',
+                    tdTheme: menuTheme,
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'save_as',
-                child: ListTile(
-                  leading: Icon(TDIcons.folder),
-                  title: Text('Save As...'),
-                  contentPadding: EdgeInsets.zero,
+                PopupMenuItem(
+                  value: 'save_as',
+                  child: _buildMenuItem(
+                    icon: TDIcons.folder,
+                    label: 'Save As...',
+                    tdTheme: menuTheme,
+                  ),
                 ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'close',
-                child: ListTile(
-                  leading: Icon(TDIcons.close),
-                  title: Text('Close Project'),
-                  contentPadding: EdgeInsets.zero,
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: 'close',
+                  child: _buildMenuItem(
+                    icon: TDIcons.close,
+                    label: 'Close Project',
+                    tdTheme: menuTheme,
+                  ),
                 ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'settings',
-                child: ListTile(
-                  leading: Icon(TDIcons.setting),
-                  title: Text('Project Settings'),
-                  contentPadding: EdgeInsets.zero,
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: 'settings',
+                  child: _buildMenuItem(
+                    icon: TDIcons.setting,
+                    label: 'Project Settings',
+                    tdTheme: menuTheme,
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'datatype',
-                child: ListTile(
-                  leading: Icon(TDIcons.code),
-                  title: Text('Data Types'),
-                  contentPadding: EdgeInsets.zero,
+                PopupMenuItem(
+                  value: 'datatype',
+                  child: _buildMenuItem(
+                    icon: TDIcons.code,
+                    label: 'Data Types',
+                    tdTheme: menuTheme,
+                  ),
                 ),
-              ),
-            ],
+              ];
+            },
           ),
         ],
       ),
     );
   }
 
+  /// Build a consistent menu item row with TDesign styling.
+  static Widget _buildMenuItem({
+    required IconData icon,
+    required String label,
+    required TDThemeData tdTheme,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: tdTheme.textColorPrimary),
+        const SizedBox(width: 12),
+        TDText(
+          label,
+          font: tdTheme.fontBodyMedium,
+          textColor: tdTheme.textColorPrimary,
+        ),
+      ],
+    );
+  }
+
   Widget _buildTabContent(
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     final tabState = ref.watch(tabProvider);
     final activeTab = tabState.activeTab;
 
     if (activeTab == null) {
-      return _buildEmptyTabContent(project, theme, colorScheme);
+      return _buildEmptyTabContent(project, tdTheme);
     }
 
     switch (activeTab.type) {
       case TabType.entity:
-        return _buildEntityEditor(activeTab, project, theme, colorScheme);
+        return _buildEntityEditor(activeTab, project, tdTheme);
       case TabType.module:
-        return _buildModuleView(activeTab, project, theme, colorScheme);
+        return _buildModuleView(activeTab, project, tdTheme);
       case TabType.relation:
-        return _buildRelationView(activeTab, project, theme, colorScheme);
+        return _buildRelationView(activeTab, project, tdTheme);
       case TabType.settings:
-        return _buildSettingsView(theme, colorScheme);
+        return _buildSettingsView(tdTheme);
       case TabType.datatype:
         return const DataTypeView();
     }
@@ -288,11 +305,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
   Widget _buildEmptyTabContent(
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Container(
-      color: colorScheme.surface,
+      color: tdTheme.bgColorContainer,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -300,21 +316,19 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             Icon(
               TDIcons.view_module,
               size: 64,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: tdTheme.textColorPlaceholder,
             ),
             const SizedBox(height: 16),
-            Text(
+            TDText(
               'Select an item from the tree',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              font: tdTheme.fontBodyLarge,
+              textColor: tdTheme.textColorSecondary,
             ),
             const SizedBox(height: 8),
-            Text(
+            TDText(
               'Double-click a module or entity to open it in a tab',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
+              font: tdTheme.fontBodyMedium,
+              textColor: tdTheme.textColorSecondary,
             ),
           ],
         ),
@@ -325,8 +339,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildEntityEditor(
     WorkspaceTab tab,
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     // Find the entity
     Entity? entity;
@@ -343,7 +356,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     }
 
     if (entity == null || moduleId == null) {
-      return _buildNotFoundContent('Entity', tab.title, theme, colorScheme);
+      return _buildNotFoundContent('Entity', tab.title, tdTheme);
     }
 
     return EntityEditorView(
@@ -355,8 +368,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildModuleView(
     WorkspaceTab tab,
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     // Find the module
     final module = project.modules.firstWhere(
@@ -365,7 +377,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     );
 
     return Container(
-      color: colorScheme.surface,
+      color: tdTheme.bgColorContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -373,10 +385,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
+              color: tdTheme.bgColorSecondaryContainer,
               border: Border(
                 bottom: BorderSide(
-                  color: colorScheme.outlineVariant,
+                  color: tdTheme.componentStrokeColor,
                 ),
               ),
             ),
@@ -384,28 +396,25 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               children: [
                 Icon(
                   TDIcons.view_module,
-                  color: colorScheme.primary,
+                  color: tdTheme.brandNormalColor,
                 ),
                 const SizedBox(width: 8),
-                Text(
+                TDText(
                   module.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  font: tdTheme.fontTitleMedium,
+                  fontWeight: FontWeight.w600,
                 ),
                 const SizedBox(width: 8),
-                Text(
+                TDText(
                   module.chnname,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontBodyMedium,
+                  textColor: tdTheme.textColorSecondary,
                 ),
                 const Spacer(),
-                Text(
+                TDText(
                   '${module.entities.length} entities',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontBodySmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ],
             ),
@@ -413,7 +422,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
           // Module content (ER diagram placeholder)
           Expanded(
-            child: _buildERDiagram(module, theme, colorScheme),
+            child: _buildERDiagram(module, tdTheme),
           ),
         ],
       ),
@@ -422,8 +431,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
   Widget _buildERDiagram(
     Module module,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     if (module.entities.isEmpty) {
       return Center(
@@ -433,14 +441,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             Icon(
               TDIcons.view_module,
               size: 64,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: tdTheme.textColorPlaceholder,
             ),
             const SizedBox(height: 16),
-            Text(
+            TDText(
               'No entities in this module',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              font: tdTheme.fontTitleMedium,
+              textColor: tdTheme.textColorSecondary,
             ),
             const SizedBox(height: 8),
             TDButton(
@@ -455,17 +462,18 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    // 使用 ERDiagramWidget 替代 _ERDiagramCanvas
-    // v1: ERDiagramWidget, v2: ERDiagramCanvas
+    // Use ERDiagramCanvas for v1 ER diagram rendering
     return ERDiagramCanvas(
       moduleId: module.id,
       onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
-      onContextMenu: (position, entity) => _showDiagramContextMenu(position, entity, module),
+      onContextMenu: (position, entity) =>
+          _showDiagramContextMenu(position, entity, module),
     );
   }
 
-  void _showDiagramContextMenu(Offset position, Entity? entity, Module module) {
-    // 显示右键菜单
+  void _showDiagramContextMenu(
+      Offset position, Entity? entity, Module module) {
+    final tdTheme = TDTheme.of(context);
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -476,29 +484,48 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       ),
       items: [
         if (entity != null) ...[
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'edit',
-            child: ListTile(
-              leading: Icon(TDIcons.edit),
-              title: Text('Edit Entity'),
-              contentPadding: EdgeInsets.zero,
+            child: Row(
+              children: [
+                Icon(TDIcons.edit, size: 20, color: tdTheme.textColorPrimary),
+                const SizedBox(width: 12),
+                TDText(
+                  'Edit Entity',
+                  font: tdTheme.fontBodyMedium,
+                  textColor: tdTheme.textColorPrimary,
+                ),
+              ],
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'delete',
-            child: ListTile(
-              leading: Icon(TDIcons.delete, color: Colors.red),
-              title: Text('Delete Entity', style: TextStyle(color: Colors.red)),
-              contentPadding: EdgeInsets.zero,
+            child: Row(
+              children: [
+                Icon(TDIcons.delete,
+                    size: 20, color: tdTheme.errorNormalColor),
+                const SizedBox(width: 12),
+                TDText(
+                  'Delete Entity',
+                  font: tdTheme.fontBodyMedium,
+                  textColor: tdTheme.errorNormalColor,
+                ),
+              ],
             ),
           ),
         ] else ...[
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'add_entity',
-            child: ListTile(
-              leading: Icon(TDIcons.add),
-              title: Text('Add Entity'),
-              contentPadding: EdgeInsets.zero,
+            child: Row(
+              children: [
+                Icon(TDIcons.add, size: 20, color: tdTheme.textColorPrimary),
+                const SizedBox(width: 12),
+                TDText(
+                  'Add Entity',
+                  font: tdTheme.fontBodyMedium,
+                  textColor: tdTheme.textColorPrimary,
+                ),
+              ],
             ),
           ),
         ],
@@ -515,6 +542,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   }
 
   void _showEntityEditorDialog(Module module, Entity entity) {
+    final tdTheme = TDTheme.of(context);
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -528,10 +556,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  color: tdTheme.bgColorSecondaryContainer,
                   border: Border(
                     bottom: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
+                      color: tdTheme.componentStrokeColor,
                     ),
                   ),
                 ),
@@ -539,14 +567,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   children: [
                     Icon(
                       TDIcons.table,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: tdTheme.brandNormalColor,
                     ),
                     const SizedBox(width: 8),
-                    Text(
+                    TDText(
                       '${entity.title} - ${entity.chnname}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      font: tdTheme.fontTitleMedium,
+                      fontWeight: FontWeight.w600,
                     ),
                     const Spacer(),
                     TDButton(
@@ -591,12 +618,15 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           theme: TDButtonTheme.danger,
           type: TDButtonType.fill,
           action: () {
-            final updatedEntities = module.entities.where((e) => e.id != entity.id).toList();
+            final updatedEntities =
+                module.entities.where((e) => e.id != entity.id).toList();
             final updatedModule = module.copyWith(
               entities: updatedEntities,
               updatedAt: DateTime.now(),
             );
-            ref.read(projectProvider.notifier).updateModule(module.id, updatedModule);
+            ref
+                .read(projectProvider.notifier)
+                .updateModule(module.id, updatedModule);
             Navigator.pop(context);
           },
         ),
@@ -607,8 +637,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildRelationView(
     WorkspaceTab tab,
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     // Find the module
     final module = project.modules.firstWhere(
@@ -617,7 +646,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     );
 
     return Container(
-      color: colorScheme.surface,
+      color: tdTheme.bgColorContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -625,10 +654,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
+              color: tdTheme.bgColorSecondaryContainer,
               border: Border(
                 bottom: BorderSide(
-                  color: colorScheme.outlineVariant,
+                  color: tdTheme.componentStrokeColor,
                 ),
               ),
             ),
@@ -636,14 +665,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               children: [
                 Icon(
                   TDIcons.relation,
-                  color: colorScheme.primary,
+                  color: tdTheme.brandNormalColor,
                 ),
                 const SizedBox(width: 8),
-                Text(
+                TDText(
                   'Relations - ${module.name}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  font: tdTheme.fontTitleMedium,
+                  fontWeight: FontWeight.w600,
                 ),
               ],
             ),
@@ -659,14 +687,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                         Icon(
                           TDIcons.view_module,
                           size: 64,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: tdTheme.textColorPlaceholder,
                         ),
                         const SizedBox(height: 16),
-                        Text(
+                        TDText(
                           'No relations defined',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          font: tdTheme.fontTitleMedium,
+                          textColor: tdTheme.textColorSecondary,
                         ),
                       ],
                     ),
@@ -676,10 +703,35 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                     itemCount: module.graphCanvas.edges.length,
                     itemBuilder: (context, index) {
                       final edge = module.graphCanvas.edges[index];
-                      return ListTile(
-                        leading: const Icon(TDIcons.arrow_right),
-                        title: Text('${edge.source} -> ${edge.target}'),
-                        subtitle: Text(edge.label ?? 'No label'),
+                      final listTheme = TDTheme.of(context);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              TDIcons.arrow_right,
+                              size: 20,
+                              color: listTheme.textColorSecondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  TDText(
+                                    '${edge.source} -> ${edge.target}',
+                                    font: listTheme.fontBodyMedium,
+                                  ),
+                                  TDText(
+                                    edge.label ?? 'No label',
+                                    font: listTheme.fontBodySmall,
+                                    textColor: listTheme.textColorSecondary,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -689,9 +741,9 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     );
   }
 
-  Widget _buildSettingsView(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildSettingsView(TDThemeData tdTheme) {
     return Container(
-      color: colorScheme.surface,
+      color: tdTheme.bgColorContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -699,10 +751,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
+              color: tdTheme.bgColorSecondaryContainer,
               border: Border(
                 bottom: BorderSide(
-                  color: colorScheme.outlineVariant,
+                  color: tdTheme.componentStrokeColor,
                 ),
               ),
             ),
@@ -710,14 +762,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               children: [
                 Icon(
                   TDIcons.setting,
-                  color: colorScheme.primary,
+                  color: tdTheme.brandNormalColor,
                 ),
                 const SizedBox(width: 8),
-                Text(
+                TDText(
                   'Project Settings',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  font: tdTheme.fontTitleMedium,
+                  fontWeight: FontWeight.w600,
                 ),
               ],
             ),
@@ -726,11 +777,10 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           // Settings content
           Expanded(
             child: Center(
-              child: Text(
+              child: TDText(
                 'Settings editor coming soon',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                font: tdTheme.fontBodyMedium,
+                textColor: tdTheme.textColorSecondary,
               ),
             ),
           ),
@@ -742,8 +792,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildNotFoundContent(
     String type,
     String name,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Center(
       child: Column(
@@ -752,19 +801,18 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           Icon(
             TDIcons.info_circle,
             size: 64,
-            color: colorScheme.error,
+            color: tdTheme.errorNormalColor,
           ),
           const SizedBox(height: 16),
-          Text(
+          TDText(
             '$type not found',
-            style: theme.textTheme.titleMedium,
+            font: tdTheme.fontTitleMedium,
           ),
           const SizedBox(height: 8),
-          Text(
+          TDText(
             name,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.textColorSecondary,
           ),
         ],
       ),
@@ -773,18 +821,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
   Widget _buildPropertiesPanel(
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     final tabState = ref.watch(tabProvider);
     final activeTab = tabState.activeTab;
 
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: tdTheme.bgColorContainer,
         border: Border(
           left: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentStrokeColor,
             width: 1,
           ),
         ),
@@ -798,18 +845,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: colorScheme.outlineVariant,
+                  color: tdTheme.componentStrokeColor,
                 ),
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                TDText(
                   'Properties',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  font: tdTheme.fontTitleSmall,
+                  fontWeight: FontWeight.w600,
                 ),
                 TDButton(
                   icon: TDIcons.close,
@@ -829,8 +875,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           // Properties content
           Expanded(
             child: activeTab != null
-                ? _buildTabProperties(activeTab, project, theme, colorScheme)
-                : _buildProjectProperties(project, theme, colorScheme),
+                ? _buildTabProperties(activeTab, project, tdTheme)
+                : _buildProjectProperties(project, tdTheme),
           ),
         ],
       ),
@@ -840,26 +886,24 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildTabProperties(
     WorkspaceTab tab,
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     switch (tab.type) {
       case TabType.entity:
-        return _buildEntityProperties(tab, project, theme, colorScheme);
+        return _buildEntityProperties(tab, project, tdTheme);
       case TabType.module:
-        return _buildModuleProperties(tab, project, theme, colorScheme);
+        return _buildModuleProperties(tab, project, tdTheme);
       case TabType.relation:
       case TabType.settings:
       case TabType.datatype:
-        return _buildProjectProperties(project, theme, colorScheme);
+        return _buildProjectProperties(project, tdTheme);
     }
   }
 
   Widget _buildEntityProperties(
     WorkspaceTab tab,
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     // Find the entity
     Entity? entity;
@@ -874,7 +918,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     }
 
     if (entity == null) {
-      return _buildProjectProperties(project, theme, colorScheme);
+      return _buildProjectProperties(project, tdTheme);
     }
 
     return ListView(
@@ -887,13 +931,24 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         _PropertyField(label: 'ID', value: entity.id),
         const SizedBox(height: 16),
         _PropertySection(title: 'Statistics'),
-        _StatTile(icon: TDIcons.view_list, label: 'Fields', value: '${entity.fields.length}'),
-        _StatTile(icon: TDIcons.key, label: 'Primary Keys', value: '${entity.primaryKeys.length}'),
-        _StatTile(icon: TDIcons.chart, label: 'Indexes', value: '${entity.indexes.length}'),
+        _StatTile(
+            icon: TDIcons.view_list,
+            label: 'Fields',
+            value: '${entity.fields.length}'),
+        _StatTile(
+            icon: TDIcons.key,
+            label: 'Primary Keys',
+            value: '${entity.primaryKeys.length}'),
+        _StatTile(
+            icon: TDIcons.chart,
+            label: 'Indexes',
+            value: '${entity.indexes.length}'),
         const SizedBox(height: 16),
         _PropertySection(title: 'Timestamps'),
-        _PropertyField(label: 'Created', value: _formatDateTime(entity.createdAt)),
-        _PropertyField(label: 'Updated', value: _formatDateTime(entity.updatedAt)),
+        _PropertyField(
+            label: 'Created', value: _formatDateTime(entity.createdAt)),
+        _PropertyField(
+            label: 'Updated', value: _formatDateTime(entity.updatedAt)),
       ],
     );
   }
@@ -901,8 +956,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildModuleProperties(
     WorkspaceTab tab,
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     // Find the module
     final module = project.modules.firstWhere(
@@ -916,50 +970,66 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         _PropertySection(title: 'Module Info'),
         _PropertyField(label: 'Name', value: module.name),
         _PropertyField(label: 'Chinese Name', value: module.chnname),
-        _PropertyField(label: 'Description', value: module.description ?? 'None'),
+        _PropertyField(
+            label: 'Description', value: module.description ?? 'None'),
         _PropertyField(label: 'ID', value: module.id),
         const SizedBox(height: 16),
         _PropertySection(title: 'Statistics'),
-        _StatTile(icon: TDIcons.table, label: 'Entities', value: '${module.entities.length}'),
-        _StatTile(icon: TDIcons.relation, label: 'Relations', value: '${module.graphCanvas.edges.length}'),
+        _StatTile(
+            icon: TDIcons.table,
+            label: 'Entities',
+            value: '${module.entities.length}'),
+        _StatTile(
+            icon: TDIcons.relation,
+            label: 'Relations',
+            value: '${module.graphCanvas.edges.length}'),
         const SizedBox(height: 16),
         _PropertySection(title: 'Timestamps'),
-        _PropertyField(label: 'Created', value: _formatDateTime(module.createdAt)),
-        _PropertyField(label: 'Updated', value: _formatDateTime(module.updatedAt)),
+        _PropertyField(
+            label: 'Created', value: _formatDateTime(module.createdAt)),
+        _PropertyField(
+            label: 'Updated', value: _formatDateTime(module.updatedAt)),
       ],
     );
   }
 
   Widget _buildProjectProperties(
     Project project,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         _PropertySection(title: 'Project Info'),
         _PropertyField(label: 'Name', value: project.name),
-        _PropertyField(label: 'Description', value: project.description ?? 'None'),
+        _PropertyField(
+            label: 'Description', value: project.description ?? 'None'),
         _PropertyField(label: 'Version', value: project.version),
         _PropertyField(label: 'ID', value: project.id),
         const SizedBox(height: 16),
         _PropertySection(title: 'Statistics'),
-        _StatTile(icon: TDIcons.view_module, label: 'Modules', value: '${project.modules.length}'),
+        _StatTile(
+            icon: TDIcons.view_module,
+            label: 'Modules',
+            value: '${project.modules.length}'),
         _StatTile(
           icon: TDIcons.table,
           label: 'Entities',
-          value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.length)}',
+          value:
+              '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.length)}',
         ),
         _StatTile(
           icon: TDIcons.view_list,
           label: 'Fields',
-          value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.fold<int>(0, (s, e) => s + e.fields.length))}',
+          value:
+              '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.fold<int>(0, (s, e) => s + e.fields.length))}',
         ),
         const SizedBox(height: 16),
         _PropertySection(title: 'Timestamps'),
-        _PropertyField(label: 'Created', value: _formatDateTime(project.createdAt)),
-        _PropertyField(label: 'Updated', value: _formatDateTime(project.updatedAt)),
+        _PropertyField(
+            label: 'Created', value: _formatDateTime(project.createdAt)),
+        _PropertyField(
+            label: 'Updated', value: _formatDateTime(project.updatedAt)),
       ],
     );
   }
@@ -967,18 +1037,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   Widget _buildStatusBar(
     Project project,
     ProjectState projectState,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     final tabState = ref.watch(tabProvider);
 
     return Container(
       height: 24,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
+        color: tdTheme.grayColor1,
         border: Border(
           top: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentStrokeColor,
             width: 1,
           ),
         ),
@@ -993,14 +1062,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 Icon(
                   TDIcons.folder,
                   size: 14,
-                  color: colorScheme.onSurfaceVariant,
+                  color: tdTheme.textColorSecondary,
                 ),
                 const SizedBox(width: 4),
-                Text(
+                TDText(
                   project.name,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontBodyExtraSmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ],
             ),
@@ -1010,7 +1078,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           Container(
             width: 1,
             height: 14,
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentStrokeColor,
           ),
 
           // Tab count
@@ -1021,14 +1089,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 Icon(
                   TDIcons.view_module,
                   size: 14,
-                  color: colorScheme.onSurfaceVariant,
+                  color: tdTheme.textColorSecondary,
                 ),
                 const SizedBox(width: 4),
-                Text(
+                TDText(
                   '${tabState.tabs.length} tabs',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontBodyExtraSmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ],
             ),
@@ -1045,14 +1112,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   Icon(
                     TDIcons.circle,
                     size: 8,
-                    color: colorScheme.primary,
+                    color: tdTheme.brandNormalColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(
+                  TDText(
                     'Unsaved',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.primary,
-                    ),
+                    font: tdTheme.fontBodyExtraSmall,
+                    textColor: tdTheme.brandNormalColor,
                   ),
                 ],
               ),
@@ -1065,14 +1131,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   Icon(
                     TDIcons.check,
                     size: 14,
-                    color: colorScheme.onSurfaceVariant,
+                    color: tdTheme.textColorSecondary,
                   ),
                   const SizedBox(width: 4),
-                  Text(
+                  TDText(
                     'Saved',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    font: tdTheme.fontBodyExtraSmall,
+                    textColor: tdTheme.textColorSecondary,
                   ),
                 ],
               ),
@@ -1138,7 +1203,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         context: context,
         builder: (context) => TDAlertDialog(
           title: 'Save changes?',
-          content: 'The project has unsaved changes. Do you want to save before closing?',
+          content:
+              'The project has unsaved changes. Do you want to save before closing?',
           leftBtn: TDDialogButtonOptions(
             title: 'Discard',
             theme: TDButtonTheme.defaultTheme,
@@ -1180,7 +1246,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       context: context,
       builder: (context) => TDAlertDialog(
         title: 'Create New Module',
-        content: 'A module is a container for related database tables/entities.',
+        content:
+            'A module is a container for related database tables/entities.',
         leftBtn: TDDialogButtonOptions(
           title: 'Cancel',
           theme: TDButtonTheme.defaultTheme,
@@ -1202,14 +1269,14 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
     if (result == true && mounted) {
       final module = ref.read(projectProvider.notifier).createNewModule(
-        name: nameController.text.trim(),
-        chnname: chnnameController.text.trim().isNotEmpty
-            ? chnnameController.text.trim()
-            : nameController.text.trim(),
-        description: descController.text.trim().isNotEmpty
-            ? descController.text.trim()
-            : null,
-      );
+            name: nameController.text.trim(),
+            chnname: chnnameController.text.trim().isNotEmpty
+                ? chnnameController.text.trim()
+                : nameController.text.trim(),
+            description: descController.text.trim().isNotEmpty
+                ? descController.text.trim()
+                : null,
+          );
       ref.read(projectProvider.notifier).addModule(module);
     }
   }
@@ -1223,7 +1290,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       context: context,
       builder: (context) => TDAlertDialog(
         title: 'Create Table in "${module.name}"',
-        content: 'Create a new database table/entity in module "${module.chnname}".',
+        content:
+            'Create a new database table/entity in module "${module.chnname}".',
         leftBtn: TDDialogButtonOptions(
           title: 'Cancel',
           theme: TDButtonTheme.defaultTheme,
@@ -1274,7 +1342,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   }
 }
 
-/// Property section widget
+/// Property section widget - uses TDTheme colors.
 class _PropertySection extends StatelessWidget {
   final String title;
 
@@ -1282,20 +1350,19 @@ class _PropertySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tdTheme = TDTheme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
+      child: TDText(
         title,
-        style: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        font: tdTheme.fontTitleSmall,
+        fontWeight: FontWeight.w600,
       ),
     );
   }
 }
 
-/// Property field widget
+/// Property field widget - uses TDTheme colors and TDText.
 class _PropertyField extends StatelessWidget {
   final String label;
   final String value;
@@ -1307,24 +1374,22 @@ class _PropertyField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          TDText(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            font: tdTheme.fontBodySmall,
+            textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 2),
-          Text(
+          TDText(
             value,
-            style: theme.textTheme.bodyMedium,
+            font: tdTheme.fontBodyMedium,
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -1333,7 +1398,7 @@ class _PropertyField extends StatelessWidget {
   }
 }
 
-/// Stat tile widget
+/// Stat tile widget - uses TDTheme colors and TDText.
 class _StatTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1347,8 +1412,7 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -1357,21 +1421,19 @@ class _StatTile extends StatelessWidget {
           Icon(
             icon,
             size: 16,
-            color: colorScheme.onSurfaceVariant,
+            color: tdTheme.textColorSecondary,
           ),
           const SizedBox(width: 8),
-          Text(
+          TDText(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            font: tdTheme.fontBodySmall,
+            textColor: tdTheme.textColorSecondary,
           ),
           const Spacer(),
-          Text(
+          TDText(
             value,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            font: tdTheme.fontBodySmall,
+            fontWeight: FontWeight.w600,
           ),
         ],
       ),

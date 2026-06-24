@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../providers/tab_provider.dart';
 
 /// Custom tab bar widget with close buttons and overflow handling
@@ -67,6 +68,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
     final tabState = ref.watch(tabProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -77,10 +79,10 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
         return Container(
           height: 40,
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
+            color: tdTheme.bgColorContainer,
             border: Border(
               bottom: BorderSide(
-                color: colorScheme.outlineVariant,
+                color: tdTheme.componentStrokeColor,
                 width: 1,
               ),
             ),
@@ -90,7 +92,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
               // Left scroll button
               if (widget.showScrollButtons && _showLeftScroll && hasOverflow)
                 IconButton(
-                  icon: const Icon(Icons.chevron_left, size: 20),
+                  icon: const Icon(TDIcons.chevron_left, size: 20),
                   onPressed: _scrollLeft,
                   tooltip: 'Scroll left',
                   visualDensity: VisualDensity.compact,
@@ -130,7 +132,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
               // Right scroll button
               if (widget.showScrollButtons && _showRightScroll && hasOverflow)
                 IconButton(
-                  icon: const Icon(Icons.chevron_right, size: 20),
+                  icon: const Icon(TDIcons.chevron_right, size: 20),
                   onPressed: _scrollRight,
                   tooltip: 'Scroll right',
                   visualDensity: VisualDensity.compact,
@@ -139,7 +141,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
               // Actions
               if (widget.onNewTab != null)
                 IconButton(
-                  icon: const Icon(Icons.add, size: 20),
+                  icon: const Icon(TDIcons.add, size: 20),
                   onPressed: widget.onNewTab,
                   tooltip: 'New tab',
                   visualDensity: VisualDensity.compact,
@@ -155,11 +157,12 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
   }
 
   Widget _buildEmptyState(ThemeData theme, ColorScheme colorScheme) {
+    final tdTheme = TDTheme.of(context);
     return Center(
       child: Text(
         'No tabs open',
         style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          color: tdTheme.textColorPlaceholder,
         ),
       ),
     );
@@ -171,13 +174,13 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
     ColorScheme colorScheme,
   ) {
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, size: 18),
+      icon: const Icon(TDIcons.more, size: 18),
       tooltip: 'Tab options',
       itemBuilder: (context) => [
         PopupMenuItem(
           value: 'close_all',
           child: const ListTile(
-            leading: Icon(Icons.close),
+            leading: Icon(TDIcons.close),
             title: Text('Close All'),
             contentPadding: EdgeInsets.zero,
           ),
@@ -187,7 +190,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
           PopupMenuItem(
             value: 'close_others',
             child: const ListTile(
-              leading: Icon(Icons.tab),
+              leading: Icon(TDIcons.tab),
               title: Text('Close Others'),
               contentPadding: EdgeInsets.zero,
             ),
@@ -195,7 +198,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
           PopupMenuItem(
             value: 'close_right',
             child: const ListTile(
-              leading: Icon(Icons.keyboard_arrow_right),
+              leading: Icon(TDIcons.chevron_right),
               title: Text('Close to Right'),
               contentPadding: EdgeInsets.zero,
             ),
@@ -203,7 +206,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
           PopupMenuItem(
             value: 'close_left',
             child: const ListTile(
-              leading: Icon(Icons.keyboard_arrow_left),
+              leading: Icon(TDIcons.chevron_left),
               title: Text('Close to Left'),
               contentPadding: EdgeInsets.zero,
             ),
@@ -255,22 +258,22 @@ class _TabItem extends StatelessWidget {
   IconData _getIconData() {
     switch (tab.icon) {
       case 'table_chart':
-        return Icons.table_chart;
+        return TDIcons.table;
       case 'view_module':
-        return Icons.view_module;
+        return TDIcons.view_module;
       case 'settings':
-        return Icons.settings;
+        return TDIcons.setting;
       case 'account_tree':
-        return Icons.account_tree;
+        return TDIcons.tree_square_dot;
       default:
-        return Icons.tab;
+        return TDIcons.tab;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return InkWell(
       onTap: onTap,
@@ -281,18 +284,18 @@ class _TabItem extends StatelessWidget {
           maxWidth: maxWidth.clamp(100.0, 200.0),
         ),
         decoration: BoxDecoration(
-          color: isActive ? colorScheme.surface : null,
+          color: isActive ? tdTheme.bgColorContainer : null,
           border: Border(
             left: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+              color: tdTheme.componentBorderColor.withValues(alpha: 0.3),
               width: 1,
             ),
             right: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+              color: tdTheme.componentBorderColor.withValues(alpha: 0.3),
               width: 1,
             ),
             bottom: isActive
-                ? BorderSide(color: colorScheme.primary, width: 2)
+                ? BorderSide(color: tdTheme.brandNormalColor, width: 2)
                 : BorderSide.none,
           ),
         ),
@@ -305,8 +308,8 @@ class _TabItem extends StatelessWidget {
               _getIconData(),
               size: 16,
               color: isActive
-                  ? colorScheme.primary
-                  : colorScheme.onSurfaceVariant,
+                  ? tdTheme.brandNormalColor
+                  : tdTheme.textColorSecondary,
             ),
             const SizedBox(width: 8),
             // Title - simplified to single line for better responsiveness
@@ -315,7 +318,7 @@ class _TabItem extends StatelessWidget {
                 tab.title,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: isActive ? FontWeight.w600 : null,
-                  color: isActive ? colorScheme.primary : null,
+                  color: isActive ? tdTheme.brandNormalColor : null,
                 ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
@@ -331,13 +334,13 @@ class _TabItem extends StatelessWidget {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
+                    color: tdTheme.bgColorComponentHover,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Icon(
-                    Icons.close,
+                    TDIcons.close,
                     size: 14,
-                    color: colorScheme.onSurfaceVariant,
+                    color: tdTheme.textColorSecondary,
                   ),
                 ),
               ),
@@ -365,7 +368,7 @@ class _TabItem extends StatelessWidget {
         const PopupMenuItem(
           value: 'close',
           child: ListTile(
-            leading: Icon(Icons.close),
+            leading: Icon(TDIcons.close),
             title: Text('Close'),
             contentPadding: EdgeInsets.zero,
           ),
@@ -373,7 +376,7 @@ class _TabItem extends StatelessWidget {
         const PopupMenuItem(
           value: 'close_others',
           child: ListTile(
-            leading: Icon(Icons.tab),
+            leading: Icon(TDIcons.tab),
             title: Text('Close Others'),
             contentPadding: EdgeInsets.zero,
           ),
@@ -381,7 +384,7 @@ class _TabItem extends StatelessWidget {
         const PopupMenuItem(
           value: 'close_right',
           child: ListTile(
-            leading: Icon(Icons.keyboard_arrow_right),
+            leading: Icon(TDIcons.chevron_right),
             title: Text('Close to Right'),
             contentPadding: EdgeInsets.zero,
           ),
@@ -389,7 +392,7 @@ class _TabItem extends StatelessWidget {
         const PopupMenuItem(
           value: 'close_left',
           child: ListTile(
-            leading: Icon(Icons.keyboard_arrow_left),
+            leading: Icon(TDIcons.chevron_left),
             title: Text('Close to Left'),
             contentPadding: EdgeInsets.zero,
           ),
