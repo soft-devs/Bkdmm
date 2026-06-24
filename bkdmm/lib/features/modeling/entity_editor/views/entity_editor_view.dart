@@ -117,7 +117,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             controller: _tabController,
             tabs: const [
               Tab(icon: Icon(TDIcons.info_circle), text: 'Summary'),
-              Tab(icon: Icon(TDIcons.unordered_list), text: 'Fields'),
+              Tab(icon: Icon(TDIcons.view_list), text: 'Fields'),
               Tab(icon: Icon(TDIcons.filter), text: 'Indexes'),
               Tab(icon: Icon(TDIcons.code), text: 'Preview'),
             ],
@@ -205,7 +205,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(TDIcons.unordered_list, size: 14, color: colorScheme.onSurfaceVariant),
+                Icon(TDIcons.view_list, size: 14, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   '${entity.fields.length} fields',
@@ -291,7 +291,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                           controller: _titleController,
                           leftLabel: 'Table Name (English)',
                           hintText: 'e.g., user',
-                          prefixIcon: TDIcons.code,
+                          leftIcon: const Icon(TDIcons.code),
+                          backgroundColor: Colors.transparent,
                           onChanged: (value) => _markDirty(),
                           onSubmitted: (value) => _saveBasicInfo(),
                         ),
@@ -302,7 +303,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                           controller: _chnnameController,
                           leftLabel: 'Chinese Name',
                           hintText: 'e.g., 用户表',
-                          prefixIcon: TDIcons.translate,
+                          leftIcon: const Icon(TDIcons.translate),
+                          backgroundColor: Colors.transparent,
                           onChanged: (value) => _markDirty(),
                           onSubmitted: (value) => _saveBasicInfo(),
                         ),
@@ -314,7 +316,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     controller: _remarkController,
                     leftLabel: 'Remark',
                     hintText: 'Table description',
-                    prefixIcon: TDIcons.edit_1,
+                    leftIcon: const Icon(TDIcons.edit),
+                    backgroundColor: Colors.transparent,
                     maxLines: 3,
                     onChanged: (value) => _markDirty(),
                   ),
@@ -325,7 +328,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                       if (_hasLocalChanges)
                         TDButton(
                           text: 'Reset',
-                          theme: TDButtonTheme.outline,
+                          theme: TDButtonTheme.defaultTheme,
+                          type: TDButtonType.outline,
                           onTap: _resetBasicInfo,
                         ),
                       const SizedBox(width: 8),
@@ -333,6 +337,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         text: 'Save Changes',
                         icon: TDIcons.save,
                         theme: TDButtonTheme.primary,
+                        type: TDButtonType.fill,
                         disabled: !_hasLocalChanges,
                         onTap: _saveBasicInfo,
                       ),
@@ -368,7 +373,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     children: [
                       Expanded(
                         child: _StatCard(
-                          icon: TDIcons.unordered_list,
+                          icon: TDIcons.view_list,
                           label: 'Fields',
                           value: entity.fields.length.toString(),
                           color: colorScheme.primary,
@@ -425,7 +430,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                       TDButton(
                         text: 'Edit Fields',
                         icon: TDIcons.edit,
-                        theme: TDButtonTheme.text,
+                        theme: TDButtonTheme.defaultTheme,
+                        type: TDButtonType.text,
                         onTap: () => _tabController.animateTo(1),
                       ),
                     ],
