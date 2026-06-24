@@ -111,61 +111,110 @@ class _FieldTableState extends State<FieldTable> {
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
 
-        // Column widths - adaptive
-        final pkWidth = 48.0;
-        final notNullWidth = 64.0;
-        final autoIncWidth = 64.0;
-        final actionsWidth = 72.0;
-        final fixedTotal = pkWidth + notNullWidth + autoIncWidth + actionsWidth;
+        // Column widths - fixed columns
+        const double pkWidth = 48.0;
+        const double notNullWidth = 64.0;
+        const double autoIncWidth = 72.0;
+        const double actionsWidth = 72.0;
+        const double fixedTotal = pkWidth + notNullWidth + autoIncWidth + actionsWidth;
 
-        final flexibleWidth = availableWidth - fixedTotal;
-        final nameWidth = (flexibleWidth * 0.35).clamp(100.0, 300.0);
-        final typeWidth = (flexibleWidth * 0.20).clamp(80.0, 150.0);
-        final chnnameWidth = (flexibleWidth * 0.20).clamp(80.0, 150.0);
-        final remarkWidth = (flexibleWidth * 0.25).clamp(80.0, 200.0);
+        // Flexible columns - calculate remaining width and distribute
+        final remainingWidth = availableWidth - fixedTotal;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: tdTheme.bgColorContainer,
-            border: Border.all(color: tdTheme.componentBorderColor),
-            borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-            child: Column(
-              children: [
-                // Header row
-                _buildHeaderRow(tdTheme, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
+        // Ensure minimum widths are respected, then distribute proportionally
+        const double minNameWidth = 100.0;
+        const double minTypeWidth = 80.0;
+        const double minChnnameWidth = 80.0;
+        const double minRemarkWidth = 60.0;
+        const double totalMinFlexible = minNameWidth + minTypeWidth + minChnnameWidth + minRemarkWidth;
 
-                // Data rows
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: widget.fields.length,
-                    itemBuilder: (context, index) {
-                      final field = widget.fields[index];
-                      final isSelected = _selectedFieldIds.contains(field.id);
-                      return _buildDataRow(
-                        field,
-                        index,
-                        isSelected,
-                        tdTheme,
-                        pkWidth,
-                        nameWidth,
-                        typeWidth,
-                        chnnameWidth,
-                        notNullWidth,
-                        autoIncWidth,
-                        remarkWidth,
-                        actionsWidth,
-                      );
-                    },
-                  ),
-                ),
-              ],
+        // If remaining space is too small, use minimum widths
+        if (remainingWidth < totalMinFlexible) {
+          // Fall back to minimum widths - table will scroll horizontally
+          final nameWidth = minNameWidth;
+          final typeWidth = minTypeWidth;
+          final chnnameWidth = minChnnameWidth;
+          final remarkWidth = minRemarkWidth;
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: fixedTotal + totalMinFlexible,
+              child: _buildTableContent(
+                tdTheme,
+                pkWidth, nameWidth, typeWidth, chnnameWidth,
+                notNullWidth, autoIncWidth, remarkWidth, actionsWidth,
+              ),
             ),
-          ),
+          );
+        }
+
+        // Distribute remaining width proportionally
+        final nameWidth = (remainingWidth * 0.40).clamp(minNameWidth, remainingWidth - minTypeWidth - minChnnameWidth - minRemarkWidth);
+        final typeWidth = (remainingWidth * 0.20).clamp(minTypeWidth, remainingWidth - nameWidth - minChnnameWidth - minRemarkWidth);
+        final chnnameWidth = (remainingWidth * 0.20).clamp(minChnnameWidth, remainingWidth - nameWidth - typeWidth - minRemarkWidth);
+        final remarkWidth = remainingWidth - nameWidth - typeWidth - chnnameWidth;
+
+        return _buildTableContent(
+          tdTheme,
+          pkWidth, nameWidth, typeWidth, chnnameWidth,
+          notNullWidth, autoIncWidth, remarkWidth, actionsWidth,
         );
       },
+    );
+  }
+
+  Widget _buildTableContent(
+    TDThemeData tdTheme,
+    double pkWidth,
+    double nameWidth,
+    double typeWidth,
+    double chnnameWidth,
+    double notNullWidth,
+    double autoIncWidth,
+    double remarkWidth,
+    double actionsWidth,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: tdTheme.bgColorContainer,
+        border: Border.all(color: tdTheme.componentBorderColor),
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+        child: Column(
+          children: [
+            // Header row
+            _buildHeaderRow(tdTheme, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
+
+            // Data rows
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.fields.length,
+                itemBuilder: (context, index) {
+                  final field = widget.fields[index];
+                  final isSelected = _selectedFieldIds.contains(field.id);
+                  return _buildDataRow(
+                    field,
+                    index,
+                    isSelected,
+                    tdTheme,
+                    pkWidth,
+                    nameWidth,
+                    typeWidth,
+                    chnnameWidth,
+                    notNullWidth,
+                    autoIncWidth,
+                    remarkWidth,
+                    actionsWidth,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
