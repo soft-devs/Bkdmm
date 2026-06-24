@@ -192,12 +192,14 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
               children: [
                 Icon(TDIcons.table, size: 56, color: isDark ? Colors.grey.shade600 : Colors.grey.shade400),
                 const SizedBox(height: 12),
-                Text('No tables yet', style: TextStyle(fontSize: 16, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600)),
+                TDText('No tables yet', font: TDTheme.of(context).fontTitleMedium, textColor: TDTheme.of(context).fontGyColor3),
                 const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  icon: const Icon(TDIcons.add),
-                  label: const Text('Add Entity'),
-                  onPressed: () => widget.onContextMenu?.call(Offset.zero, null),
+                TDButton(
+                  text: 'Add Entity',
+                  icon: TDIcons.add,
+                  theme: TDButtonTheme.primary,
+                  type: TDButtonType.fill,
+                  onTap: () => widget.onContextMenu?.call(Offset.zero, null),
                 ),
               ],
             ),
@@ -554,109 +556,126 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     // 关系类型选择状态
     String selectedRelationType = '1:N';
 
-    showGeneralDialog(
+    showDialog(
       context: context,
-      pageBuilder: (BuildContext buildContext, Animation<double> animation,
-          Animation<double> secondaryAnimation) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Create Relation'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(TDIcons.table, size: 16, color: Colors.blue),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '${sourceNode?.entity.title}.${sourceField ?? 'Unknown'}',
-                                style: const TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Row(children: [Icon(TDIcons.arrow_down, size: 16), SizedBox(width: 8), Text('relation')]),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(TDIcons.table, size: 16, color: Colors.blue),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '${targetNode?.entity.title}.${targetField ?? 'Unknown'}',
-                                style: const TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return TDAlertDialog(
+            title: 'Create Relation',
+            contentWidget: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: TDTheme.of(context).bgColorSecondaryContainer,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Relation type:', style: TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ChoiceChip(
-                        label: const Text('1:1'),
-                        selected: selectedRelationType == '1:1',
-                        onSelected: (selected) => setState(() => selectedRelationType = '1:1'),
+                      Row(
+                        children: [
+                          Icon(TDIcons.table, size: 16, color: TDTheme.of(context).brandNormalColor),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TDText(
+                              '${sourceNode?.entity.title}.${sourceField ?? 'Unknown'}',
+                              font: TDTheme.of(context).fontBodyMedium,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      ChoiceChip(
-                        label: const Text('1:N'),
-                        selected: selectedRelationType == '1:N',
-                        onSelected: (selected) => setState(() => selectedRelationType = '1:N'),
-                      ),
-                      ChoiceChip(
-                        label: const Text('N:1'),
-                        selected: selectedRelationType == 'N:1',
-                        onSelected: (selected) => setState(() => selectedRelationType = 'N:1'),
-                      ),
-                      ChoiceChip(
-                        label: const Text('N:M'),
-                        selected: selectedRelationType == 'N:M',
-                        onSelected: (selected) => setState(() => selectedRelationType = 'N:M'),
+                      const SizedBox(height: 8),
+                      Row(children: [
+                        Icon(TDIcons.arrow_right, size: 16, color: TDTheme.of(context).fontGyColor3),
+                        const SizedBox(width: 8),
+                        TDText('relation', font: TDTheme.of(context).fontBodyMedium, textColor: TDTheme.of(context).fontGyColor3),
+                      ]),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(TDIcons.table, size: 16, color: TDTheme.of(context).brandNormalColor),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TDText(
+                              '${targetNode?.entity.title}.${targetField ?? 'Unknown'}',
+                              font: TDTheme.of(context).fontBodyMedium,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
                 ),
-                FilledButton(
-                  onPressed: () {
-                    notifier.addEdgeWithFields(
-                      sourceParts.first,
-                      targetParts.first,
-                      sourceField: sourceField,
-                      targetField: targetField,
-                    );
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Create'),
+                const SizedBox(height: 16),
+                TDText('Relation type:', font: TDTheme.of(context).fontBodyMedium, fontWeight: FontWeight.w500),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => selectedRelationType = '1:1'),
+                      child: TDTag(
+                        '1:1',
+                        theme: selectedRelationType == '1:1' ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+                        size: TDTagSize.medium,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => setState(() => selectedRelationType = '1:N'),
+                      child: TDTag(
+                        '1:N',
+                        theme: selectedRelationType == '1:N' ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+                        size: TDTagSize.medium,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => setState(() => selectedRelationType = 'N:1'),
+                      child: TDTag(
+                        'N:1',
+                        theme: selectedRelationType == 'N:1' ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+                        size: TDTagSize.medium,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => setState(() => selectedRelationType = 'N:M'),
+                      child: TDTag(
+                        'N:M',
+                        theme: selectedRelationType == 'N:M' ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+                        size: TDTagSize.medium,
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            );
-          },
-        );
-      },
+            ),
+            leftBtn: TDDialogButtonOptions(
+              title: 'Cancel',
+              theme: TDButtonTheme.defaultTheme,
+              type: TDButtonType.text,
+              action: () => Navigator.pop(context),
+            ),
+            rightBtn: TDDialogButtonOptions(
+              title: 'Create',
+              theme: TDButtonTheme.primary,
+              type: TDButtonType.fill,
+              action: () {
+                notifier.addEdgeWithFields(
+                  sourceParts.first,
+                  targetParts.first,
+                  sourceField: sourceField,
+                  targetField: targetField,
+                );
+                Navigator.pop(context);
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }

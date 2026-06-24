@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../features/home/views/home_view.dart';
 import '../shared/providers/providers.dart';
 import 'app_theme.dart';
@@ -24,14 +25,46 @@ class BkdmmApp extends ConsumerWidget {
       darkTheme = _applyAccentColor(darkTheme, accentColor, Brightness.dark);
     }
 
-    return MaterialApp(
-      title: 'Bkdmm - Data Modeling Tool',
-      debugShowCheckedModeBanner: false,
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: themeMode,
-      home: const HomeView(),
+    // Build TDesign theme data with custom accent color
+    final tdThemeData = _buildTDThemeData(accentColor);
+
+    return TDTheme(
+      data: tdThemeData,
+      child: MaterialApp(
+        title: 'Bkdmm - Data Modeling Tool',
+        debugShowCheckedModeBanner: false,
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: themeMode,
+        home: const HomeView(),
+      ),
     );
+  }
+
+  /// Build TDesign theme data with custom brand color
+  TDThemeData _buildTDThemeData(Color? accentColor) {
+    if (accentColor == null) {
+      return TDThemeData.defaultData();
+    }
+
+    // Create custom theme JSON with the accent color
+    final hexColor = '#${accentColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+    final themeJson = '''
+    {
+      "customTheme": {
+        "color": {
+          "brandNormalColor": "$hexColor"
+        }
+      }
+    }
+    ''';
+
+    try {
+      return TDThemeData.fromJson('customTheme', themeJson) ?? TDThemeData.defaultData();
+    } catch (e) {
+      // If JSON parsing fails, return default theme
+      return TDThemeData.defaultData();
+    }
   }
 
   /// Apply custom accent color to theme

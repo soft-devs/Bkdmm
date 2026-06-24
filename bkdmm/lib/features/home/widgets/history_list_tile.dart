@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
 
@@ -46,14 +47,18 @@ class HistoryListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: tdTheme.bgColorContainer,
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+        border: Border.all(color: tdTheme.componentBorderColor),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -62,12 +67,12 @@ class HistoryListTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
+                  color: tdTheme.brandLightColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  Icons.description_outlined,
-                  color: colorScheme.primary,
+                  TDIcons.file,
+                  color: tdTheme.brandNormalColor,
                 ),
               ),
               const SizedBox(width: 12),
@@ -75,34 +80,31 @@ class HistoryListTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TDText(
                       history.name,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                      font: tdTheme.fontBodyLarge,
+                      fontWeight: FontWeight.w500,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    TDText(
                       history.path,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      font: tdTheme.fontBodySmall,
+                      textColor: tdTheme.fontGyColor3,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    TDText(
                       _formatDateTime(history.lastOpenedAt),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                      ),
+                      font: tdTheme.fontBodySmall,
+                      textColor: tdTheme.fontGyColor4,
                     ),
                   ],
                 ),
               ),
-              trailing ?? _buildPopupMenu(context),
+              trailing ?? _buildPopupMenu(context, tdTheme),
             ],
           ),
         ),
@@ -110,9 +112,9 @@ class HistoryListTile extends StatelessWidget {
     );
   }
 
-  Widget _buildPopupMenu(BuildContext context) {
+  Widget _buildPopupMenu(BuildContext context, TDThemeData tdTheme) {
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert),
+      icon: Icon(TDIcons.more, color: tdTheme.fontGyColor3),
       onSelected: (value) {
         switch (value) {
           case 'open':
@@ -130,13 +132,13 @@ class HistoryListTile extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'open',
           child: Row(
             children: [
-              Icon(Icons.open_in_new),
-              SizedBox(width: 12),
-              Text('Open'),
+              Icon(TDIcons.folder_open, size: 18, color: tdTheme.fontGyColor2),
+              const SizedBox(width: 12),
+              TDText('Open', font: tdTheme.fontBodyMedium),
             ],
           ),
         ),
@@ -145,31 +147,40 @@ class HistoryListTile extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                isFavorite ? Icons.star : Icons.star_outline,
+                isFavorite ? TDIcons.star_filled : TDIcons.star,
+                size: 18,
+                color: tdTheme.fontGyColor2,
               ),
               const SizedBox(width: 12),
-              Text(isFavorite ? 'Remove from Favorites' : 'Add to Favorites'),
+              TDText(
+                isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                font: tdTheme.fontBodyMedium,
+              ),
             ],
           ),
         ),
         if (onDuplicate != null)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'duplicate',
             child: Row(
               children: [
-                Icon(Icons.content_copy),
-                SizedBox(width: 12),
-                Text('Duplicate'),
+                Icon(TDIcons.copy, size: 18, color: tdTheme.fontGyColor2),
+                const SizedBox(width: 12),
+                TDText('Duplicate', font: tdTheme.fontBodyMedium),
               ],
             ),
           ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: Row(
             children: [
-              Icon(Icons.delete_outline),
-              SizedBox(width: 12),
-              Text('Remove from List'),
+              Icon(TDIcons.delete, size: 18, color: tdTheme.errorNormalColor),
+              const SizedBox(width: 12),
+              TDText(
+                'Remove from List',
+                font: tdTheme.fontBodyMedium,
+                textColor: tdTheme.errorNormalColor,
+              ),
             ],
           ),
         ),
@@ -201,7 +212,7 @@ class HistoryListTileSimple extends StatelessWidget {
     required this.title,
     required this.timestamp,
     this.subtitle,
-    this.icon = Icons.description,
+    this.icon = TDIcons.file,
     this.onTap,
     this.onDelete,
   });
@@ -241,23 +252,32 @@ class HistoryListTileSimple extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: tdTheme.bgColorContainer,
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+        border: Border.all(color: tdTheme.componentBorderColor),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: colorScheme.primaryContainer,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: tdTheme.brandLightColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: Icon(
                   icon,
-                  color: colorScheme.onPrimaryContainer,
+                  color: tdTheme.brandNormalColor,
                 ),
               ),
               const SizedBox(width: 12),
@@ -265,27 +285,27 @@ class HistoryListTileSimple extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TDText(
                       title,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                      font: tdTheme.fontBodyLarge,
+                      fontWeight: FontWeight.w500,
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    TDText(
                       subtitle ?? _formatTimestamp(timestamp),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      font: tdTheme.fontBodyMedium,
+                      textColor: tdTheme.fontGyColor3,
                     ),
                   ],
                 ),
               ),
               if (onDelete != null)
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: onDelete,
-                  tooltip: 'Remove',
+                TDButton(
+                  icon: TDIcons.close,
+                  theme: TDButtonTheme.defaultTheme,
+                  type: TDButtonType.text,
+                  size: TDButtonSize.small,
+                  onTap: onDelete,
                 ),
             ],
           ),

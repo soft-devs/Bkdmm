@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../shared/diagram_editor/diagram_editor.dart';
 import '../models/flowchart_models.dart';
 import '../renderers/flowchart_renderers.dart';
@@ -92,41 +93,63 @@ class _FlowchartCanvasState extends ConsumerState<FlowchartCanvas> {
   }
 
   Widget _buildToolbar(FlowDiagramState state, bool isDark) {
-    return Card(
-      elevation: 4,
+    final tdTheme = TDTheme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: const Icon(Icons.zoom_in),
-              tooltip: 'Zoom In',
-              onPressed: () {
+            TDButton(
+              icon: TDIcons.zoom_in,
+              size: TDButtonSize.small,
+              type: TDButtonType.outline,
+              theme: TDButtonTheme.defaultTheme,
+              onTap: () {
                 final scale = _transformController.value.getMaxScaleOnAxis() * 1.2;
                 _transformController.value = Matrix4.identity()..scale(scale.clamp(0.1, 5.0));
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.zoom_out),
-              tooltip: 'Zoom Out',
-              onPressed: () {
+            const SizedBox(width: 4),
+            TDButton(
+              icon: TDIcons.zoom_out,
+              size: TDButtonSize.small,
+              type: TDButtonType.outline,
+              theme: TDButtonTheme.defaultTheme,
+              onTap: () {
                 final scale = _transformController.value.getMaxScaleOnAxis() / 1.2;
                 _transformController.value = Matrix4.identity()..scale(scale.clamp(0.1, 5.0));
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.fit_screen),
-              tooltip: 'Fit to Screen',
-              onPressed: () => _transformController.value = Matrix4.identity(),
+            const SizedBox(width: 4),
+            TDButton(
+              icon: TDIcons.fullscreen,
+              size: TDButtonSize.small,
+              type: TDButtonType.outline,
+              theme: TDButtonTheme.defaultTheme,
+              onTap: () => _transformController.value = Matrix4.identity(),
             ),
             const SizedBox(width: 8),
-            Container(width: 1, height: 20, color: Colors.grey.shade300),
+            Container(width: 1, height: 20, color: tdTheme.componentBorderColor),
             const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.account_tree),
-              tooltip: 'Auto Layout (Tree)',
-              onPressed: _autoLayout,
+            TDButton(
+              icon: TDIcons.tree_square_dot,
+              size: TDButtonSize.small,
+              type: TDButtonType.outline,
+              theme: TDButtonTheme.primary,
+              onTap: _autoLayout,
             ),
           ],
         ),

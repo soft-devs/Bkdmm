@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../shared/models/models.dart';
 
 /// Code preview widget for displaying generated DDL
@@ -326,8 +327,7 @@ class _CodePreviewState extends State<CodePreview> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return Column(
       children: [
@@ -335,9 +335,9 @@ class _CodePreviewState extends State<CodePreview> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
+            color: tdTheme.bgColorSecondaryContainer,
             border: Border(
-              bottom: BorderSide(color: colorScheme.outlineVariant),
+              bottom: BorderSide(color: tdTheme.componentBorderColor),
             ),
           ),
           child: Row(
@@ -350,7 +350,7 @@ class _CodePreviewState extends State<CodePreview> {
                     value: db.code,
                     child: Row(
                       children: [
-                        const Icon(Icons.storage, size: 18),
+                        const Icon(TDIcons.data_base, size: 18),
                         const SizedBox(width: 8),
                         Text(db.name),
                       ],
@@ -366,17 +366,22 @@ class _CodePreviewState extends State<CodePreview> {
               ),
               const Spacer(),
               // Copy button
-              IconButton(
-                icon: const Icon(Icons.copy),
-                onPressed: _copyToClipboard,
-                tooltip: 'Copy to Clipboard',
+              TDButton(
+                icon: TDIcons.copy,
+                theme: TDButtonTheme.defaultTheme,
+                type: TDButtonType.text,
+                size: TDButtonSize.small,
+                onTap: _copyToClipboard,
               ),
               const SizedBox(width: 8),
               // Download button
-              FilledButton.icon(
-                onPressed: _downloadSql,
-                icon: const Icon(Icons.download, size: 18),
-                label: const Text('Download .sql'),
+              TDButton(
+                text: 'Download .sql',
+                icon: TDIcons.download,
+                theme: TDButtonTheme.primary,
+                type: TDButtonType.fill,
+                size: TDButtonSize.small,
+                onTap: _downloadSql,
               ),
             ],
           ),
@@ -387,9 +392,9 @@ class _CodePreviewState extends State<CodePreview> {
           child: Container(
             margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: colorScheme.outlineVariant),
+              color: tdTheme.bgColorContainer,
+              borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+              border: Border.all(color: tdTheme.componentBorderColor),
             ),
             child: Column(
               children: [
@@ -397,21 +402,20 @@ class _CodePreviewState extends State<CodePreview> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHigh,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
+                    color: tdTheme.bgColorSecondaryContainer,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(tdTheme.radiusDefault),
+                      topRight: Radius.circular(tdTheme.radiusDefault),
                     ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.code, size: 16, color: colorScheme.primary),
+                      Icon(TDIcons.code, size: 16, color: tdTheme.brandNormalColor),
                       const SizedBox(width: 8),
-                      Text(
+                      TDText(
                         '${widget.entity.title}.sql',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                        font: tdTheme.fontBodySmall,
+                        fontWeight: FontWeight.w500,
                       ),
                     ],
                   ),
@@ -427,9 +431,10 @@ class _CodePreviewState extends State<CodePreview> {
                       padding: const EdgeInsets.all(16),
                       child: SelectableText(
                         _sqlController.text,
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: TextStyle(
                           fontFamily: 'RobotoMono',
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                          fontSize: 14,
+                          color: tdTheme.textColorPrimary,
                         ),
                       ),
                     ),
@@ -445,13 +450,13 @@ class _CodePreviewState extends State<CodePreview> {
 
   void _copyToClipboard() {
     Clipboard.setData(ClipboardData(text: _sqlController.text));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('DDL copied to clipboard'), backgroundColor: Colors.green));
+    TDToast.showSuccess('DDL copied to clipboard', context: context);
   }
 
   void _downloadSql() {
     // In a web context, this would trigger a download
     // For desktop, we'd save to a file
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('DDL ready for ${widget.entity.title}.sql'), backgroundColor: Colors.green));
+    TDToast.showSuccess('DDL ready for ${widget.entity.title}.sql', context: context);
   }
 }
 

@@ -208,83 +208,86 @@ class _FieldTableState extends State<FieldTable> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => TDAlertDialog(
           title: 'Add Field',
-          contentWidget: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TDInput(
-                  controller: nameController,
-                  leftLabel: 'Field Name *',
-                  hintText: 'e.g., user_id',
-                  leftIcon: const Icon(TDIcons.code),
-                  backgroundColor: Colors.transparent,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedType,
-                  decoration: const InputDecoration(
-                    labelText: 'Data Type',
-                    prefixIcon: Icon(TDIcons.data),
+          contentWidget: SizedBox(
+            width: 500,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TDInput(
+                    controller: nameController,
+                    leftLabel: 'Field Name *',
+                    hintText: 'e.g., user_id',
+                    leftIcon: const Icon(TDIcons.code),
+                    backgroundColor: Colors.transparent,
                   ),
-                  items: widget.dataTypes.map((dt) {
-                    return DropdownMenuItem(
-                      value: dt.name,
-                      child: Text('${dt.name} (${dt.chnname})'),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => selectedType = value);
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                TDInput(
-                  controller: chnnameController,
-                  leftLabel: 'Chinese Name',
-                  hintText: 'e.g., 用户ID',
-                  leftIcon: const Icon(TDIcons.translate),
-                  backgroundColor: Colors.transparent,
-                ),
-                const SizedBox(height: 16),
-                TDCheckbox(
-                  title: 'Primary Key',
-                  checked: isPk,
-                  onCheckBoxChanged: (checked) {
-                    setState(() {
-                      isPk = checked;
-                      if (isPk) {
-                        isNotNull = true;
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    decoration: const InputDecoration(
+                      labelText: 'Data Type',
+                      prefixIcon: Icon(TDIcons.data),
+                    ),
+                    items: widget.dataTypes.map((dt) {
+                      return DropdownMenuItem(
+                        value: dt.name,
+                        child: Text('${dt.name} (${dt.chnname})'),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => selectedType = value);
                       }
-                    });
-                  },
-                ),
-                const SizedBox(height: 8),
-                TDCheckbox(
-                  title: 'Not Null',
-                  checked: isNotNull,
-                  enable: !isPk,
-                  onCheckBoxChanged: isPk ? null : (checked) {
-                    setState(() => isNotNull = checked);
-                  },
-                ),
-                const SizedBox(height: 8),
-                TDCheckbox(
-                  title: 'Auto Increment',
-                  checked: isAutoIncrement,
-                  onCheckBoxChanged: (checked) {
-                    setState(() => isAutoIncrement = checked);
-                  },
-                ),
-                const SizedBox(height: 16),
-                TDInput(
-                  controller: remarkController,
-                  leftLabel: 'Remark',
-                  hintText: 'Field description',
-                  backgroundColor: Colors.transparent,
-                  maxLines: 2,
-                ),
-              ],
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TDInput(
+                    controller: chnnameController,
+                    leftLabel: 'Chinese Name',
+                    hintText: 'e.g., 用户ID',
+                    leftIcon: const Icon(TDIcons.translate),
+                    backgroundColor: Colors.transparent,
+                  ),
+                  const SizedBox(height: 16),
+                  TDCheckbox(
+                    title: 'Primary Key',
+                    checked: isPk,
+                    onCheckBoxChanged: (checked) {
+                      setState(() {
+                        isPk = checked;
+                        if (isPk) {
+                          isNotNull = true;
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TDCheckbox(
+                    title: 'Not Null',
+                    checked: isNotNull,
+                    enable: !isPk,
+                    onCheckBoxChanged: isPk ? null : (checked) {
+                      setState(() => isNotNull = checked);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TDCheckbox(
+                    title: 'Auto Increment',
+                    checked: isAutoIncrement,
+                    onCheckBoxChanged: (checked) {
+                      setState(() => isAutoIncrement = checked);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TDInput(
+                    controller: remarkController,
+                    leftLabel: 'Remark',
+                    hintText: 'Field description',
+                    backgroundColor: Colors.transparent,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
             ),
           ),
           leftBtn: TDDialogButtonOptions(

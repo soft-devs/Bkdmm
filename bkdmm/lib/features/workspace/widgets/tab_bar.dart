@@ -159,11 +159,10 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
   Widget _buildEmptyState(ThemeData theme, ColorScheme colorScheme) {
     final tdTheme = TDTheme.of(context);
     return Center(
-      child: Text(
+      child: TDText(
         'No tabs open',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: tdTheme.textColorPlaceholder,
-        ),
+        font: tdTheme.fontBodySmall,
+        textColor: tdTheme.textColorSecondary,
       ),
     );
   }
@@ -314,14 +313,13 @@ class _TabItem extends StatelessWidget {
             const SizedBox(width: 8),
             // Title - simplified to single line for better responsiveness
             Flexible(
-              child: Text(
+              child: TDText(
                 tab.title,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: isActive ? FontWeight.w600 : null,
-                  color: isActive ? tdTheme.brandNormalColor : null,
-                ),
-                overflow: TextOverflow.ellipsis,
+                font: tdTheme.fontBodySmall,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                textColor: isActive ? tdTheme.brandNormalColor : tdTheme.textColorPrimary,
                 maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 4),
