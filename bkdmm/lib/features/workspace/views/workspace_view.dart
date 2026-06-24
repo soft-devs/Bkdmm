@@ -298,7 +298,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              TDIcons.browser,
+              TDIcons.view_module,
               size: 64,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
@@ -580,17 +580,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       builder: (context) => TDAlertDialog(
         title: 'Delete Entity',
         content: 'Are you sure you want to delete "${entity.title}"?',
-        leftBtn: TDButton(
-          text: 'Cancel',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
-          onTap: () => Navigator.pop(context),
+          action: () => Navigator.pop(context),
         ),
-        rightBtn: TDButton(
-          text: 'Delete',
+        rightBtn: TDDialogButtonOptions(
+          title: 'Delete',
           theme: TDButtonTheme.danger,
           type: TDButtonType.fill,
-          onTap: () {
+          action: () {
             final updatedEntities = module.entities.where((e) => e.id != entity.id).toList();
             final updatedModule = module.copyWith(
               entities: updatedEntities,
@@ -887,7 +887,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         _PropertyField(label: 'ID', value: entity.id),
         const SizedBox(height: 16),
         _PropertySection(title: 'Statistics'),
-        _StatTile(icon: TDIcons.unordered_list, label: 'Fields', value: '${entity.fields.length}'),
+        _StatTile(icon: TDIcons.view_list, label: 'Fields', value: '${entity.fields.length}'),
         _StatTile(icon: TDIcons.key, label: 'Primary Keys', value: '${entity.primaryKeys.length}'),
         _StatTile(icon: TDIcons.chart, label: 'Indexes', value: '${entity.indexes.length}'),
         const SizedBox(height: 16),
@@ -952,7 +952,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.length)}',
         ),
         _StatTile(
-          icon: TDIcons.unordered_list,
+          icon: TDIcons.view_list,
           label: 'Fields',
           value: '${project.modules.fold<int>(0, (sum, m) => sum + m.entities.fold<int>(0, (s, e) => s + e.fields.length))}',
         ),
@@ -1019,7 +1019,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             child: Row(
               children: [
                 Icon(
-                  TDIcons.browser,
+                  TDIcons.view_module,
                   size: 14,
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -1139,17 +1139,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         builder: (context) => TDAlertDialog(
           title: 'Save changes?',
           content: 'The project has unsaved changes. Do you want to save before closing?',
-          leftBtn: TDButton(
-            text: 'Discard',
+          leftBtn: TDDialogButtonOptions(
+            title: 'Discard',
             theme: TDButtonTheme.defaultTheme,
             type: TDButtonType.text,
-            onTap: () => Navigator.pop(context, false),
+            action: () => Navigator.pop(context, false),
           ),
-          rightBtn: TDButton(
-            text: 'Save',
+          rightBtn: TDDialogButtonOptions(
+            title: 'Save',
             theme: TDButtonTheme.primary,
             type: TDButtonType.fill,
-            onTap: () => Navigator.pop(context, true),
+            action: () => Navigator.pop(context, true),
           ),
         ),
       );
@@ -1181,17 +1181,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       builder: (context) => TDAlertDialog(
         title: 'Create New Module',
         content: 'A module is a container for related database tables/entities.',
-        leftBtn: TDButton(
-          text: 'Cancel',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
-          onTap: () => Navigator.pop(context, false),
+          action: () => Navigator.pop(context, false),
         ),
-        rightBtn: TDButton(
-          text: 'Create Module',
+        rightBtn: TDDialogButtonOptions(
+          title: 'Create Module',
           theme: TDButtonTheme.primary,
           type: TDButtonType.fill,
-          onTap: () {
+          action: () {
             if (nameController.text.trim().isNotEmpty) {
               Navigator.pop(context, true);
             }
@@ -1224,17 +1224,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       builder: (context) => TDAlertDialog(
         title: 'Create Table in "${module.name}"',
         content: 'Create a new database table/entity in module "${module.chnname}".',
-        leftBtn: TDButton(
-          text: 'Cancel',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
-          onTap: () => Navigator.pop(context, false),
+          action: () => Navigator.pop(context, false),
         ),
-        rightBtn: TDButton(
-          text: 'Create Table',
+        rightBtn: TDDialogButtonOptions(
+          title: 'Create Table',
           theme: TDButtonTheme.primary,
           type: TDButtonType.fill,
-          onTap: () {
+          action: () {
             if (titleController.text.trim().isNotEmpty) {
               Navigator.pop(context, true);
             }
