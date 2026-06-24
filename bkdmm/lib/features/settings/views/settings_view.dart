@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/providers/providers.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -34,7 +35,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           // Appearance Section
           _SettingsSection(
             title: 'Appearance',
-            icon: Icons.palette_outlined,
+            icon: TDIcons.palette,
             children: [
               // Theme Mode
               _SettingsTile(
@@ -51,7 +52,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 title: 'Accent Color',
                 subtitle: 'Customize the app accent color',
                 leading: Icon(
-                  Icons.colorize,
+                  TDIcons.color_invert,
                   color: colorScheme.primary,
                 ),
                 trailing: Row(
@@ -78,7 +79,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 title: 'Font Size',
                 subtitle: 'Editor font size: ${settings.editorFontSize.toInt()}',
                 leading: Icon(
-                  Icons.text_fields,
+                  TDIcons.textformat_bold,
                   color: colorScheme.primary,
                 ),
                 onTap: () => _showFontSizeDialog(),
@@ -91,14 +92,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           // Editor Section
           _SettingsSection(
             title: 'Editor',
-            icon: Icons.edit_outlined,
+            icon: TDIcons.edit,
             children: [
               // Default Database Type
               _SettingsTile(
                 title: 'Default Database Type',
                 subtitle: settings.defaultDatabase ?? 'Not set',
                 leading: Icon(
-                  Icons.storage,
+                  TDIcons.data_base,
                   color: colorScheme.primary,
                 ),
                 onTap: () => _showDatabaseTypeDialog(),
@@ -108,7 +109,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 title: 'Auto-save Interval',
                 subtitle: _getAutoSaveLabel(settings.autoSaveInterval),
                 leading: Icon(
-                  Icons.save,
+                  TDIcons.time,
                   color: colorScheme.primary,
                 ),
                 onTap: () => _showAutoSaveDialog(),
@@ -130,7 +131,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           // Default Fields Section
           _SettingsSection(
             title: 'Default Fields',
-            icon: Icons.list_alt,
+            icon: TDIcons.list,
             description: 'Configure default fields for new tables',
             children: [
               _SettingsSwitchTile(
@@ -181,13 +182,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           // Data Type Settings Section
           _SettingsSection(
             title: 'Data Types',
-            icon: Icons.data_object,
+            icon: TDIcons.data,
             children: [
               _SettingsTile(
                 title: 'Manage Data Types',
                 subtitle: 'Configure custom data types',
                 leading: Icon(
-                  Icons.chevron_right,
+                  TDIcons.chevron_right,
                   color: colorScheme.primary,
                 ),
                 onTap: () => _navigateToDataTypes(),
@@ -200,13 +201,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           // Reset Section
           _SettingsSection(
             title: 'Reset',
-            icon: Icons.restore,
+            icon: TDIcons.refresh,
             children: [
               _SettingsTile(
                 title: 'Reset to Defaults',
                 subtitle: 'Restore all settings to default values',
                 leading: Icon(
-                  Icons.refresh,
+                  TDIcons.close_circle,
                   color: colorScheme.error,
                 ),
                 onTap: () => _showResetConfirmation(),
@@ -232,11 +233,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   IconData _getThemeModeIcon(String mode) {
     switch (mode) {
       case 'light':
-        return Icons.light_mode;
+        return TDIcons.sun_rising;
       case 'dark':
-        return Icons.dark_mode;
+        return TDIcons.moon;
       default:
-        return Icons.brightness_auto;
+        return TDIcons.brightness;
     }
   }
 
@@ -318,25 +319,25 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   void _showResetConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Settings'),
-        content: const Text(
-          'Are you sure you want to reset all settings to their default values? This action cannot be undone.',
+      builder: (context) => TDAlertDialog(
+        title: 'Reset Settings',
+        content: 'Are you sure you want to reset all settings to their default values? This action cannot be undone.',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(settingsProvider.notifier).resetToDefaults();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings reset to defaults'), backgroundColor: Colors.green));
-            },
-            child: const Text('Reset'),
-          ),
-        ],
+        rightBtn: TDDialogButtonOptions(
+          title: 'Reset',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          action: () {
+            ref.read(settingsProvider.notifier).resetToDefaults();
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings reset to defaults'), backgroundColor: Colors.green));
+          },
+        ),
       ),
     );
   }
@@ -503,9 +504,12 @@ class _SettingsSwitchTile extends StatelessWidget {
               ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
+          TDSwitch(
+            isOn: value,
+            onChanged: (newValue) {
+              onChanged(newValue);
+              return false; // Return false to let internal state update automatically
+            },
           ),
         ],
       ),
@@ -525,100 +529,41 @@ class _ThemeModeDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Theme Mode'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ThemeModeOption(
-            icon: Icons.brightness_auto,
+    return TDAlertDialog(
+      title: 'Theme Mode',
+      content: '',
+      contentWidget: TDRadioGroup(
+        selectId: currentValue,
+        onRadioGroupChange: (value) {
+          if (value != null) {
+            onChanged(value);
+            Navigator.pop(context);
+          }
+        },
+        directionalTdRadios: [
+          TDRadio(
+            id: 'system',
             title: 'System',
-            subtitle: 'Follow system settings',
-            value: 'system',
-            groupValue: currentValue,
-            onChanged: (value) {
-              onChanged(value);
-              Navigator.pop(context);
-            },
+            subTitle: 'Follow system settings',
           ),
-          _ThemeModeOption(
-            icon: Icons.light_mode,
+          TDRadio(
+            id: 'light',
             title: 'Light',
-            subtitle: 'Always use light theme',
-            value: 'light',
-            groupValue: currentValue,
-            onChanged: (value) {
-              onChanged(value);
-              Navigator.pop(context);
-            },
+            subTitle: 'Always use light theme',
           ),
-          _ThemeModeOption(
-            icon: Icons.dark_mode,
+          TDRadio(
+            id: 'dark',
             title: 'Dark',
-            subtitle: 'Always use dark theme',
-            value: 'dark',
-            groupValue: currentValue,
-            onChanged: (value) {
-              onChanged(value);
-              Navigator.pop(context);
-            },
+            subTitle: 'Always use dark theme',
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ],
-    );
-  }
-}
-
-/// Theme mode option widget
-class _ThemeModeOption extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String value;
-  final String groupValue;
-  final ValueChanged<String> onChanged;
-
-  const _ThemeModeOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.groupValue,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isSelected = value == groupValue;
-
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: () => Navigator.pop(context),
       ),
-      title: Text(title),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
-      trailing: Radio<String>(
-        value: value,
-        groupValue: groupValue,
-        onChanged: (v) {
-          if (v != null) onChanged(v);
-        },
-      ),
-      onTap: () => onChanged(value),
     );
   }
 }
@@ -646,9 +591,10 @@ class _AccentColorDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AlertDialog(
-      title: const Text('Accent Color'),
-      content: SizedBox(
+    return TDAlertDialog(
+      title: 'Accent Color',
+      content: '',
+      contentWidget: SizedBox(
         width: 280,
         child: GridView.builder(
           shrinkWrap: true,
@@ -681,7 +627,7 @@ class _AccentColorDialog extends StatelessWidget {
                 ),
                 child: isSelected
                     ? Icon(
-                        Icons.check,
+                        TDIcons.check,
                         color: ThemeData.estimateBrightnessForColor(color) ==
                                 Brightness.dark
                             ? Colors.white
@@ -693,12 +639,12 @@ class _AccentColorDialog extends StatelessWidget {
           },
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ],
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: () => Navigator.pop(context),
+      ),
     );
   }
 }
@@ -730,9 +676,10 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AlertDialog(
-      title: const Text('Font Size'),
-      content: Column(
+    return TDAlertDialog(
+      title: 'Font Size',
+      content: '',
+      customContent: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
@@ -744,12 +691,13 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
             children: [
               const Text('A', style: TextStyle(fontSize: 12)),
               Expanded(
-                child: Slider(
+                child: TDSlider(
                   value: _value,
-                  min: 10,
-                  max: 24,
-                  divisions: 14,
-                  label: _value.toInt().toString(),
+                  sliderThemeData: TDSliderThemeData(
+                    min: 10,
+                    max: 24,
+                    divisions: 14,
+                  ),
                   onChanged: (value) {
                     setState(() => _value = value);
                   },
@@ -764,19 +712,21 @@ class _FontSizeDialogState extends State<_FontSizeDialog> {
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () {
-            widget.onChanged(_value);
-            Navigator.pop(context);
-          },
-          child: const Text('Apply'),
-        ),
-      ],
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: () => Navigator.pop(context),
+      ),
+      rightBtn: TDDialogButtonOptions(
+        title: 'Apply',
+        theme: TDButtonTheme.primary,
+        type: TDButtonType.fill,
+        action: () {
+          widget.onChanged(_value);
+          Navigator.pop(context);
+        },
+      ),
     );
   }
 }
@@ -796,9 +746,10 @@ class _DatabaseTypeDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AlertDialog(
-      title: const Text('Default Database Type'),
-      content: SizedBox(
+    return TDAlertDialog(
+      title: 'Default Database Type',
+      content: '',
+      contentWidget: SizedBox(
         width: 300,
         child: ListView.builder(
           shrinkWrap: true,
@@ -807,11 +758,11 @@ class _DatabaseTypeDialog extends StatelessWidget {
             if (index == 0) {
               // Option to clear selection
               return ListTile(
-                leading: const Icon(Icons.clear),
+                leading: const Icon(TDIcons.close),
                 title: const Text('Not Set'),
                 subtitle: const Text('No default database'),
                 trailing: currentValue == null
-                    ? Icon(Icons.check, color: colorScheme.primary)
+                    ? Icon(TDIcons.check, color: colorScheme.primary)
                     : null,
                 onTap: () {
                   onChanged(null);
@@ -823,14 +774,14 @@ class _DatabaseTypeDialog extends StatelessWidget {
             final db = AppConstants.supportedDatabases[index - 1];
             return ListTile(
               leading: Icon(
-                Icons.storage,
+                TDIcons.data_base,
                 color: currentValue == db
                     ? colorScheme.primary
                     : colorScheme.onSurfaceVariant,
               ),
               title: Text(db),
               trailing: currentValue == db
-                  ? Icon(Icons.check, color: colorScheme.primary)
+                  ? Icon(TDIcons.check, color: colorScheme.primary)
                   : null,
               onTap: () {
                 onChanged(db);
@@ -840,12 +791,12 @@ class _DatabaseTypeDialog extends StatelessWidget {
           },
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ],
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: () => Navigator.pop(context),
+      ),
     );
   }
 }
@@ -878,9 +829,10 @@ class _AutoSaveDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AlertDialog(
-      title: const Text('Auto-save Interval'),
-      content: SizedBox(
+    return TDAlertDialog(
+      title: 'Auto-save Interval',
+      content: '',
+      contentWidget: SizedBox(
         width: 300,
         child: ListView.builder(
           shrinkWrap: true,
@@ -889,14 +841,14 @@ class _AutoSaveDialog extends StatelessWidget {
             final interval = _intervals[index];
             return ListTile(
               leading: Icon(
-                interval == 0 ? Icons.timer_off : Icons.timer,
+                interval == 0 ? TDIcons.time : TDIcons.time,
                 color: currentValue == interval
                     ? colorScheme.primary
                     : colorScheme.onSurfaceVariant,
               ),
               title: Text(_getLabel(interval)),
               trailing: currentValue == interval
-                  ? Icon(Icons.check, color: colorScheme.primary)
+                  ? Icon(TDIcons.check, color: colorScheme.primary)
                   : null,
               onTap: () {
                 onChanged(interval);
@@ -906,12 +858,12 @@ class _AutoSaveDialog extends StatelessWidget {
           },
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ],
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: () => Navigator.pop(context),
+      ),
     );
   }
 }

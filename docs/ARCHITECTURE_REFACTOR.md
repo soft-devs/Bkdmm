@@ -729,20 +729,43 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
 
 ## 九、参考资料
 
-### 9.1 架构模式
+### 9.1 官方指南
+- [Flutter App Architecture](https://docs.flutter.dev/app-architecture) - Flutter 官方架构指南
+- [Flutter Compass App Sample](https://github.com/flutter/samples/tree/main/compass_app) - Flutter 官方架构示例
+- [Effective Dart: Style Guide](https://dart.dev/guides/language/effective-dart/style) - Dart 官方代码风格指南
+- [Flutter Style Guide](https://github.com/flutter/flutter/wiki/Style-guide-for-Flutter-repo) - Flutter 团队代码风格
+- [Flutter State Management Options](https://docs.flutter.dev/data-and-backend/state-mgmt/options) - 官方状态管理指南
+
+### 9.2 架构模式
 - Clean Architecture by Robert C. Martin
 - Domain-Driven Design by Eric Evans
-- Flutter Architecture Samples (github.com/brianegan/flutter_architecture_samples)
+- [Flutter App Architecture (Andrea Bizzotto)](https://codewithandrea.com/articles/flutter-app-architecture/) - Riverpod 架构详解
+- [Flutter Architecture with Riverpod](https://codewithandrea.com/articles/flutter-app-architecture-riverpod-introduction/) - Riverpod 架构实践
+- [Flutter Clean Architecture TDD](https://resocoder.com/flutter-clean-architecture-tdd/) - Clean Architecture 实战教程
 
-### 9.2 Flutter 最佳实践
-- Effective Dart: Style Guide
-- Flutter Documentation: Architecture
-- Riverpod Best Practices by Andrea Bizzotto
+### 9.3 企业级最佳实践
+- [Very Good CLI](https://github.com/VeryGoodOpenSource/very_good_cli) - VGV 官方项目模板工具
+- [Very Good CLI Blog](https://verygood.ventures/blog/very-good-cli) - 企业级 Flutter 项目模板
+- [Scalable Flutter Architecture](https://verygood.ventures/blog/scalable-flutter-architecture) - 可扩展架构设计
+- [Flutter Project Structure](https://verygood.ventures/blog/flutter-project-structure) - VGV 项目结构最佳实践
+- [Flutter State Management](https://verygood.ventures/blog/flutter-state-management) - VGV 状态管理方案
 
-### 9.3 相关项目
-- Very Good CLI (Very Good Ventures)
-- Flutter News Toolkit
-- Stagehand Templates
+### 9.4 社区讨论
+- [Flutter Architecture Discussions](https://github.com/fluttercommunity/architecture-discussions) - 社区架构讨论
+- [State Management in Large Apps](https://www.reddit.com/r/FlutterDev/comments/state-management-large-apps/) - 大型应用状态管理讨论
+
+### 9.5 架构决策总结
+
+基于以上权威来源，我们总结出以下核心原则：
+
+| 原则 | 说明 | 来源 |
+|------|------|------|
+| **Feature-First 组织** | 按功能模块组织代码，而非技术层 | Flutter 官方、VGV |
+| **领域驱动设计** | 业务逻辑独立于框架和 UI | Clean Architecture |
+| **单向数据流** | 状态管理采用单向数据流 | Riverpod、VGV |
+| **依赖注入** | 通过构造函数注入依赖 | Effective Dart |
+| **测试优先** | 架构设计需支持单元测试 | TDD、Clean Architecture |
+| **snake_case 文件名** | Dart 文件使用小写下划线命名 | Effective Dart、Flutter Style Guide |
 
 ---
 
