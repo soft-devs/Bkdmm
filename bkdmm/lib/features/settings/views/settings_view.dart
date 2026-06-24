@@ -778,6 +778,11 @@ class _DatabaseTypeDialog extends StatelessWidget {
           itemBuilder: (context, index) {
             if (index == 0) {
               // Option to clear selection
+              final isSelected = currentValue == null;
+              final cellStyle = TDCellStyle(context: context);
+              if (isSelected) {
+                cellStyle.rightIconColor = tdTheme.brandNormalColor;
+              }
               return TDCell(
                 leftIcon: TDIcons.close,
                 title: 'Not Set',
@@ -787,14 +792,20 @@ class _DatabaseTypeDialog extends StatelessWidget {
                   onChanged(null);
                   Navigator.pop(context);
                 },
-                rightIcon: currentValue == null ? TDIcons.check : null,
-                style: TDCellStyle.cellStyle(context).copyWith(
-                  rightIconColor: currentValue == null ? tdTheme.brandNormalColor : null,
-                ),
+                rightIcon: isSelected ? TDIcons.check : null,
+                style: cellStyle,
               );
             }
 
             final db = AppConstants.supportedDatabases[index - 1];
+            final isSelected = currentValue == db;
+            final cellStyle = TDCellStyle(context: context);
+            if (isSelected) {
+              cellStyle.leftIconColor = tdTheme.brandNormalColor;
+              cellStyle.rightIconColor = tdTheme.brandNormalColor;
+            } else {
+              cellStyle.leftIconColor = tdTheme.textColorSecondary;
+            }
             return TDCell(
               leftIcon: TDIcons.data_base,
               title: db,
@@ -803,13 +814,8 @@ class _DatabaseTypeDialog extends StatelessWidget {
                 onChanged(db);
                 Navigator.pop(context);
               },
-              rightIcon: currentValue == db ? TDIcons.check : null,
-              style: TDCellStyle.cellStyle(context).copyWith(
-                leftIconColor: currentValue == db
-                    ? tdTheme.brandNormalColor
-                    : tdTheme.textColorSecondary,
-                rightIconColor: currentValue == db ? tdTheme.brandNormalColor : null,
-              ),
+              rightIcon: isSelected ? TDIcons.check : null,
+              style: cellStyle,
             );
           },
         ),
@@ -863,6 +869,14 @@ class _AutoSaveDialog extends StatelessWidget {
             final interval = _intervals[index];
             final isSelected = currentValue == interval;
 
+            final cellStyle = TDCellStyle(context: context);
+            if (isSelected) {
+              cellStyle.leftIconColor = tdTheme.brandNormalColor;
+              cellStyle.rightIconColor = tdTheme.brandNormalColor;
+            } else {
+              cellStyle.leftIconColor = tdTheme.textColorSecondary;
+            }
+
             return TDCell(
               leftIcon: TDIcons.time,
               title: _getLabel(interval),
@@ -872,12 +886,7 @@ class _AutoSaveDialog extends StatelessWidget {
                 Navigator.pop(context);
               },
               rightIcon: isSelected ? TDIcons.check : null,
-              style: TDCellStyle.cellStyle(context).copyWith(
-                leftIconColor: isSelected
-                    ? tdTheme.brandNormalColor
-                    : tdTheme.textColorSecondary,
-                rightIconColor: isSelected ? tdTheme.brandNormalColor : null,
-              ),
+              style: cellStyle,
             );
           },
         ),

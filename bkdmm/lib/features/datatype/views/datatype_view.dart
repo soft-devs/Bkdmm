@@ -49,47 +49,42 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
     final state = ref.watch(dataTypeNotifierProvider);
 
     final defaultTypes = _filterTypes(state.defaultTypes);
     final customTypes = _filterTypes(state.customTypes);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: tdTheme.grayColor1,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          _buildHeader(theme, colorScheme, state),
+          _buildHeader(tdTheme, state),
 
           // Search and filter bar
-          _buildSearchBar(theme, colorScheme),
+          _buildSearchBar(tdTheme),
 
           // Content
           Expanded(
             child: state.dataTypes.isEmpty
-                ? _buildEmptyState(theme, colorScheme)
-                : _buildTypeList(theme, colorScheme, defaultTypes, customTypes),
+                ? _buildEmptyState(tdTheme)
+                : _buildTypeList(tdTheme, defaultTypes, customTypes),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    DataTypeState state,
-  ) {
+  Widget _buildHeader(TDThemeData tdTheme, DataTypeState state) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
+        color: tdTheme.grayColor1,
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentStrokeColor,
           ),
         ),
       ),
@@ -97,25 +92,25 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
         children: [
           Icon(
             TDIcons.data,
-            color: colorScheme.primary,
+            color: tdTheme.brandNormalColor,
           ),
           const SizedBox(width: 8),
-          Text(
+          TDText(
             'Data Type Management',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            font: tdTheme.fontTitleMedium,
+            fontWeight: FontWeight.w600,
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
+              color: tdTheme.grayColor3,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(
+            child: TDText(
               '${state.dataTypes.length} types',
-              style: theme.textTheme.labelSmall,
+              font: tdTheme.fontBodySmall,
+              textColor: tdTheme.fontGyColor2,
             ),
           ),
           if (state.isDirty)
@@ -123,14 +118,13 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
               margin: const EdgeInsets.only(left: 8),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
+                color: tdTheme.brandLightColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
+              child: TDText(
                 'Modified',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                ),
+                font: tdTheme.fontBodySmall,
+                textColor: tdTheme.brandNormalColor,
               ),
             ),
           const Spacer(),
@@ -153,7 +147,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     );
   }
 
-  Widget _buildSearchBar(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildSearchBar(TDThemeData tdTheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -162,7 +156,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           Expanded(
             child: TDInput(
               hintText: 'Search types...',
-              leftIcon: const Icon(TDIcons.search),
+              leftIcon: Icon(TDIcons.search, color: tdTheme.fontGyColor3),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
@@ -171,32 +165,38 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
             ),
           ),
           const SizedBox(width: 16),
-          // Filter toggles
-          FilterChip(
-            label: const Text('Default Types'),
-            selected: _showDefaultTypes,
-            onSelected: (selected) {
+          // Filter toggles using TDTag wrapped in GestureDetector
+          GestureDetector(
+            onTap: () {
               setState(() {
-                _showDefaultTypes = selected;
+                _showDefaultTypes = !_showDefaultTypes;
               });
             },
+            child: TDTag(
+              'Default Types',
+              theme: _showDefaultTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+              size: TDTagSize.medium,
+            ),
           ),
           const SizedBox(width: 8),
-          FilterChip(
-            label: const Text('Custom Types'),
-            selected: _showCustomTypes,
-            onSelected: (selected) {
+          GestureDetector(
+            onTap: () {
               setState(() {
-                _showCustomTypes = selected;
+                _showCustomTypes = !_showCustomTypes;
               });
             },
+            child: TDTag(
+              'Custom Types',
+              theme: _showCustomTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+              size: TDTagSize.medium,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildEmptyState(TDThemeData tdTheme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -204,21 +204,19 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           Icon(
             TDIcons.data,
             size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: tdTheme.fontGyColor4,
           ),
           const SizedBox(height: 16),
-          Text(
+          TDText(
             'No data types found',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            font: tdTheme.fontTitleMedium,
+            textColor: tdTheme.fontGyColor2,
           ),
           const SizedBox(height: 8),
-          Text(
+          TDText(
             'Click "Restore Defaults" to load default types',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            ),
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.fontGyColor3,
           ),
         ],
       ),
@@ -226,8 +224,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
   }
 
   Widget _buildTypeList(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     List<DataType> defaultTypes,
     List<DataType> customTypes,
   ) {
@@ -240,10 +237,10 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
             'Default Types',
             '${defaultTypes.length}',
             TDIcons.bookmark,
-            colorScheme,
+            tdTheme,
           ),
           const SizedBox(height: 8),
-          ...defaultTypes.map((type) => _buildTypeCard(type, theme, colorScheme)),
+          ...defaultTypes.map((type) => _buildTypeCard(type, tdTheme)),
           const SizedBox(height: 24),
         ],
 
@@ -253,10 +250,10 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
             'Custom Types',
             '${customTypes.length}',
             TDIcons.extension,
-            colorScheme,
+            tdTheme,
           ),
           const SizedBox(height: 8),
-          ...customTypes.map((type) => _buildTypeCard(type, theme, colorScheme)),
+          ...customTypes.map((type) => _buildTypeCard(type, tdTheme)),
         ],
       ],
     );
@@ -266,59 +263,63 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     String title,
     String count,
     IconData icon,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
   ) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: colorScheme.primary),
+        Icon(icon, size: 18, color: tdTheme.brandNormalColor),
         const SizedBox(width: 8),
-        Text(
+        TDText(
           title,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          font: tdTheme.fontTitleSmall,
+          fontWeight: FontWeight.w600,
         ),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHigh,
+            color: tdTheme.grayColor3,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Text(
+          child: TDText(
             count,
-            style: Theme.of(context).textTheme.labelSmall,
+            font: tdTheme.fontBodySmall,
+            textColor: tdTheme.fontGyColor2,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTypeCard(
-    DataType type,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildTypeCard(DataType type, TDThemeData tdTheme) {
     final isDefault = DefaultDataTypes.isDefaultType(type.id);
     final isSelected = _selectedTypeId == type.id;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: isSelected ? 2 : 0,
-      color: isSelected ? colorScheme.primaryContainer.withValues(alpha: 0.3) : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: isSelected
-            ? BorderSide(color: colorScheme.primary, width: 2)
-            : BorderSide(color: colorScheme.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedTypeId = isSelected ? null : type.id;
-          });
-        },
-        borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTypeId = isSelected ? null : type.id;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? tdTheme.brandLightColor : tdTheme.whiteColor1,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? tdTheme.brandNormalColor : tdTheme.componentStrokeColor,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: tdTheme.grayColor4.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -330,17 +331,13 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDefault
-                          ? colorScheme.primaryContainer
-                          : colorScheme.secondaryContainer,
+                      color: isDefault ? tdTheme.brandLightColor : tdTheme.grayColor3,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       _getTypeIcon(type.name),
                       size: 20,
-                      color: isDefault
-                          ? colorScheme.onPrimaryContainer
-                          : colorScheme.onSecondaryContainer,
+                      color: isDefault ? tdTheme.brandNormalColor : tdTheme.fontGyColor1,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -350,62 +347,65 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                       children: [
                         Row(
                           children: [
-                            Text(
+                            TDText(
                               type.name,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              font: tdTheme.fontTitleSmall,
+                              fontWeight: FontWeight.w600,
                             ),
                             const SizedBox(width: 8),
-                            Text(
+                            TDText(
                               type.chnname,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                              font: tdTheme.fontBodyMedium,
+                              textColor: tdTheme.fontGyColor2,
                             ),
                           ],
                         ),
                         if (type.remark != null && type.remark!.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Text(
+                            child: TDText(
                               type.remark!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                              font: tdTheme.fontBodySmall,
+                              textColor: tdTheme.fontGyColor3,
                             ),
                           ),
                       ],
                     ),
                   ),
-                  // Actions
+                  // Actions using PopupMenuButton with TDIcons
                   PopupMenuButton<String>(
-                    icon: Icon(TDIcons.more),
+                    icon: Icon(TDIcons.more, color: tdTheme.fontGyColor1),
                     onSelected: (action) => _handleTypeAction(type, action),
                     itemBuilder: (context) => [
                       PopupMenuItem(
                         value: 'edit',
-                        child: ListTile(
-                          leading: Icon(TDIcons.edit),
-                          title: const Text('Edit'),
-                          contentPadding: EdgeInsets.zero,
+                        child: Row(
+                          children: [
+                            Icon(TDIcons.edit, size: 18, color: tdTheme.fontGyColor1),
+                            const SizedBox(width: 8),
+                            TDText('Edit', font: tdTheme.fontBodyMedium),
+                          ],
                         ),
                       ),
                       PopupMenuItem(
                         value: 'duplicate',
-                        child: ListTile(
-                          leading: Icon(TDIcons.copy),
-                          title: const Text('Duplicate'),
-                          contentPadding: EdgeInsets.zero,
+                        child: Row(
+                          children: [
+                            Icon(TDIcons.copy, size: 18, color: tdTheme.fontGyColor1),
+                            const SizedBox(width: 8),
+                            TDText('Duplicate', font: tdTheme.fontBodyMedium),
+                          ],
                         ),
                       ),
                       if (!isDefault)
                         PopupMenuItem(
                           value: 'delete',
-                          child: ListTile(
-                            leading: Icon(TDIcons.delete, color: Colors.red),
-                            title: const Text('Delete', style: TextStyle(color: Colors.red)),
-                            contentPadding: EdgeInsets.zero,
+                          child: Row(
+                            children: [
+                              Icon(TDIcons.delete, size: 18, color: tdTheme.errorColor6),
+                              const SizedBox(width: 8),
+                              TDText('Delete', font: tdTheme.fontBodyMedium, textColor: tdTheme.errorColor6),
+                            ],
                           ),
                         ),
                     ],
@@ -416,7 +416,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
               // Type mappings
               if (isSelected) ...[
                 const SizedBox(height: 16),
-                _buildTypeMappings(type, theme, colorScheme),
+                _buildTypeMappings(type, tdTheme),
               ],
             ],
           ),
@@ -425,19 +425,14 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     );
   }
 
-  Widget _buildTypeMappings(
-    DataType type,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildTypeMappings(DataType type, TDThemeData tdTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TDText(
           'Database Mappings',
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          font: tdTheme.fontBodySmall,
+          textColor: tdTheme.fontGyColor2,
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -448,24 +443,24 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
+                color: tdTheme.grayColor2,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  TDText(
                     DatabaseCodes.getDisplayName(dbCode),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    font: tdTheme.fontBodySmall,
+                    fontWeight: FontWeight.w600,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     dbType ?? '-',
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: TextStyle(
+                      fontSize: tdTheme.fontBodySmall?.size,
+                      color: tdTheme.fontGyColor2,
                       fontFamily: 'monospace',
-                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -477,21 +472,22 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Text(
+              TDText(
                 'Java: ',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                font: tdTheme.fontBodySmall,
+                textColor: tdTheme.fontGyColor2,
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
+                  color: tdTheme.grayColor2,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   type.java!,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: TextStyle(
+                    fontSize: tdTheme.fontBodySmall?.size,
+                    color: tdTheme.fontGyColor1,
                     fontFamily: 'monospace',
                   ),
                 ),

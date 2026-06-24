@@ -61,8 +61,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
     final codegenState = ref.watch(codegenProvider);
     final project = ref.watch(currentProjectProvider);
 
@@ -75,29 +74,29 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
       body: Column(
         children: [
           // Toolbar
-          _buildToolbar(theme, colorScheme, codegenState, project),
+          _buildToolbar(tdTheme, codegenState, project),
 
           // Main content
           Expanded(
             child: project == null
-                ? _buildEmptyState(theme, colorScheme)
+                ? _buildEmptyState(tdTheme)
                 : Row(
                     children: [
                       // Selection tree (left panel)
                       SizedBox(
                         width: 280,
-                        child: _buildSelectionTree(theme, colorScheme, project),
+                        child: _buildSelectionTree(tdTheme, project),
                       ),
 
                       // Divider
                       VerticalDivider(
                         width: 1,
-                        color: colorScheme.outlineVariant,
+                        color: tdTheme.componentStrokeColor,
                       ),
 
                       // Preview panel (right panel)
                       Expanded(
-                        child: _buildPreviewPanel(theme, colorScheme, codegenState),
+                        child: _buildPreviewPanel(tdTheme, codegenState),
                       ),
                     ],
                   ),
@@ -109,28 +108,27 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
   /// Build toolbar with database selector and actions
   Widget _buildToolbar(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     CodegenState state,
     Project? project,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
+        color: tdTheme.bgColorContainer,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
+          bottom: BorderSide(color: tdTheme.componentStrokeColor),
         ),
       ),
       child: Row(
         children: [
           // Database selector
-          _buildDatabaseSelector(theme, colorScheme, state),
+          _buildDatabaseSelector(tdTheme, state),
 
           const SizedBox(width: 16),
 
           // DDL type selector
-          _buildDdlTypeSelector(theme, colorScheme, state),
+          _buildDdlTypeSelector(tdTheme, state),
 
           const Spacer(),
 
@@ -171,101 +169,194 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     );
   }
 
-  /// Build database selector dropdown
+  /// Build database selector dropdown using TDesign styled button
   Widget _buildDatabaseSelector(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     CodegenState state,
   ) {
     final databases = ref.watch(availableDatabasesProvider);
+    final selectedDb = databases.firstWhere(
+      (db) => db.code == state.selectedDatabase,
+      orElse: () => databases.first,
+    );
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: DropdownButton<String>(
-        value: state.selectedDatabase,
-        items: databases.map((db) {
-          return DropdownMenuItem(
-            value: db.code,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(TDIcons.data_base, size: 18),
-                const SizedBox(width: 8),
-                Text(db.name),
-              ],
-            ),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            ref.read(codegenProvider.notifier).selectDatabase(value);
-          }
-        },
-        underline: const SizedBox(),
-        borderRadius: BorderRadius.circular(8),
-        style: theme.textTheme.bodyMedium,
+    return TDButton(
+      onTap: () => _showDatabaseSelectorDialog(databases, state.selectedDatabase),
+      type: TDButtonType.outline,
+      theme: TDButtonTheme.defaultTheme,
+      size: TDButtonSize.medium,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(TDIcons.data_base, size: 18, color: tdTheme.brandNormalColor),
+          const SizedBox(width: 8),
+          TDText(
+            selectedDb.name,
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.textColorPrimary,
+          ),
+          const SizedBox(width: 4),
+          Icon(TDIcons.chevron_down, size: 16, color: tdTheme.textColorSecondary),
+        ],
       ),
     );
   }
 
-  /// Build DDL type selector
+  /// Show database selector dialog
+  void _showDatabaseSelectorDialog(List<DatabaseInfo> databases, String currentSelection) {
+    final tdTheme = TDTheme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: 'Select Database',
+        content: '',
+        contentWidget: SizedBox(
+          width: 300,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: databases.length,
+            itemBuilder: (context, index) {
+              final db = databases[index];
+              final isSelected = db.code == currentSelection;
+              final cellStyle = TDCellStyle(context: context);
+              if (isSelected) {
+                cellStyle.leftIconColor = tdTheme.brandNormalColor;
+                cellStyle.rightIconColor = tdTheme.brandNormalColor;
+              } else {
+                cellStyle.leftIconColor = tdTheme.textColorSecondary;
+              }
+
+              return TDCell(
+                leftIcon: TDIcons.data_base,
+                title: db.name,
+                description: db.code.toUpperCase(),
+                arrow: false,
+                onClick: (_) {
+                  ref.read(codegenProvider.notifier).selectDatabase(db.code);
+                  Navigator.pop(context);
+                },
+                rightIcon: isSelected ? TDIcons.check : null,
+                style: cellStyle,
+              );
+            },
+          ),
+        ),
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
+      ),
+    );
+  }
+
+  /// Build DDL type selector using TDesign styled button
   Widget _buildDdlTypeSelector(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     CodegenState state,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: DropdownButton<DdlType>(
-        value: state.ddlType,
-        items: const [
-          DropdownMenuItem(
-            value: DdlType.createTable,
-            child: Text('CREATE TABLE'),
+    return TDButton(
+      onTap: () => _showDdlTypeSelectorDialog(state.ddlType),
+      type: TDButtonType.outline,
+      theme: TDButtonTheme.defaultTheme,
+      size: TDButtonSize.medium,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(TDIcons.code, size: 18, color: tdTheme.brandNormalColor),
+          const SizedBox(width: 8),
+          TDText(
+            _getDdlTypeLabel(state.ddlType),
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.textColorPrimary,
           ),
-          DropdownMenuItem(
-            value: DdlType.dropTable,
-            child: Text('DROP TABLE'),
-          ),
-          DropdownMenuItem(
-            value: DdlType.createIndex,
-            child: Text('CREATE INDEX'),
-          ),
-          DropdownMenuItem(
-            value: DdlType.dropIndex,
-            child: Text('DROP INDEX'),
-          ),
+          const SizedBox(width: 4),
+          Icon(TDIcons.chevron_down, size: 16, color: tdTheme.textColorSecondary),
         ],
-        onChanged: (value) {
-          if (value != null) {
-            ref.read(codegenProvider.notifier).setDdlType(value);
-          }
-        },
-        underline: const SizedBox(),
-        borderRadius: BorderRadius.circular(8),
-        style: theme.textTheme.bodyMedium,
+      ),
+    );
+  }
+
+  /// Get DDL type label
+  String _getDdlTypeLabel(DdlType type) {
+    switch (type) {
+      case DdlType.createTable:
+        return 'CREATE TABLE';
+      case DdlType.dropTable:
+        return 'DROP TABLE';
+      case DdlType.createIndex:
+        return 'CREATE INDEX';
+      case DdlType.dropIndex:
+        return 'DROP INDEX';
+    }
+  }
+
+  /// Show DDL type selector dialog
+  void _showDdlTypeSelectorDialog(DdlType currentSelection) {
+    final tdTheme = TDTheme.of(context);
+
+    final ddlTypes = [
+      (DdlType.createTable, 'CREATE TABLE', 'Create new table'),
+      (DdlType.dropTable, 'DROP TABLE', 'Drop existing table'),
+      (DdlType.createIndex, 'CREATE INDEX', 'Create index on table'),
+      (DdlType.dropIndex, 'DROP INDEX', 'Drop existing index'),
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: 'Select DDL Type',
+        content: '',
+        contentWidget: SizedBox(
+          width: 300,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: ddlTypes.length,
+            itemBuilder: (context, index) {
+              final (type, label, description) = ddlTypes[index];
+              final isSelected = type == currentSelection;
+              final cellStyle = TDCellStyle(context: context);
+              if (isSelected) {
+                cellStyle.leftIconColor = tdTheme.brandNormalColor;
+                cellStyle.rightIconColor = tdTheme.brandNormalColor;
+              } else {
+                cellStyle.leftIconColor = tdTheme.textColorSecondary;
+              }
+
+              return TDCell(
+                leftIcon: TDIcons.code,
+                title: label,
+                description: description,
+                arrow: false,
+                onClick: (_) {
+                  ref.read(codegenProvider.notifier).setDdlType(type);
+                  Navigator.pop(context);
+                },
+                rightIcon: isSelected ? TDIcons.check : null,
+                style: cellStyle,
+              );
+            },
+          ),
+        ),
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
       ),
     );
   }
 
   /// Build selection tree for entities/modules
   Widget _buildSelectionTree(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     Project project,
   ) {
     return Container(
-      color: colorScheme.surfaceContainerLow,
+      color: tdTheme.bgColorContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -274,16 +365,17 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: colorScheme.outlineVariant),
+                bottom: BorderSide(color: tdTheme.componentStrokeColor),
               ),
             ),
             child: Row(
               children: [
-                Icon(TDIcons.tree_square_dot, size: 20, color: colorScheme.primary),
+                Icon(TDIcons.tree_square_dot, size: 20, color: tdTheme.brandNormalColor),
                 const SizedBox(width: 8),
-                Text(
+                TDText(
                   'Select Target',
-                  style: theme.textTheme.titleSmall,
+                  font: tdTheme.fontTitleSmall,
+                  fontWeight: FontWeight.w600,
                 ),
               ],
             ),
@@ -296,12 +388,12 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
               itemBuilder: (context, index) {
                 if (index == 0) {
                   // Project root node
-                  return _buildProjectNode(theme, colorScheme, project);
+                  return _buildProjectNode(tdTheme, project);
                 }
 
                 final moduleIndex = index - 1;
                 final module = project.modules[moduleIndex];
-                return _buildModuleNode(theme, colorScheme, module);
+                return _buildModuleNode(tdTheme, module);
               },
             ),
           ),
@@ -310,137 +402,164 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     );
   }
 
-  /// Build project root node
+  /// Build project root node using custom Row + TDText
   Widget _buildProjectNode(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     Project project,
   ) {
     final codegenState = ref.watch(codegenProvider);
     final isSelected = codegenState.generateProject;
 
-    return ListTile(
-      leading: Icon(
-        TDIcons.folder,
-        size: 20,
-        color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-      ),
-      title: Text(
-        'All Project (${project.modules.length} modules)',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: isSelected ? colorScheme.primary : null,
-          fontWeight: isSelected ? FontWeight.w600 : null,
-        ),
-      ),
-      selected: isSelected,
-      selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.2),
+    return InkWell(
       onTap: () {
         ref.read(codegenProvider.notifier).selectProject();
       },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        color: isSelected ? tdTheme.brandColorLight : null,
+        child: Row(
+          children: [
+            Icon(
+              TDIcons.folder,
+              size: 20,
+              color: isSelected ? tdTheme.brandNormalColor : tdTheme.textColorSecondary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TDText(
+                'All Project (${project.modules.length} modules)',
+                font: tdTheme.fontBodyMedium,
+                textColor: isSelected ? tdTheme.brandNormalColor : tdTheme.textColorPrimary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  /// Build module node with expandable entities
+  /// Build module node with expandable entities using ExpansionTile with TDIcons
   Widget _buildModuleNode(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     Module module,
   ) {
     final codegenState = ref.watch(codegenProvider);
     final isModuleSelected = codegenState.selectedModule?.id == module.id;
 
-    return ExpansionTile(
-      leading: Icon(
-        TDIcons.book,
-        size: 20,
-        color: isModuleSelected
-            ? colorScheme.primary
-            : colorScheme.onSurfaceVariant,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        dividerColor: Colors.transparent,
       ),
-      title: Text(
-        module.chnname,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: isModuleSelected ? colorScheme.primary : null,
-          fontWeight: isModuleSelected ? FontWeight.w600 : null,
+      child: ExpansionTile(
+        leading: Icon(
+          TDIcons.book,
+          size: 20,
+          color: isModuleSelected ? tdTheme.brandNormalColor : tdTheme.textColorSecondary,
         ),
-      ),
-      subtitle: Text(
-        '${module.entities.length} tables',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
+        title: TDText(
+          module.chnname,
+          font: tdTheme.fontBodyMedium,
+          textColor: isModuleSelected ? tdTheme.brandNormalColor : tdTheme.textColorPrimary,
+          fontWeight: isModuleSelected ? FontWeight.w600 : FontWeight.normal,
         ),
+        subtitle: TDText(
+          '${module.entities.length} tables',
+          font: tdTheme.fontBodySmall,
+          textColor: tdTheme.textColorSecondary,
+        ),
+        trailing: Icon(
+          TDIcons.chevron_down,
+          size: 20,
+          color: tdTheme.textColorSecondary,
+        ),
+        initiallyExpanded: module.entities.isNotEmpty,
+        children: module.entities.map((entity) {
+          return _buildEntityTile(tdTheme, entity, module);
+        }).toList(),
       ),
-      initiallyExpanded: module.entities.isNotEmpty,
-      children: module.entities.map((entity) {
-        return _buildEntityTile(theme, colorScheme, entity, module);
-      }).toList(),
     );
   }
 
-  /// Build entity tile
+  /// Build entity tile using custom Row + TDText
   Widget _buildEntityTile(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     Entity entity,
     Module module,
   ) {
     final codegenState = ref.watch(codegenProvider);
     final isSelected = codegenState.selectedEntity?.id == entity.id;
 
-    return ListTile(
-      leading: Icon(
-        TDIcons.table,
-        size: 18,
-        color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-      ),
-      title: Text(
-        entity.title,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: isSelected ? colorScheme.primary : null,
-          fontWeight: isSelected ? FontWeight.w600 : null,
-        ),
-      ),
-      subtitle: Text(
-        entity.chnname,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
-      trailing: Text(
-        '${entity.fields.length}',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: colorScheme.outline,
-        ),
-      ),
-      selected: isSelected,
-      selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.2),
-      dense: true,
+    return InkWell(
       onTap: () {
         ref.read(codegenProvider.notifier).selectEntity(entity);
       },
+      child: Container(
+        padding: const EdgeInsets.only(left: 56, right: 16, top: 8, bottom: 8),
+        color: isSelected ? tdTheme.brandColorLight : null,
+        child: Row(
+          children: [
+            Icon(
+              TDIcons.table,
+              size: 18,
+              color: isSelected ? tdTheme.brandNormalColor : tdTheme.textColorSecondary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TDText(
+                    entity.title,
+                    font: tdTheme.fontBodyMedium,
+                    textColor: isSelected ? tdTheme.brandNormalColor : tdTheme.textColorPrimary,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  TDText(
+                    entity.chnname,
+                    font: tdTheme.fontBodySmall,
+                    textColor: tdTheme.textColorSecondary,
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: tdTheme.grayColor1,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TDText(
+                '${entity.fields.length}',
+                font: tdTheme.fontMarkSmall,
+                textColor: tdTheme.textColorSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   /// Build preview panel with syntax highlighting
   Widget _buildPreviewPanel(
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     CodegenState state,
   ) {
     if (!state.hasOutput && !state.hasEntity && !state.hasModule && !state.generateProject) {
-      return _buildNoSelectionState(theme, colorScheme);
+      return _buildNoSelectionState(tdTheme);
     }
 
     if (state.error != null) {
-      return _buildErrorState(theme, colorScheme, state);
+      return _buildErrorState(tdTheme, state);
     }
 
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
+        color: tdTheme.grayColor1,
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+        border: Border.all(color: tdTheme.componentStrokeColor),
       ),
       child: Column(
         children: [
@@ -448,28 +567,26 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
+              color: tdTheme.bgColorSecondarycontainer,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(tdTheme.radiusDefault),
+                topRight: Radius.circular(tdTheme.radiusDefault),
               ),
             ),
             child: Row(
               children: [
-                Icon(TDIcons.code, size: 16, color: colorScheme.primary),
+                Icon(TDIcons.code, size: 16, color: tdTheme.brandNormalColor),
                 const SizedBox(width: 8),
-                Text(
+                TDText(
                   _getFileName(state),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  font: tdTheme.fontBodySmall,
+                  fontWeight: FontWeight.w500,
                 ),
                 const Spacer(),
-                Text(
+                TDText(
                   state.selectedDatabase,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontMarkSmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ],
             ),
@@ -483,7 +600,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
               child: SingleChildScrollView(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16),
-                child: _buildSqlContent(theme, state),
+                child: _buildSqlContent(tdTheme, state),
               ),
             ),
           ),
@@ -493,21 +610,21 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   }
 
   /// Build SQL content with syntax highlighting
-  Widget _buildSqlContent(ThemeData theme, CodegenState state) {
-    return RichText(
-      text: TextSpan(
-        children: _highlightSql(state.generatedDdl, theme),
-        style: theme.textTheme.bodyMedium?.copyWith(
+  Widget _buildSqlContent(TDThemeData tdTheme, CodegenState state) {
+    return SelectableText.rich(
+      TextSpan(
+        children: _highlightSql(state.generatedDdl, tdTheme),
+        style: TextStyle(
           fontFamily: 'RobotoMono',
-          fontFeatures: const [FontFeature.tabularFigures()],
+          fontSize: tdTheme.fontBodyMedium.fontSize,
+          color: tdTheme.textColorPrimary,
         ),
       ),
     );
   }
 
   /// Highlight SQL keywords
-  List<TextSpan> _highlightSql(String sql, ThemeData theme) {
-    final colorScheme = theme.colorScheme;
+  List<TextSpan> _highlightSql(String sql, TDThemeData tdTheme) {
     final spans = <TextSpan>[];
 
     // Simple keyword highlighting
@@ -533,25 +650,25 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         if (isKeyword) {
           spans.add(TextSpan(
             text: word,
-            style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600),
+            style: TextStyle(color: tdTheme.brandNormalColor, fontWeight: FontWeight.w600),
           ));
         } else if (word.startsWith("'") && word.endsWith("'")) {
           // String/comment
           spans.add(TextSpan(
             text: word,
-            style: TextStyle(color: colorScheme.secondary),
+            style: TextStyle(color: tdTheme.warningColor),
           ));
         } else if (word.startsWith('--') || word.startsWith('/*')) {
           // Comment
           spans.add(TextSpan(
             text: word,
-            style: TextStyle(color: colorScheme.onSurfaceVariant),
+            style: TextStyle(color: tdTheme.textColorSecondary),
           ));
         } else if (word.startsWith('`') && word.endsWith('`')) {
           // Quoted identifier
           spans.add(TextSpan(
             text: word,
-            style: TextStyle(color: colorScheme.tertiary),
+            style: TextStyle(color: tdTheme.successColor),
           ));
         } else {
           spans.add(TextSpan(text: word));
@@ -586,7 +703,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   }
 
   /// Build empty state when no project is loaded
-  Widget _buildEmptyState(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildEmptyState(TDThemeData tdTheme) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -594,21 +711,19 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           Icon(
             TDIcons.folder_open,
             size: 64,
-            color: colorScheme.onSurfaceVariant,
+            color: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 16),
-          Text(
+          TDText(
             'No Project Loaded',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            font: tdTheme.fontTitleMedium,
+            textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 8),
-          Text(
+          TDText(
             'Open a project to generate DDL',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.outline,
-            ),
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.textColorPlaceholder,
           ),
         ],
       ),
@@ -616,7 +731,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   }
 
   /// Build no selection state
-  Widget _buildNoSelectionState(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildNoSelectionState(TDThemeData tdTheme) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -624,21 +739,19 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           Icon(
             TDIcons.gesture_click,
             size: 64,
-            color: colorScheme.onSurfaceVariant,
+            color: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 16),
-          Text(
+          TDText(
             'Select a Target',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            font: tdTheme.fontTitleMedium,
+            textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 8),
-          Text(
+          TDText(
             'Choose a table, module, or entire project',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.outline,
-            ),
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.textColorPlaceholder,
           ),
         ],
       ),
@@ -646,7 +759,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   }
 
   /// Build error state
-  Widget _buildErrorState(ThemeData theme, ColorScheme colorScheme, CodegenState state) {
+  Widget _buildErrorState(TDThemeData tdTheme, CodegenState state) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -654,21 +767,19 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           Icon(
             TDIcons.close_circle,
             size: 64,
-            color: colorScheme.error,
+            color: tdTheme.errorColor,
           ),
           const SizedBox(height: 16),
-          Text(
+          TDText(
             'Generation Error',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.error,
-            ),
+            font: tdTheme.fontTitleMedium,
+            textColor: tdTheme.errorColor,
           ),
           const SizedBox(height: 8),
-          Text(
+          TDText(
             state.error ?? 'Unknown error',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onErrorContainer,
-            ),
+            font: tdTheme.fontBodyMedium,
+            textColor: tdTheme.errorColor,
           ),
           const SizedBox(height: 16),
           TDButton(
