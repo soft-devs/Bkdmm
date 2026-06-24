@@ -627,7 +627,7 @@ class _AccentColorDialog extends StatelessWidget {
       title: 'Accent Color',
       content: '',
       contentWidget: SizedBox(
-        width: 280,
+        width: 364, // 280 * 1.3
         child: GridView.builder(
           shrinkWrap: true,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -794,7 +794,7 @@ class _DatabaseTypeDialog extends StatelessWidget {
       title: 'Default Database Type',
       content: '',
       contentWidget: SizedBox(
-        width: 300,
+        width: 390, // 300 * 1.3
         child: ListView.builder(
           shrinkWrap: true,
           itemCount: AppConstants.supportedDatabases.length + 1,
@@ -884,7 +884,7 @@ class _AutoSaveDialog extends StatelessWidget {
       title: 'Auto-save Interval',
       content: '',
       contentWidget: SizedBox(
-        width: 300,
+        width: 390, // 300 * 1.3
         child: ListView.builder(
           shrinkWrap: true,
           itemCount: _intervals.length,

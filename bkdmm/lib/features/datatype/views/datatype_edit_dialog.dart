@@ -129,7 +129,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
       title: widget.existingType != null ? 'Edit Data Type' : 'Add Data Type',
       content: '',
       contentWidget: SizedBox(
-        width: 600,
+        width: 780, // 600 * 1.3
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

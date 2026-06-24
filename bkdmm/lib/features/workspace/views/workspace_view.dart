@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
+import '../../../shared/widgets/td_popup_menu.dart';
 import '../../../utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
@@ -203,78 +204,42 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           ),
 
           // More actions menu
-          PopupMenuButton<String>(
-            icon: Icon(TDIcons.more, color: tdTheme.textColorPrimary),
+          TDPopupMenuButton(
+            icon: TDIcons.more,
+            iconColor: tdTheme.textColorPrimary,
+            items: [
+              TDPopupMenuItem(
+                value: 'save',
+                icon: TDIcons.save,
+                label: 'Save',
+              ),
+              TDPopupMenuItem(
+                value: 'save_as',
+                icon: TDIcons.folder,
+                label: 'Save As...',
+              ),
+              const TDPopupMenuItem.divider(),
+              TDPopupMenuItem(
+                value: 'close',
+                icon: TDIcons.close,
+                label: 'Close Project',
+              ),
+              const TDPopupMenuItem.divider(),
+              TDPopupMenuItem(
+                value: 'settings',
+                icon: TDIcons.setting,
+                label: 'Project Settings',
+              ),
+              TDPopupMenuItem(
+                value: 'datatype',
+                icon: TDIcons.code,
+                label: 'Data Types',
+              ),
+            ],
             onSelected: (action) => _handleMenuAction(action),
-            itemBuilder: (context) {
-              final menuTheme = TDTheme.of(context);
-              return [
-                PopupMenuItem(
-                  value: 'save',
-                  child: _buildMenuItem(
-                    icon: TDIcons.save,
-                    label: 'Save',
-                    tdTheme: menuTheme,
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'save_as',
-                  child: _buildMenuItem(
-                    icon: TDIcons.folder,
-                    label: 'Save As...',
-                    tdTheme: menuTheme,
-                  ),
-                ),
-                const PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 'close',
-                  child: _buildMenuItem(
-                    icon: TDIcons.close,
-                    label: 'Close Project',
-                    tdTheme: menuTheme,
-                  ),
-                ),
-                const PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 'settings',
-                  child: _buildMenuItem(
-                    icon: TDIcons.setting,
-                    label: 'Project Settings',
-                    tdTheme: menuTheme,
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'datatype',
-                  child: _buildMenuItem(
-                    icon: TDIcons.code,
-                    label: 'Data Types',
-                    tdTheme: menuTheme,
-                  ),
-                ),
-              ];
-            },
           ),
         ],
       ),
-    );
-  }
-
-  /// Build a consistent menu item row with TDesign styling.
-  static Widget _buildMenuItem({
-    required IconData icon,
-    required String label,
-    required TDThemeData tdTheme,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: tdTheme.textColorPrimary),
-        const SizedBox(width: 12),
-        TDText(
-          label,
-          font: tdTheme.fontBodyMedium,
-          textColor: tdTheme.textColorPrimary,
-        ),
-      ],
     );
   }
 
@@ -474,71 +439,46 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   void _showDiagramContextMenu(
       Offset position, Entity? entity, Module module) {
     final tdTheme = TDTheme.of(context);
-    showMenu<String>(
+
+    // Build menu items based on context
+    final items = <TDPopupMenuItem>[];
+    if (entity != null) {
+      items.addAll([
+        TDPopupMenuItem(
+          value: 'edit',
+          icon: TDIcons.edit,
+          label: 'Edit Entity',
+        ),
+        TDPopupMenuItem(
+          value: 'delete',
+          icon: TDIcons.delete,
+          label: 'Delete Entity',
+          iconColor: tdTheme.errorNormalColor,
+          textColor: tdTheme.errorNormalColor,
+        ),
+      ]);
+    } else {
+      items.add(TDPopupMenuItem(
+        value: 'add_entity',
+        icon: TDIcons.add,
+        label: 'Add Entity',
+      ));
+    }
+
+    showTDPopupMenu(
       context: context,
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy,
-        position.dx,
-        position.dy,
-      ),
-      items: [
-        if (entity != null) ...[
-          PopupMenuItem(
-            value: 'edit',
-            child: Row(
-              children: [
-                Icon(TDIcons.edit, size: 20, color: tdTheme.textColorPrimary),
-                const SizedBox(width: 12),
-                TDText(
-                  'Edit Entity',
-                  font: tdTheme.fontBodyMedium,
-                  textColor: tdTheme.textColorPrimary,
-                ),
-              ],
-            ),
-          ),
-          PopupMenuItem(
-            value: 'delete',
-            child: Row(
-              children: [
-                Icon(TDIcons.delete,
-                    size: 20, color: tdTheme.errorNormalColor),
-                const SizedBox(width: 12),
-                TDText(
-                  'Delete Entity',
-                  font: tdTheme.fontBodyMedium,
-                  textColor: tdTheme.errorNormalColor,
-                ),
-              ],
-            ),
-          ),
-        ] else ...[
-          PopupMenuItem(
-            value: 'add_entity',
-            child: Row(
-              children: [
-                Icon(TDIcons.add, size: 20, color: tdTheme.textColorPrimary),
-                const SizedBox(width: 12),
-                TDText(
-                  'Add Entity',
-                  font: tdTheme.fontBodyMedium,
-                  textColor: tdTheme.textColorPrimary,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    ).then((value) {
-      if (value == 'edit' && entity != null) {
-        _showEntityEditorDialog(module, entity);
-      } else if (value == 'delete' && entity != null) {
-        _confirmDeleteEntity(module, entity);
-      } else if (value == 'add_entity') {
-        _showAddEntityDialog(module);
-      }
-    });
+      position: position,
+      items: items,
+      onSelected: (value) {
+        if (value == 'edit' && entity != null) {
+          _showEntityEditorDialog(module, entity);
+        } else if (value == 'delete' && entity != null) {
+          _confirmDeleteEntity(module, entity);
+        } else if (value == 'add_entity') {
+          _showAddEntityDialog(module);
+        }
+      },
+    );
   }
 
   void _showEntityEditorDialog(Module module, Entity entity) {

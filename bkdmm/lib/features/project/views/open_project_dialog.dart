@@ -57,8 +57,8 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     return TDAlertDialog(
       title: 'Open Project',
       contentWidget: SizedBox(
-        width: 600,
-        height: 400,
+        width: 780, // 600 * 1.3
+        height: 520, // 400 * 1.3
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

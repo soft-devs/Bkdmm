@@ -71,8 +71,8 @@ class AnchorRenderer {
     // 背景
     final bgPaint = Paint()
       ..color = isHovered
-          ? anchorColor.withOpacity(0.6)
-          : anchorColor.withOpacity(0.4)
+          ? anchorColor.withValues(alpha: 0.6)
+          : anchorColor.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(position, size, bgPaint);
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../shared/models/models.dart';
+import '../../../shared/widgets/td_popup_menu.dart';
 import '../providers/tab_provider.dart';
 
 /// Module tree widget - displays project modules and entities in a tree structure
@@ -575,58 +576,34 @@ class _ModuleTreeItem extends StatelessWidget {
   }
 
   Widget _buildModuleContextMenu(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: Icon(
-        TDIcons.more,
-        size: 16,
-        color: tdTheme.textColorSecondary,
-      ),
-      itemBuilder: (context) => [
-        PopupMenuItem(
+    return TDPopupMenuButton(
+      icon: TDIcons.more,
+      iconSize: 16,
+      iconColor: tdTheme.textColorSecondary,
+      items: [
+        TDPopupMenuItem(
           value: 'open_relation',
-          child: Row(
-            children: [
-              Icon(TDIcons.link, size: 18, color: tdTheme.textColorSecondary),
-              const SizedBox(width: 8),
-              TDText('Open Relation', font: tdTheme.fontBodyMedium),
-            ],
-          ),
+          icon: TDIcons.link,
+          label: 'Open Relation',
         ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
+        const TDPopupMenuItem.divider(),
+        TDPopupMenuItem(
           value: 'rename',
-          child: Row(
-            children: [
-              Icon(TDIcons.edit, size: 18, color: tdTheme.textColorSecondary),
-              const SizedBox(width: 8),
-              TDText('Rename', font: tdTheme.fontBodyMedium),
-            ],
-          ),
+          icon: TDIcons.edit,
+          label: 'Rename',
         ),
-        PopupMenuItem(
+        TDPopupMenuItem(
           value: 'add_entity',
-          child: Row(
-            children: [
-              Icon(TDIcons.add, size: 18, color: tdTheme.textColorSecondary),
-              const SizedBox(width: 8),
-              TDText('Add Entity', font: tdTheme.fontBodyMedium),
-            ],
-          ),
+          icon: TDIcons.add,
+          label: 'Add Entity',
         ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
+        const TDPopupMenuItem.divider(),
+        TDPopupMenuItem(
           value: 'delete',
-          child: Row(
-            children: [
-              const Icon(TDIcons.delete, size: 18, color: Colors.red),
-              const SizedBox(width: 8),
-              TDText(
-                'Delete',
-                font: tdTheme.fontBodyMedium,
-                textColor: Colors.red,
-              ),
-            ],
-          ),
+          icon: TDIcons.delete,
+          label: 'Delete',
+          iconColor: tdTheme.errorNormalColor,
+          textColor: tdTheme.errorNormalColor,
         ),
       ],
       onSelected: (value) {
@@ -750,37 +727,23 @@ class _EntityTreeItem extends StatelessWidget {
   }
 
   Widget _buildEntityContextMenu(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: Icon(
-        TDIcons.more,
-        size: 14,
-        color: tdTheme.textColorSecondary,
-      ),
-      itemBuilder: (context) => [
-        PopupMenuItem(
+    return TDPopupMenuButton(
+      icon: TDIcons.more,
+      iconSize: 14,
+      iconColor: tdTheme.textColorSecondary,
+      items: [
+        TDPopupMenuItem(
           value: 'rename',
-          child: Row(
-            children: [
-              Icon(TDIcons.edit, size: 18, color: tdTheme.textColorSecondary),
-              const SizedBox(width: 8),
-              TDText('Rename', font: tdTheme.fontBodyMedium),
-            ],
-          ),
+          icon: TDIcons.edit,
+          label: 'Rename',
         ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
+        const TDPopupMenuItem.divider(),
+        TDPopupMenuItem(
           value: 'delete',
-          child: Row(
-            children: [
-              const Icon(TDIcons.delete, size: 18, color: Colors.red),
-              const SizedBox(width: 8),
-              TDText(
-                'Delete',
-                font: tdTheme.fontBodyMedium,
-                textColor: Colors.red,
-              ),
-            ],
-          ),
+          icon: TDIcons.delete,
+          label: 'Delete',
+          iconColor: tdTheme.errorNormalColor,
+          textColor: tdTheme.errorNormalColor,
         ),
       ],
       onSelected: (value) {

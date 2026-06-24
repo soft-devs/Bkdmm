@@ -76,7 +76,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     return TDAlertDialog(
       title: 'Create New Project',
       contentWidget: SizedBox(
-        width: 600,
+        width: 780, // 600 * 1.3
         child: Form(
           key: _formKey,
           child: Column(

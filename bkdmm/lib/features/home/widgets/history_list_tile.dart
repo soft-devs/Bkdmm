@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
+import '../../../shared/widgets/td_popup_menu.dart';
 
 /// A list tile widget for displaying project history items.
 ///
@@ -113,8 +114,34 @@ class HistoryListTile extends StatelessWidget {
   }
 
   Widget _buildPopupMenu(BuildContext context, TDThemeData tdTheme) {
-    return PopupMenuButton<String>(
-      icon: Icon(TDIcons.more, color: tdTheme.fontGyColor3),
+    return TDPopupMenuButton(
+      icon: TDIcons.more,
+      iconColor: tdTheme.fontGyColor3,
+      items: [
+        TDPopupMenuItem(
+          value: 'open',
+          icon: TDIcons.folder_open,
+          label: 'Open',
+        ),
+        TDPopupMenuItem(
+          value: 'favorite',
+          icon: isFavorite ? TDIcons.star_filled : TDIcons.star,
+          label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+        ),
+        if (onDuplicate != null)
+          TDPopupMenuItem(
+            value: 'duplicate',
+            icon: TDIcons.copy,
+            label: 'Duplicate',
+          ),
+        TDPopupMenuItem(
+          value: 'delete',
+          icon: TDIcons.delete,
+          label: 'Remove from List',
+          iconColor: tdTheme.errorNormalColor,
+          textColor: tdTheme.errorNormalColor,
+        ),
+      ],
       onSelected: (value) {
         switch (value) {
           case 'open':
@@ -131,60 +158,6 @@ class HistoryListTile extends StatelessWidget {
             break;
         }
       },
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'open',
-          child: Row(
-            children: [
-              Icon(TDIcons.folder_open, size: 18, color: tdTheme.fontGyColor2),
-              const SizedBox(width: 12),
-              TDText('Open', font: tdTheme.fontBodyMedium),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'favorite',
-          child: Row(
-            children: [
-              Icon(
-                isFavorite ? TDIcons.star_filled : TDIcons.star,
-                size: 18,
-                color: tdTheme.fontGyColor2,
-              ),
-              const SizedBox(width: 12),
-              TDText(
-                isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-                font: tdTheme.fontBodyMedium,
-              ),
-            ],
-          ),
-        ),
-        if (onDuplicate != null)
-          PopupMenuItem(
-            value: 'duplicate',
-            child: Row(
-              children: [
-                Icon(TDIcons.copy, size: 18, color: tdTheme.fontGyColor2),
-                const SizedBox(width: 12),
-                TDText('Duplicate', font: tdTheme.fontBodyMedium),
-              ],
-            ),
-          ),
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(TDIcons.delete, size: 18, color: tdTheme.errorNormalColor),
-              const SizedBox(width: 12),
-              TDText(
-                'Remove from List',
-                font: tdTheme.fontBodyMedium,
-                textColor: tdTheme.errorNormalColor,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

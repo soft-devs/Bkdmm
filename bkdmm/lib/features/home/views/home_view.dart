@@ -443,8 +443,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
       builder: (dialogContext) => TDAlertDialog(
         title: 'All Recent Projects',
         contentWidget: SizedBox(
-          width: 500,
-          height: 400,
+          width: 650, // 500 * 1.3
+          height: 520, // 400 * 1.3
           child: ListView.builder(
             itemCount: historyList.length,
             itemBuilder: (context, index) {

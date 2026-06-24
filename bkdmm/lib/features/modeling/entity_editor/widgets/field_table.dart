@@ -116,93 +116,109 @@ class _FieldTableState extends State<FieldTable> {
   }
 
   Widget _buildTable(TDThemeData tdTheme) {
-    // Build columns for TDTable
-    final columns = [
-      TDTableCol(
-        title: 'PK',
-        colKey: 'pk',
-        width: 60,
-        align: TDTableColAlign.center,
-        cellBuilder: (context, index) => _buildCheckboxCell(index, 'pk', tdTheme),
-      ),
-      TDTableCol(
-        title: 'Field Name',
-        colKey: 'name',
-        width: 150,
-        ellipsis: true,
-        cellBuilder: (context, index) => _buildTextCell(index, 'name', tdTheme),
-      ),
-      TDTableCol(
-        title: 'Data Type',
-        colKey: 'type',
-        width: 120,
-        cellBuilder: (context, index) => _buildTypeCell(index, tdTheme),
-      ),
-      TDTableCol(
-        title: 'Chinese Name',
-        colKey: 'chnname',
-        width: 120,
-        ellipsis: true,
-        cellBuilder: (context, index) => _buildTextCell(index, 'chnname', tdTheme),
-      ),
-      TDTableCol(
-        title: 'Not Null',
-        colKey: 'notNull',
-        width: 80,
-        align: TDTableColAlign.center,
-        cellBuilder: (context, index) => _buildCheckboxCell(index, 'notNull', tdTheme),
-      ),
-      TDTableCol(
-        title: 'Auto Inc',
-        colKey: 'autoIncrement',
-        width: 80,
-        align: TDTableColAlign.center,
-        cellBuilder: (context, index) => _buildCheckboxCell(index, 'autoIncrement', tdTheme),
-      ),
-      TDTableCol(
-        title: 'Remark',
-        colKey: 'remark',
-        width: 150,
-        ellipsis: true,
-        cellBuilder: (context, index) => _buildTextCell(index, 'remark', tdTheme),
-      ),
-    ];
+    // Use LayoutBuilder to get available width and calculate column widths
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        // Calculate flexible column widths based on available space
+        // Fixed columns: PK(50), Not Null(70), Auto Inc(70) = 190
+        // Flexible columns: Field Name, Data Type, Chinese Name, Remark
+        final fixedWidth = 50.0 + 70.0 + 70.0;
+        final flexibleWidth = (availableWidth - fixedWidth).clamp(300.0, availableWidth);
+        final nameWidth = flexibleWidth * 0.30;  // 30% for field name
+        final typeWidth = flexibleWidth * 0.20;  // 20% for type
+        final chnnameWidth = flexibleWidth * 0.20;  // 20% for chinese name
+        final remarkWidth = flexibleWidth * 0.30;  // 30% for remark
 
-    // Build data for TDTable
-    final data = widget.fields.map((field) => {
-      'pk': field.pk,
-      'name': field.name,
-      'type': field.type,
-      'chnname': field.chnname,
-      'notNull': field.notNull,
-      'autoIncrement': field.autoIncrement,
-      'remark': field.remark ?? '',
-    }).toList();
+        final columns = [
+          TDTableCol(
+            title: 'PK',
+            colKey: 'pk',
+            width: 50,
+            align: TDTableColAlign.center,
+            cellBuilder: (context, index) => _buildCheckboxCell(index, 'pk', tdTheme),
+          ),
+          TDTableCol(
+            title: 'Field Name',
+            colKey: 'name',
+            width: nameWidth,
+            ellipsis: true,
+            cellBuilder: (context, index) => _buildTextCell(index, 'name', tdTheme),
+          ),
+          TDTableCol(
+            title: 'Data Type',
+            colKey: 'type',
+            width: typeWidth,
+            cellBuilder: (context, index) => _buildTypeCell(index, tdTheme),
+          ),
+          TDTableCol(
+            title: 'Chinese Name',
+            colKey: 'chnname',
+            width: chnnameWidth,
+            ellipsis: true,
+            cellBuilder: (context, index) => _buildTextCell(index, 'chnname', tdTheme),
+          ),
+          TDTableCol(
+            title: 'Not Null',
+            colKey: 'notNull',
+            width: 70,
+            align: TDTableColAlign.center,
+            cellBuilder: (context, index) => _buildCheckboxCell(index, 'notNull', tdTheme),
+          ),
+          TDTableCol(
+            title: 'Auto Inc',
+            colKey: 'autoIncrement',
+            width: 70,
+            align: TDTableColAlign.center,
+            cellBuilder: (context, index) => _buildCheckboxCell(index, 'autoIncrement', tdTheme),
+          ),
+          TDTableCol(
+            title: 'Remark',
+            colKey: 'remark',
+            width: remarkWidth,
+            ellipsis: true,
+            cellBuilder: (context, index) => _buildTextCell(index, 'remark', tdTheme),
+          ),
+        ];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: tdTheme.bgColorContainer,
-        border: Border.all(color: tdTheme.componentBorderColor),
-        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-      ),
-      child: TDTable(
-        columns: columns,
-        data: data,
-        bordered: true,
-        stripe: true,
-        rowHeight: 44,
-        backgroundColor: tdTheme.bgColorContainer,
-        onCellTap: (rowIndex, row, col) {
-          // Toggle row selection
-          setState(() {
-            if (_selectedRows.contains(rowIndex)) {
-              _selectedRows.remove(rowIndex);
-            } else {
-              _selectedRows.add(rowIndex);
-            }
-          });
-        },
-      ),
+        // Build data for TDTable - use placeholder strings since we use cellBuilder
+        // TDTable requires all data values to be strings
+        final data = widget.fields.map((field) => {
+          'pk': '', // Rendered by cellBuilder
+          'name': field.name,
+          'type': field.type,
+          'chnname': field.chnname,
+          'notNull': '', // Rendered by cellBuilder
+          'autoIncrement': '', // Rendered by cellBuilder
+          'remark': field.remark ?? '',
+        }).toList();
+
+        return Container(
+          decoration: BoxDecoration(
+            color: tdTheme.bgColorContainer,
+            border: Border.all(color: tdTheme.componentBorderColor),
+            borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+          ),
+          child: TDTable(
+            columns: columns,
+            data: data,
+            bordered: true,
+            stripe: true,
+            rowHeight: 44,
+            backgroundColor: tdTheme.bgColorContainer,
+            onCellTap: (rowIndex, row, col) {
+              // Toggle row selection
+              setState(() {
+                if (_selectedRows.contains(rowIndex)) {
+                  _selectedRows.remove(rowIndex);
+                } else {
+                  _selectedRows.add(rowIndex);
+                }
+              });
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -364,7 +380,7 @@ class _FieldTableState extends State<FieldTable> {
         builder: (context, setState) => TDAlertDialog(
           title: 'Add Field',
           contentWidget: SizedBox(
-            width: 500,
+            width: 650, // 500 * 1.3
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

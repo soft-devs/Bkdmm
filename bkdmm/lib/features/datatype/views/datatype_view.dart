@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/constants/default_data_types.dart';
 import '../../../shared/providers/providers.dart';
+import '../../../shared/widgets/td_popup_menu.dart';
 import '../providers/datatype_provider.dart';
 import 'datatype_edit_dialog.dart';
 
@@ -372,43 +373,31 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                       ],
                     ),
                   ),
-                  // Actions using PopupMenuButton with TDIcons
-                  PopupMenuButton<String>(
-                    icon: Icon(TDIcons.more, color: tdTheme.fontGyColor1),
-                    onSelected: (action) => _handleTypeAction(type, action),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
+                  // Actions using TDPopupMenuButton with TDIcons
+                  TDPopupMenuButton(
+                    icon: TDIcons.more,
+                    iconColor: tdTheme.fontGyColor1,
+                    items: [
+                      TDPopupMenuItem(
                         value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(TDIcons.edit, size: 18, color: tdTheme.fontGyColor1),
-                            const SizedBox(width: 8),
-                            TDText('Edit', font: tdTheme.fontBodyMedium),
-                          ],
-                        ),
+                        icon: TDIcons.edit,
+                        label: 'Edit',
                       ),
-                      PopupMenuItem(
+                      TDPopupMenuItem(
                         value: 'duplicate',
-                        child: Row(
-                          children: [
-                            Icon(TDIcons.copy, size: 18, color: tdTheme.fontGyColor1),
-                            const SizedBox(width: 8),
-                            TDText('Duplicate', font: tdTheme.fontBodyMedium),
-                          ],
-                        ),
+                        icon: TDIcons.copy,
+                        label: 'Duplicate',
                       ),
                       if (!isDefault)
-                        PopupMenuItem(
+                        TDPopupMenuItem(
                           value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(TDIcons.delete, size: 18, color: tdTheme.errorColor6),
-                              const SizedBox(width: 8),
-                              TDText('Delete', font: tdTheme.fontBodyMedium, textColor: tdTheme.errorColor6),
-                            ],
-                          ),
+                          icon: TDIcons.delete,
+                          label: 'Delete',
+                          iconColor: tdTheme.errorColor6,
+                          textColor: tdTheme.errorColor6,
                         ),
                     ],
+                    onSelected: (action) => _handleTypeAction(type, action),
                   ),
                 ],
               ),

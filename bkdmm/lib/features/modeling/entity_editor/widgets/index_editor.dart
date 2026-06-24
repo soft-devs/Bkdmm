@@ -250,7 +250,7 @@ class _IndexEditorState extends State<IndexEditor> {
           return TDAlertDialog(
             title: existingIndex == null ? 'Add Index' : 'Edit Index',
             contentWidget: SizedBox(
-              width: 500,
+              width: 650, // 500 * 1.3
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

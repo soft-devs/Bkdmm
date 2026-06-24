@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../shared/widgets/td_popup_menu.dart';
 import '../providers/tab_provider.dart';
 
 /// Custom tab bar widget with close buttons and overflow handling
@@ -172,43 +173,32 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    return PopupMenuButton<String>(
-      icon: const Icon(TDIcons.more, size: 18),
+    return TDPopupMenuButton(
+      icon: TDIcons.more,
+      iconSize: 18,
       tooltip: 'Tab options',
-      itemBuilder: (context) => [
-        PopupMenuItem(
+      items: [
+        TDPopupMenuItem(
           value: 'close_all',
-          child: const ListTile(
-            leading: Icon(TDIcons.close),
-            title: Text('Close All'),
-            contentPadding: EdgeInsets.zero,
-          ),
+          icon: TDIcons.close,
+          label: 'Close All',
         ),
         if (tabState.activeTab != null) ...[
-          const PopupMenuDivider(),
-          PopupMenuItem(
+          const TDPopupMenuItem.divider(),
+          TDPopupMenuItem(
             value: 'close_others',
-            child: const ListTile(
-              leading: Icon(TDIcons.tab),
-              title: Text('Close Others'),
-              contentPadding: EdgeInsets.zero,
-            ),
+            icon: TDIcons.tab,
+            label: 'Close Others',
           ),
-          PopupMenuItem(
+          TDPopupMenuItem(
             value: 'close_right',
-            child: const ListTile(
-              leading: Icon(TDIcons.chevron_right),
-              title: Text('Close to Right'),
-              contentPadding: EdgeInsets.zero,
-            ),
+            icon: TDIcons.chevron_right,
+            label: 'Close to Right',
           ),
-          PopupMenuItem(
+          TDPopupMenuItem(
             value: 'close_left',
-            child: const ListTile(
-              leading: Icon(TDIcons.chevron_left),
-              title: Text('Close to Left'),
-              contentPadding: EdgeInsets.zero,
-            ),
+            icon: TDIcons.chevron_left,
+            label: 'Close to Left',
           ),
         ],
       ],
@@ -271,7 +261,6 @@ class _TabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final tdTheme = TDTheme.of(context);
 
     return InkWell(
@@ -350,68 +339,48 @@ class _TabItem extends StatelessWidget {
   }
 
   void _showContextMenu(BuildContext context, TapDownDetails details) {
-    final RenderBox overlay =
-        Overlay.of(context).context.findRenderObject()! as RenderBox;
-    final Offset local = overlay.globalToLocal(details.globalPosition);
-
-    showMenu<String>(
+    showTDPopupMenu(
       context: context,
-      position: RelativeRect.fromLTRB(
-        local.dx,
-        local.dy,
-        local.dx,
-        local.dy,
-      ),
+      position: details.globalPosition,
       items: [
-        const PopupMenuItem(
+        TDPopupMenuItem(
           value: 'close',
-          child: ListTile(
-            leading: Icon(TDIcons.close),
-            title: Text('Close'),
-            contentPadding: EdgeInsets.zero,
-          ),
+          icon: TDIcons.close,
+          label: 'Close',
         ),
-        const PopupMenuItem(
+        TDPopupMenuItem(
           value: 'close_others',
-          child: ListTile(
-            leading: Icon(TDIcons.tab),
-            title: Text('Close Others'),
-            contentPadding: EdgeInsets.zero,
-          ),
+          icon: TDIcons.tab,
+          label: 'Close Others',
         ),
-        const PopupMenuItem(
+        TDPopupMenuItem(
           value: 'close_right',
-          child: ListTile(
-            leading: Icon(TDIcons.chevron_right),
-            title: Text('Close to Right'),
-            contentPadding: EdgeInsets.zero,
-          ),
+          icon: TDIcons.chevron_right,
+          label: 'Close to Right',
         ),
-        const PopupMenuItem(
+        TDPopupMenuItem(
           value: 'close_left',
-          child: ListTile(
-            leading: Icon(TDIcons.chevron_left),
-            title: Text('Close to Left'),
-            contentPadding: EdgeInsets.zero,
-          ),
+          icon: TDIcons.chevron_left,
+          label: 'Close to Left',
         ),
       ],
-    ).then((value) {
-      switch (value) {
-        case 'close':
-          onClose();
-          break;
-        case 'close_others':
-          onCloseOthers();
-          break;
-        case 'close_right':
-          onCloseToRight();
-          break;
-        case 'close_left':
-          onCloseToLeft();
-          break;
-      }
-    });
+      onSelected: (value) {
+        switch (value) {
+          case 'close':
+            onClose();
+            break;
+          case 'close_others':
+            onCloseOthers();
+            break;
+          case 'close_right':
+            onCloseToRight();
+            break;
+          case 'close_left':
+            onCloseToLeft();
+            break;
+        }
+      },
+    );
   }
 }
 
