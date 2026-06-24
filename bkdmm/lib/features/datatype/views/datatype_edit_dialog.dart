@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../shared/models/data_type.dart';
 import '../../../shared/constants/default_data_types.dart';
 import '../providers/datatype_provider.dart';
@@ -124,11 +125,11 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AlertDialog(
+    return TDAlertDialog(
       title: Row(
         children: [
           Icon(
-            widget.existingType != null ? Icons.edit : Icons.add,
+            widget.existingType != null ? TDIcons.edit : TDIcons.add,
             color: colorScheme.primary,
           ),
           const SizedBox(width: 8),
@@ -160,14 +161,14 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Basic info section
-              _buildSectionHeader('Basic Info', Icons.info_outline),
+              _buildSectionHeader('Basic Info', TDIcons.info_outline),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Type Name (English)',
                   hintText: 'e.g., MyCustomType',
-                  prefixIcon: const Icon(Icons.code),
+                  prefixIcon: const Icon(TDIcons.code),
                   helperText: _nameController.text.trim().isEmpty
                       ? 'Name is required'
                       : ref.read(dataTypeNotifierProvider).nameExists(
@@ -199,7 +200,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 decoration: InputDecoration(
                   labelText: 'Chinese Name',
                   hintText: 'e.g., 自定义类型',
-                  prefixIcon: const Icon(Icons.translate),
+                  prefixIcon: Icon(TDIcons.translate),
                   helperText: _chnnameController.text.trim().isEmpty
                       ? 'Chinese name is required'
                       : 'Display name in Chinese',
@@ -220,7 +221,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Remark',
                   hintText: 'Description of this data type',
-                  prefixIcon: Icon(Icons.note),
+                  prefixIcon: Icon(TDIcons.note),
                 ),
                 maxLines: 2,
                 onChanged: (text) {
@@ -244,7 +245,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               const SizedBox(height: 24),
 
               // Database mapping section
-              _buildSectionHeader('Database Type Mapping', Icons.storage),
+              _buildSectionHeader('Database Type Mapping', TDIcons.storage),
               const SizedBox(height: 12),
               Text(
                 'Define how this type maps to each database',
@@ -278,13 +279,16 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+        TDButton(
+          text: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          onTap: () => Navigator.of(context).pop(),
         ),
         if (widget.existingType != null && _isDefaultType)
-          TextButton(
-            onPressed: () {
+          TDButton(
+            text: 'Restore Default',
+            theme: TDButtonTheme.defaultTheme,
+            onTap: () {
               // Restore default values
               final defaultType = DefaultDataTypes.getById(widget.existingType!.id);
               if (defaultType != null) {
@@ -297,16 +301,16 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 }
               }
             },
-            child: const Text('Restore Default'),
           ),
-        FilledButton(
-          onPressed: _isValid
+        TDButton(
+          text: 'Save',
+          theme: TDButtonTheme.primary,
+          onTap: _isValid
               ? () {
                   widget.onSave(_buildDataType());
                   Navigator.of(context).pop();
                 }
               : null,
-          child: const Text('Save'),
         ),
       ],
     );
@@ -334,22 +338,22 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     IconData icon;
     switch (dbCode) {
       case DatabaseCodes.mysql:
-        icon = Icons.storage;
+        icon = TDIcons.storage;
         break;
       case DatabaseCodes.postgresql:
-        icon = Icons.storage;
+        icon = TDIcons.storage;
         break;
       case DatabaseCodes.oracle:
-        icon = Icons.business;
+        icon = TDIcons.business;
         break;
       case DatabaseCodes.sqlServer:
-        icon = Icons.business;
+        icon = TDIcons.business;
         break;
       case DatabaseCodes.sqlite:
-        icon = Icons.phone_android;
+        icon = TDIcons.phone_android;
         break;
       default:
-        icon = Icons.storage;
+        icon = TDIcons.storage;
     }
     return Icon(icon);
   }

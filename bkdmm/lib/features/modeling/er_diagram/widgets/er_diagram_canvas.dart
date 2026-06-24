@@ -190,12 +190,12 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.table_chart, size: 56, color: isDark ? Colors.grey.shade600 : Colors.grey.shade400),
+                Icon(TDIcons.table, size: 56, color: isDark ? Colors.grey.shade600 : Colors.grey.shade400),
                 const SizedBox(height: 12),
                 Text('No tables yet', style: TextStyle(fontSize: 16, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600)),
                 const SizedBox(height: 8),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(TDIcons.add),
                   label: const Text('Add Entity'),
                   onPressed: () => widget.onContextMenu?.call(Offset.zero, null),
                 ),
@@ -577,7 +577,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.table_chart, size: 16, color: Colors.blue),
+                            const Icon(TDIcons.table, size: 16, color: Colors.blue),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -588,11 +588,11 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        const Row(children: [Icon(Icons.arrow_downward, size: 16), SizedBox(width: 8), Text('relation')]),
+                        const Row(children: [Icon(TDIcons.arrow_down, size: 16), SizedBox(width: 8), Text('relation')]),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.table_chart, size: 16, color: Colors.blue),
+                            const Icon(TDIcons.table, size: 16, color: Colors.blue),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/constants/default_data_types.dart';
 import '../../../shared/providers/providers.dart';
@@ -95,7 +96,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
       child: Row(
         children: [
           Icon(
-            Icons.data_object,
+            TDIcons.data_object,
             color: colorScheme.primary,
           ),
           const SizedBox(width: 8),
@@ -134,16 +135,18 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
             ),
           const Spacer(),
           // Action buttons
-          TextButton.icon(
-            onPressed: () => _showRestoreDefaultsDialog(),
-            icon: const Icon(Icons.restore, size: 18),
-            label: const Text('Restore Defaults'),
+          TDButton(
+            text: 'Restore Defaults',
+            theme: TDButtonTheme.defaultTheme,
+            icon: TDIcons.restore,
+            onTap: () => _showRestoreDefaultsDialog(),
           ),
           const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: () => _showAddDialog(),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add Type'),
+          TDButton(
+            text: 'Add Type',
+            theme: TDButtonTheme.primary,
+            icon: TDIcons.add,
+            onTap: () => _showAddDialog(),
           ),
         ],
       ),
@@ -157,7 +160,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
         children: [
           // Search field
           Expanded(
-            child: TextField(
+            child: TDInput(
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
@@ -165,7 +168,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
               },
               decoration: InputDecoration(
                 hintText: 'Search types...',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(TDIcons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -208,7 +211,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.data_object_outlined,
+            TDIcons.data_object_outlined,
             size: 64,
             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
@@ -245,7 +248,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           _buildSectionHeader(
             'Default Types',
             '${defaultTypes.length}',
-            Icons.bookmark,
+            TDIcons.bookmark,
             colorScheme,
           ),
           const SizedBox(height: 8),
@@ -258,7 +261,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           _buildSectionHeader(
             'Custom Types',
             '${customTypes.length}',
-            Icons.extension,
+            TDIcons.extension,
             colorScheme,
           ),
           const SizedBox(height: 8),
@@ -386,13 +389,13 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                   ),
                   // Actions
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
+                    icon: const Icon(TDIcons.more_vert),
                     onSelected: (action) => _handleTypeAction(type, action),
                     itemBuilder: (context) => [
                       const PopupMenuItem(
                         value: 'edit',
                         child: ListTile(
-                          leading: Icon(Icons.edit),
+                          leading: Icon(TDIcons.edit),
                           title: Text('Edit'),
                           contentPadding: EdgeInsets.zero,
                         ),
@@ -400,7 +403,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                       const PopupMenuItem(
                         value: 'duplicate',
                         child: ListTile(
-                          leading: Icon(Icons.copy),
+                          leading: Icon(TDIcons.copy),
                           title: Text('Duplicate'),
                           contentPadding: EdgeInsets.zero,
                         ),
@@ -409,7 +412,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                         const PopupMenuItem(
                           value: 'delete',
                           child: ListTile(
-                            leading: Icon(Icons.delete, color: Colors.red),
+                            leading: Icon(TDIcons.delete, color: Colors.red),
                             title: Text('Delete', style: TextStyle(color: Colors.red)),
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -512,27 +515,27 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
   IconData _getTypeIcon(String typeName) {
     switch (typeName.toLowerCase()) {
       case 'idorkey':
-        return Icons.key;
+        return TDIcons.key;
       case 'name':
-        return Icons.label;
+        return TDIcons.label;
       case 'intro':
-        return Icons.short_text;
+        return TDIcons.short_text;
       case 'longtext':
-        return Icons.notes;
+        return TDIcons.notes;
       case 'integer':
-        return Icons.filter_1;
+        return TDIcons.filter_1;
       case 'long':
-        return Icons.filter_9_plus;
+        return TDIcons.filter_9_plus;
       case 'money':
-        return Icons.attach_money;
+        return TDIcons.attach_money;
       case 'datetime':
-        return Icons.schedule;
+        return TDIcons.schedule;
       case 'yesno':
-        return Icons.check_box;
+        return TDIcons.check_box;
       case 'dict':
-        return Icons.book;
+        return TDIcons.book;
       default:
-        return Icons.data_object;
+        return TDIcons.data_object;
     }
   }
 
@@ -596,7 +599,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => TDAlertDialog(
         title: const Text('Delete Data Type'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -613,12 +616,15 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          TDButton(
+            text: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            onTap: () => Navigator.pop(context),
           ),
-          FilledButton(
-            onPressed: () {
+          TDButton(
+            text: 'Delete',
+            theme: TDButtonTheme.danger,
+            onTap: () {
               final usage = ref
                   .read(dataTypeNotifierProvider.notifier)
                   .deleteDataType(type.id, modules);
@@ -633,10 +639,6 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                 _updateProject();
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
           ),
         ],
       ),
@@ -646,7 +648,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
   void _showUsageWarning(DataType type, Map<String, List<String>> usage) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => TDAlertDialog(
         title: const Text('Type In Use'),
         content: SizedBox(
           width: 400,
@@ -661,7 +663,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      const Icon(Icons.table_chart, size: 16),
+                      const Icon(TDIcons.table_chart, size: 16),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -684,20 +686,19 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          TDButton(
+            text: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            onTap: () => Navigator.pop(context),
           ),
-          FilledButton(
-            onPressed: () {
+          TDButton(
+            text: 'Delete Anyway',
+            theme: TDButtonTheme.danger,
+            onTap: () {
               ref.read(dataTypeNotifierProvider.notifier).forceDeleteDataType(type.id);
               Navigator.pop(context);
               _updateProject();
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete Anyway'),
           ),
         ],
       ),
@@ -707,23 +708,25 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
   void _showRestoreDefaultsDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => TDAlertDialog(
         title: const Text('Restore Defaults'),
         content: const Text(
           'This will restore all default data types to their original values. Custom types will not be affected.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          TDButton(
+            text: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            onTap: () => Navigator.pop(context),
           ),
-          FilledButton(
-            onPressed: () {
+          TDButton(
+            text: 'Restore',
+            theme: TDButtonTheme.primary,
+            onTap: () {
               ref.read(dataTypeNotifierProvider.notifier).restoreDefaults();
               Navigator.pop(context);
               _updateProject();
             },
-            child: const Text('Restore'),
           ),
         ],
       ),
