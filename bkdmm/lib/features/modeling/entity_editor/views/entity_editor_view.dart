@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/providers/providers.dart';
 import '../providers/entity_provider.dart';
@@ -115,10 +116,10 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           child: TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(icon: Icon(Icons.info_outline), text: 'Summary'),
-              Tab(icon: Icon(Icons.list_alt), text: 'Fields'),
-              Tab(icon: Icon(Icons.sort), text: 'Indexes'),
-              Tab(icon: Icon(Icons.code), text: 'Preview'),
+              Tab(icon: Icon(TDIcons.info_circle), text: 'Summary'),
+              Tab(icon: Icon(TDIcons.unordered_list), text: 'Fields'),
+              Tab(icon: Icon(TDIcons.filter), text: 'Indexes'),
+              Tab(icon: Icon(TDIcons.code), text: 'Preview'),
             ],
             labelColor: colorScheme.primary,
             unselectedLabelColor: colorScheme.onSurfaceVariant,
@@ -167,7 +168,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.table_chart,
+              TDIcons.table,
               color: colorScheme.onPrimaryContainer,
             ),
           ),
@@ -204,7 +205,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.list_alt, size: 14, color: colorScheme.onSurfaceVariant),
+                Icon(TDIcons.unordered_list, size: 14, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   '${entity.fields.length} fields',
@@ -213,7 +214,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                   ),
                 ),
                 const SizedBox(width: 12),
-                Icon(Icons.sort, size: 14, color: colorScheme.onSurfaceVariant),
+                Icon(TDIcons.filter, size: 14, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   '${entity.indexes.length} indexes',
@@ -238,7 +239,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.circle, size: 8, color: colorScheme.primary),
+                  Icon(TDIcons.circle, size: 8, color: colorScheme.primary),
                   const SizedBox(width: 4),
                   Text(
                     'Unsaved',
@@ -286,28 +287,22 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
+                        child: TDInput(
                           controller: _titleController,
-                          decoration: const InputDecoration(
-                            labelText: 'Table Name (English)',
-                            hintText: 'e.g., user',
-                            prefixIcon: Icon(Icons.code),
-                            border: OutlineInputBorder(),
-                          ),
+                          leftLabel: 'Table Name (English)',
+                          hintText: 'e.g., user',
+                          prefixIcon: TDIcons.code,
                           onChanged: (value) => _markDirty(),
                           onSubmitted: (value) => _saveBasicInfo(),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: TextField(
+                        child: TDInput(
                           controller: _chnnameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Chinese Name',
-                            hintText: 'e.g., 用户表',
-                            prefixIcon: Icon(Icons.translate),
-                            border: OutlineInputBorder(),
-                          ),
+                          leftLabel: 'Chinese Name',
+                          hintText: 'e.g., 用户表',
+                          prefixIcon: TDIcons.translate,
                           onChanged: (value) => _markDirty(),
                           onSubmitted: (value) => _saveBasicInfo(),
                         ),
@@ -315,14 +310,11 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     ],
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  TDInput(
                     controller: _remarkController,
-                    decoration: const InputDecoration(
-                      labelText: 'Remark',
-                      hintText: 'Table description',
-                      prefixIcon: Icon(Icons.notes),
-                      border: OutlineInputBorder(),
-                    ),
+                    leftLabel: 'Remark',
+                    hintText: 'Table description',
+                    prefixIcon: TDIcons.edit_1,
                     maxLines: 3,
                     onChanged: (value) => _markDirty(),
                   ),
@@ -331,15 +323,18 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       if (_hasLocalChanges)
-                        OutlinedButton(
-                          onPressed: _resetBasicInfo,
-                          child: const Text('Reset'),
+                        TDButton(
+                          text: 'Reset',
+                          theme: TDButtonTheme.outline,
+                          onTap: _resetBasicInfo,
                         ),
                       const SizedBox(width: 8),
-                      FilledButton.icon(
-                        icon: const Icon(Icons.save),
-                        onPressed: _hasLocalChanges ? _saveBasicInfo : null,
-                        label: const Text('Save Changes'),
+                      TDButton(
+                        text: 'Save Changes',
+                        icon: TDIcons.save,
+                        theme: TDButtonTheme.primary,
+                        disabled: !_hasLocalChanges,
+                        onTap: _saveBasicInfo,
                       ),
                     ],
                   ),
@@ -373,7 +368,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     children: [
                       Expanded(
                         child: _StatCard(
-                          icon: Icons.list_alt,
+                          icon: TDIcons.unordered_list,
                           label: 'Fields',
                           value: entity.fields.length.toString(),
                           color: colorScheme.primary,
@@ -382,7 +377,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                       const SizedBox(width: 16),
                       Expanded(
                         child: _StatCard(
-                          icon: Icons.key,
+                          icon: TDIcons.lock_on,
                           label: 'Primary Keys',
                           value: entity.primaryKeys.length.toString(),
                           color: colorScheme.tertiary,
@@ -391,7 +386,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                       const SizedBox(width: 16),
                       Expanded(
                         child: _StatCard(
-                          icon: Icons.sort,
+                          icon: TDIcons.filter,
                           label: 'Indexes',
                           value: entity.indexes.length.toString(),
                           color: colorScheme.secondary,
@@ -427,10 +422,11 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      TextButton.icon(
-                        icon: const Icon(Icons.edit, size: 18),
-                        label: const Text('Edit Fields'),
-                        onPressed: () => _tabController.animateTo(1),
+                      TDButton(
+                        text: 'Edit Fields',
+                        icon: TDIcons.edit,
+                        theme: TDButtonTheme.text,
+                        onTap: () => _tabController.animateTo(1),
                       ),
                     ],
                   ),
@@ -442,7 +438,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         child: Column(
                           children: [
                             Icon(
-                              Icons.list_alt_outlined,
+                              TDIcons.unordered_list,
                               size: 48,
                               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                             ),
@@ -469,7 +465,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         return DataRow(
                           cells: [
                             DataCell(field.pk
-                                ? Icon(Icons.key, size: 16, color: colorScheme.primary)
+                                ? Icon(TDIcons.lock_on, size: 16, color: colorScheme.primary)
                                 : const SizedBox()),
                             DataCell(Text(field.name)),
                             DataCell(Text(field.type)),
@@ -656,12 +652,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
 
     setState(() => _hasLocalChanges = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Entity updated'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    TDToast.showText('Entity updated', context: context);
   }
 
   void _resetBasicInfo() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../shared/models/models.dart';
 
 /// Field table widget using Syncfusion DataGrid
@@ -85,17 +86,19 @@ class _FieldTableState extends State<FieldTable> {
               ),
               const Spacer(),
               // Add field button
-              FilledButton.icon(
-                onPressed: () => _showAddFieldDialog(),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Field'),
+              TDButton(
+                text: 'Add Field',
+                icon: TDIcons.add,
+                theme: TDButtonTheme.primary,
+                onTap: () => _showAddFieldDialog(),
               ),
               const SizedBox(width: 8),
               // Delete selected button
-              OutlinedButton.icon(
-                onPressed: _deleteSelectedFields,
-                icon: const Icon(Icons.delete, size: 18),
-                label: const Text('Delete'),
+              TDButton(
+                text: 'Delete',
+                icon: TDIcons.delete,
+                theme: TDButtonTheme.outline,
+                onTap: _deleteSelectedFields,
               ),
             ],
           ),
