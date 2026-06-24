@@ -8,11 +8,9 @@ import '../../../constants/app_constants.dart';
 
 /// Settings view - Application settings configuration
 ///
-/// Categories:
-/// - Appearance: Theme mode, accent color, font size
-/// - Editor: Default database, auto-save, line numbers
-/// - Default Fields: Default fields for new tables
-/// - Data Types: Link to data type management
+/// Two tabs:
+/// - Global Settings: Theme mode, accent color, font size, auto-save, etc.
+/// - Project Settings: Default fields, default database (can inherit from global)
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
 
@@ -20,11 +18,26 @@ class SettingsView extends ConsumerStatefulWidget {
   ConsumerState<SettingsView> createState() => _SettingsViewState();
 }
 
-class _SettingsViewState extends ConsumerState<SettingsView> {
+class _SettingsViewState extends ConsumerState<SettingsView>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
-    final settings = ref.watch(settingsProvider);
+    final hasProject = ref.watch(hasProjectSettingsProvider);
 
     return AppScaffold(
       title: 'Settings',
@@ -33,195 +46,241 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         size: 24,
         color: tdTheme.textColorPrimary,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
+      body: Column(
         children: [
-          // Appearance Section
-          _SettingsSection(
-            title: 'Appearance',
-            icon: TDIcons.palette,
-            children: [
-              // Theme Mode
-              _SettingsTile(
-                title: 'Theme Mode',
-                subtitle: _getThemeModeLabel(settings.themeMode),
-                leading: Icon(
-                  _getThemeModeIcon(settings.themeMode),
-                  size: 24,
-                  color: tdTheme.brandNormalColor,
+          // Tab bar
+          Container(
+            decoration: BoxDecoration(
+              color: tdTheme.bgColorContainer,
+              border: Border(
+                bottom: BorderSide(
+                  color: tdTheme.componentStrokeColor,
+                  width: 1,
                 ),
-                onTap: () => _showThemeModeDialog(),
               ),
-              // Accent Color
-              _SettingsTile(
-                title: 'Accent Color',
-                subtitle: 'Customize the app accent color',
-                leading: Icon(
-                  TDIcons.color_invert,
-                  size: 24,
-                  color: tdTheme.brandNormalColor,
-                ),
-                trailing: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: tdTheme.brandNormalColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: tdTheme.componentStrokeColor,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                onTap: () => _showAccentColorDialog(),
-              ),
-              // Font Size
-              _SettingsTile(
-                title: 'Font Size',
-                subtitle: 'Editor font size: ${settings.editorFontSize.toInt()}',
-                leading: Icon(
-                  TDIcons.textformat_bold,
-                  size: 24,
-                  color: tdTheme.brandNormalColor,
-                ),
-                onTap: () => _showFontSizeDialog(),
-              ),
-            ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: tdTheme.brandNormalColor,
+              unselectedLabelColor: tdTheme.textColorSecondary,
+              indicatorColor: tdTheme.brandNormalColor,
+              tabs: const [
+                Tab(text: 'Global Settings'),
+                Tab(text: 'Project Settings'),
+              ],
+            ),
           ),
-
-          const SizedBox(height: 24),
-
-          // Editor Section
-          _SettingsSection(
-            title: 'Editor',
-            icon: TDIcons.edit,
-            children: [
-              // Default Database Type
-              _SettingsTile(
-                title: 'Default Database Type',
-                subtitle: settings.defaultDatabase ?? 'Not set',
-                leading: Icon(
-                  TDIcons.data_base,
-                  size: 24,
-                  color: tdTheme.brandNormalColor,
-                ),
-                onTap: () => _showDatabaseTypeDialog(),
-              ),
-              // Auto-save Interval
-              _SettingsTile(
-                title: 'Auto-save Interval',
-                subtitle: _getAutoSaveLabel(settings.autoSaveInterval),
-                leading: Icon(
-                  TDIcons.time,
-                  size: 24,
-                  color: tdTheme.brandNormalColor,
-                ),
-                onTap: () => _showAutoSaveDialog(),
-              ),
-              // Show Line Numbers
-              _SettingsSwitchTile(
-                title: 'Show Line Numbers',
-                subtitle: 'Display line numbers in code preview',
-                value: settings.showLineNumbers,
-                onChanged: (value) {
-                  ref.read(settingsProvider.notifier).setShowLineNumbers(value);
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Default Fields Section
-          _SettingsSection(
-            title: 'Default Fields',
-            icon: TDIcons.list,
-            description: 'Configure default fields for new tables',
-            children: [
-              _SettingsSwitchTile(
-                title: 'REVISION',
-                subtitle: 'Add revision number field',
-                value: settings.defaultFieldsRevision,
-                onChanged: (value) {
-                  ref.read(settingsProvider.notifier).setDefaultFieldsRevision(value);
-                },
-              ),
-              _SettingsSwitchTile(
-                title: 'CREATED_BY',
-                subtitle: 'Add creator field',
-                value: settings.defaultFieldsCreatedBy,
-                onChanged: (value) {
-                  ref.read(settingsProvider.notifier).setDefaultFieldsCreatedBy(value);
-                },
-              ),
-              _SettingsSwitchTile(
-                title: 'CREATED_TIME',
-                subtitle: 'Add creation timestamp field',
-                value: settings.defaultFieldsCreatedTime,
-                onChanged: (value) {
-                  ref.read(settingsProvider.notifier).setDefaultFieldsCreatedTime(value);
-                },
-              ),
-              _SettingsSwitchTile(
-                title: 'UPDATED_BY',
-                subtitle: 'Add updater field',
-                value: settings.defaultFieldsUpdatedBy,
-                onChanged: (value) {
-                  ref.read(settingsProvider.notifier).setDefaultFieldsUpdatedBy(value);
-                },
-              ),
-              _SettingsSwitchTile(
-                title: 'UPDATED_TIME',
-                subtitle: 'Add update timestamp field',
-                value: settings.defaultFieldsUpdatedTime,
-                onChanged: (value) {
-                  ref.read(settingsProvider.notifier).setDefaultFieldsUpdatedTime(value);
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Data Type Settings Section
-          _SettingsSection(
-            title: 'Data Types',
-            icon: TDIcons.data,
-            children: [
-              _SettingsTile(
-                title: 'Manage Data Types',
-                subtitle: 'Configure custom data types',
-                leading: Icon(
-                  TDIcons.chevron_right,
-                  size: 24,
-                  color: tdTheme.brandNormalColor,
-                ),
-                onTap: () => _navigateToDataTypes(),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Reset Section
-          _SettingsSection(
-            title: 'Reset',
-            icon: TDIcons.refresh,
-            children: [
-              _SettingsTile(
-                title: 'Reset to Defaults',
-                subtitle: 'Restore all settings to default values',
-                leading: Icon(
-                  TDIcons.close_circle,
-                  size: 24,
-                  color: tdTheme.errorNormalColor,
-                ),
-                onTap: () => _showResetConfirmation(),
-              ),
-            ],
+          // Tab content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _GlobalSettingsView(),
+                _ProjectSettingsView(hasProject: hasProject),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Global settings view
+class _GlobalSettingsView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tdTheme = TDTheme.of(context);
+    final settings = ref.watch(settingsProvider);
+
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        // Appearance Section
+        _SettingsSection(
+          title: 'Appearance',
+          icon: TDIcons.palette,
+          children: [
+            // Theme Mode
+            _SettingsTile(
+              title: 'Theme Mode',
+              subtitle: _getThemeModeLabel(settings.themeMode),
+              leading: Icon(
+                _getThemeModeIcon(settings.themeMode),
+                size: 24,
+                color: tdTheme.brandNormalColor,
+              ),
+              onTap: () => _showThemeModeDialog(context, ref),
+            ),
+            // Accent Color
+            _SettingsTile(
+              title: 'Accent Color',
+              subtitle: 'Customize the app accent color',
+              leading: Icon(
+                TDIcons.color_invert,
+                size: 24,
+                color: tdTheme.brandNormalColor,
+              ),
+              trailing: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: settings.accentColorValue ?? tdTheme.brandNormalColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: tdTheme.componentStrokeColor,
+                    width: 1,
+                  ),
+                ),
+              ),
+              onTap: () => _showAccentColorDialog(context, ref),
+            ),
+            // Font Size
+            _SettingsTile(
+              title: 'Font Size',
+              subtitle: 'Editor font size: ${settings.editorFontSize.toInt()}',
+              leading: Icon(
+                TDIcons.textformat_bold,
+                size: 24,
+                color: tdTheme.brandNormalColor,
+              ),
+              onTap: () => _showFontSizeDialog(context, ref),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Editor Section
+        _SettingsSection(
+          title: 'Editor',
+          icon: TDIcons.edit,
+          children: [
+            // Default Database Type
+            _SettingsTile(
+              title: 'Default Database Type',
+              subtitle: settings.defaultDatabase ?? 'Not set',
+              leading: Icon(
+                TDIcons.data_base,
+                size: 24,
+                color: tdTheme.brandNormalColor,
+              ),
+              onTap: () => _showDatabaseTypeDialog(context, ref),
+            ),
+            // Auto-save Interval
+            _SettingsTile(
+              title: 'Auto-save Interval',
+              subtitle: _getAutoSaveLabel(settings.autoSaveInterval),
+              leading: Icon(
+                TDIcons.time,
+                size: 24,
+                color: tdTheme.brandNormalColor,
+              ),
+              onTap: () => _showAutoSaveDialog(context, ref),
+            ),
+            // Show Line Numbers
+            _SettingsSwitchTile(
+              title: 'Show Line Numbers',
+              subtitle: 'Display line numbers in code preview',
+              value: settings.showLineNumbers,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).setShowLineNumbers(value);
+              },
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Default Fields Section (Global defaults)
+        _SettingsSection(
+          title: 'Default Fields (Global)',
+          icon: TDIcons.list,
+          description: 'Configure default fields for new tables (used as project defaults)',
+          children: [
+            _SettingsSwitchTile(
+              title: 'REVISION',
+              subtitle: 'Add revision number field',
+              value: settings.defaultFieldsRevision,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).setDefaultFieldsRevision(value);
+              },
+            ),
+            _SettingsSwitchTile(
+              title: 'CREATED_BY',
+              subtitle: 'Add creator field',
+              value: settings.defaultFieldsCreatedBy,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).setDefaultFieldsCreatedBy(value);
+              },
+            ),
+            _SettingsSwitchTile(
+              title: 'CREATED_TIME',
+              subtitle: 'Add creation timestamp field',
+              value: settings.defaultFieldsCreatedTime,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).setDefaultFieldsCreatedTime(value);
+              },
+            ),
+            _SettingsSwitchTile(
+              title: 'UPDATED_BY',
+              subtitle: 'Add updater field',
+              value: settings.defaultFieldsUpdatedBy,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).setDefaultFieldsUpdatedBy(value);
+              },
+            ),
+            _SettingsSwitchTile(
+              title: 'UPDATED_TIME',
+              subtitle: 'Add update timestamp field',
+              value: settings.defaultFieldsUpdatedTime,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).setDefaultFieldsUpdatedTime(value);
+              },
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Data Type Settings Section
+        _SettingsSection(
+          title: 'Data Types',
+          icon: TDIcons.data,
+          children: [
+            _SettingsTile(
+              title: 'Manage Data Types',
+              subtitle: 'Configure custom data types',
+              leading: Icon(
+                TDIcons.chevron_right,
+                size: 24,
+                color: tdTheme.brandNormalColor,
+              ),
+              onTap: () => _navigateToDataTypes(context),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Reset Section
+        _SettingsSection(
+          title: 'Reset',
+          icon: TDIcons.refresh,
+          children: [
+            _SettingsTile(
+              title: 'Reset to Defaults',
+              subtitle: 'Restore all settings to default values',
+              leading: Icon(
+                TDIcons.close_circle,
+                size: 24,
+                color: tdTheme.errorNormalColor,
+              ),
+              onTap: () => _showResetConfirmation(context, ref),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -258,7 +317,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     }
   }
 
-  void _showThemeModeDialog() {
+  void _showThemeModeDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => _ThemeModeDialog(
@@ -270,7 +329,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
-  void _showAccentColorDialog() {
+  void _showAccentColorDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => _AccentColorDialog(
@@ -281,7 +340,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
-  void _showFontSizeDialog() {
+  void _showFontSizeDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => _FontSizeDialog(
@@ -293,7 +352,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
-  void _showDatabaseTypeDialog() {
+  void _showDatabaseTypeDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => _DatabaseTypeDialog(
@@ -305,7 +364,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
-  void _showAutoSaveDialog() {
+  void _showAutoSaveDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => _AutoSaveDialog(
@@ -317,17 +376,17 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     );
   }
 
-  void _navigateToDataTypes() {
-    // TODO: Navigate to data type management page
+  void _navigateToDataTypes(BuildContext context) {
     TDToast.showText('Data type management coming soon', context: context);
   }
 
-  void _showResetConfirmation() {
+  void _showResetConfirmation(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
         title: 'Reset Settings',
-        content: 'Are you sure you want to reset all settings to their default values? This action cannot be undone.',
+        content:
+            'Are you sure you want to reset all settings to their default values? This action cannot be undone.',
         leftBtn: TDDialogButtonOptions(
           title: 'Cancel',
           theme: TDButtonTheme.defaultTheme,
@@ -342,6 +401,356 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             ref.read(settingsProvider.notifier).resetToDefaults();
             Navigator.pop(context);
             TDToast.showSuccess('Settings reset to defaults', context: context);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Project settings view
+class _ProjectSettingsView extends ConsumerStatefulWidget {
+  final bool hasProject;
+
+  const _ProjectSettingsView({required this.hasProject});
+
+  @override
+  ConsumerState<_ProjectSettingsView> createState() =>
+      _ProjectSettingsViewState();
+}
+
+class _ProjectSettingsViewState extends ConsumerState<_ProjectSettingsView> {
+  @override
+  void initState() {
+    super.initState();
+    // Load project settings when project is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProjectSettings();
+    });
+  }
+
+  void _loadProjectSettings() {
+    final project = ref.read(currentProjectProvider);
+    ref.read(projectSettingsProvider.notifier).loadFromProject(project);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tdTheme = TDTheme.of(context);
+
+    if (!widget.hasProject) {
+      return _buildNoProjectState(tdTheme);
+    }
+
+    final projectSettings = ref.watch(projectSettingsProvider);
+    final globalSettings = ref.watch(settingsProvider);
+
+    if (projectSettings == null) {
+      return _buildNoProjectState(tdTheme);
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        // Project Info Banner
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: tdTheme.bgColorSecondaryContainer,
+            borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+          ),
+          child: Row(
+            children: [
+              Icon(TDIcons.info_circle, color: tdTheme.brandNormalColor, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TDText(
+                  'Project settings can override global defaults. Toggle inheritance to use global values.',
+                  font: tdTheme.fontBodySmall,
+                  textColor: tdTheme.textColorPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Default Database Section
+        _SettingsSection(
+          title: 'Default Database',
+          icon: TDIcons.data_base,
+          children: [
+            // Inheritance toggle
+            _SettingsSwitchTile(
+              title: 'Inherit from Global',
+              subtitle: 'Use global default database setting',
+              value: projectSettings.inheritDefaultDatabase,
+              onChanged: (value) {
+                ref
+                    .read(projectSettingsProvider.notifier)
+                    .setInheritDefaultDatabase(value);
+              },
+            ),
+            // Database selection (only if not inheriting)
+            if (!projectSettings.inheritDefaultDatabase)
+              _SettingsTile(
+                title: 'Default Database Type',
+                subtitle: projectSettings.defaultDatabase ??
+                    globalSettings.defaultDatabase ??
+                    'Not set',
+                leading: Icon(
+                  TDIcons.data_base,
+                  size: 24,
+                  color: tdTheme.brandNormalColor,
+                ),
+                onTap: () => _showProjectDatabaseTypeDialog(
+                    context, ref, projectSettings.defaultDatabase),
+              ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Default Fields Section
+        _SettingsSection(
+          title: 'Default Fields',
+          icon: TDIcons.list,
+          description: 'Configure default fields for new tables in this project',
+          children: [
+            // Inheritance toggle
+            _SettingsSwitchTile(
+              title: 'Inherit from Global',
+              subtitle: 'Use global default fields settings',
+              value: projectSettings.inheritDefaultFields,
+              onChanged: (value) {
+                ref
+                    .read(projectSettingsProvider.notifier)
+                    .setInheritDefaultFields(value);
+              },
+            ),
+            // Field toggles (only if not inheriting)
+            if (!projectSettings.inheritDefaultFields) ...[
+              TDDivider(margin: const EdgeInsets.symmetric(horizontal: 16)),
+              _buildFieldToggle(
+                context: context,
+                title: 'REVISION',
+                subtitle: 'Add revision number field',
+                projectValue: projectSettings.defaultFieldsRevision,
+                globalValue: globalSettings.defaultFieldsRevision,
+                onChanged: (value) {
+                  ref
+                      .read(projectSettingsProvider.notifier)
+                      .setDefaultFieldsRevision(value);
+                },
+              ),
+              _buildFieldToggle(
+                context: context,
+                title: 'CREATED_BY',
+                subtitle: 'Add creator field',
+                projectValue: projectSettings.defaultFieldsCreatedBy,
+                globalValue: globalSettings.defaultFieldsCreatedBy,
+                onChanged: (value) {
+                  ref
+                      .read(projectSettingsProvider.notifier)
+                      .setDefaultFieldsCreatedBy(value);
+                },
+              ),
+              _buildFieldToggle(
+                context: context,
+                title: 'CREATED_TIME',
+                subtitle: 'Add creation timestamp field',
+                projectValue: projectSettings.defaultFieldsCreatedTime,
+                globalValue: globalSettings.defaultFieldsCreatedTime,
+                onChanged: (value) {
+                  ref
+                      .read(projectSettingsProvider.notifier)
+                      .setDefaultFieldsCreatedTime(value);
+                },
+              ),
+              _buildFieldToggle(
+                context: context,
+                title: 'UPDATED_BY',
+                subtitle: 'Add updater field',
+                projectValue: projectSettings.defaultFieldsUpdatedBy,
+                globalValue: globalSettings.defaultFieldsUpdatedBy,
+                onChanged: (value) {
+                  ref
+                      .read(projectSettingsProvider.notifier)
+                      .setDefaultFieldsUpdatedBy(value);
+                },
+              ),
+              _buildFieldToggle(
+                context: context,
+                title: 'UPDATED_TIME',
+                subtitle: 'Add update timestamp field',
+                projectValue: projectSettings.defaultFieldsUpdatedTime,
+                globalValue: globalSettings.defaultFieldsUpdatedTime,
+                onChanged: (value) {
+                  ref
+                      .read(projectSettingsProvider.notifier)
+                      .setDefaultFieldsUpdatedTime(value);
+                },
+              ),
+            ],
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Reset Section
+        _SettingsSection(
+          title: 'Reset',
+          icon: TDIcons.refresh,
+          children: [
+            _SettingsTile(
+              title: 'Reset to Inherit All',
+              subtitle: 'Reset all project settings to inherit from global',
+              leading: Icon(
+                TDIcons.close_circle,
+                size: 24,
+                color: tdTheme.errorNormalColor,
+              ),
+              onTap: () => _showProjectResetConfirmation(context, ref),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoProjectState(TDThemeData tdTheme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            TDIcons.folder_open,
+            size: 64,
+            color: tdTheme.textColorSecondary,
+          ),
+          const SizedBox(height: 16),
+          TDText(
+            'No Project Open',
+            font: tdTheme.fontTitleMedium,
+            textColor: tdTheme.textColorSecondary,
+          ),
+          const SizedBox(height: 8),
+          TDText(
+            'Open a project to configure project-specific settings',
+            font: tdTheme.fontBodySmall,
+            textColor: tdTheme.textColorPlaceholder,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldToggle({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required bool? projectValue,
+    required bool globalValue,
+    required ValueChanged<bool?> onChanged,
+  }) {
+    final tdTheme = TDTheme.of(context);
+    // If project value is null, show global value with indicator
+    final displayValue = projectValue ?? globalValue;
+    final isUsingGlobal = projectValue == null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const SizedBox(width: 40),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    TDText(
+                      title,
+                      font: tdTheme.fontBodyMedium,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    if (isUsingGlobal) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tdTheme.bgColorSecondaryContainer,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: TDText(
+                          'Global',
+                          font: tdTheme.fontMarkSmall,
+                          textColor: tdTheme.brandNormalColor,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                TDText(
+                  subtitle,
+                  font: tdTheme.fontBodySmall,
+                  textColor: tdTheme.textColorSecondary,
+                ),
+              ],
+            ),
+          ),
+          TDSwitch(
+            isOn: displayValue,
+            size: TDSwitchSize.medium,
+            onChanged: (newValue) {
+              onChanged(newValue);
+              return false;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProjectDatabaseTypeDialog(
+      BuildContext context, WidgetRef ref, String? currentValue) {
+    showDialog(
+      context: context,
+      builder: (context) => _DatabaseTypeDialog(
+        currentValue: currentValue,
+        onChanged: (value) {
+          ref.read(projectSettingsProvider.notifier).setDefaultDatabase(value);
+        },
+      ),
+    );
+  }
+
+  void _showProjectResetConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: 'Reset Project Settings',
+        content:
+            'Reset all project settings to inherit from global settings? This action cannot be undone.',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: 'Reset',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          action: () {
+            ref.read(projectSettingsProvider.notifier).resetToDefaults();
+            Navigator.pop(context);
+            TDToast.showSuccess('Project settings reset', context: context);
           },
         ),
       ),
@@ -404,7 +813,8 @@ class _SettingsSection extends StatelessWidget {
               ),
             ),
           TDDivider(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: description != null ? 8 : 0),
+            margin: EdgeInsets.symmetric(
+                horizontal: 16, vertical: description != null ? 8 : 0),
           ),
           // Settings items
           ...children,
@@ -594,7 +1004,8 @@ class _ThemeModeDialog extends StatelessWidget {
       description: subtitle,
       arrow: false,
       style: TDCellStyle(context: context)
-        ..leftIconColor = isSelected ? tdTheme.brandNormalColor : tdTheme.textColorSecondary
+        ..leftIconColor =
+            isSelected ? tdTheme.brandNormalColor : tdTheme.textColorSecondary
         ..rightIconColor = tdTheme.brandNormalColor,
       rightIcon: isSelected ? TDIcons.check : null,
       onClick: (_) {
@@ -646,7 +1057,8 @@ class _AccentColorDialog extends StatelessWidget {
           itemCount: _accentColors.length,
           itemBuilder: (context, index) {
             final color = _accentColors[index];
-            final isSelected = color.toARGB32 == tdTheme.brandNormalColor.toARGB32;
+            final isSelected =
+                color.toARGB32 == tdTheme.brandNormalColor.toARGB32;
 
             return InkWell(
               onTap: () {

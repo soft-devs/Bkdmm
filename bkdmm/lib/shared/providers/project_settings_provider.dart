@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../services/services.dart';
-import '../../project/providers/project_notifier.dart';
+import '../../features/project/providers/project_notifier.dart';
+import '../models/project.dart';
 
 /// Project-specific settings state
 ///
