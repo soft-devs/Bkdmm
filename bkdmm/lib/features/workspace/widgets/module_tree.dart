@@ -89,17 +89,15 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final tdTheme = TDTheme.of(context);
     final modules = widget.project.modules;
 
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
+        color: tdTheme.bgColorContainer,
         border: Border(
           right: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentBorderColor,
             width: 1,
           ),
         ),
@@ -108,29 +106,30 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          _buildHeader(theme, colorScheme, tdTheme),
+          _buildHeader(tdTheme),
 
           // Tree content
           Expanded(
             child: modules.isEmpty
-                ? _buildEmptyState(theme, colorScheme, tdTheme)
-                : _buildTree(modules, theme, colorScheme, tdTheme),
+                ? _buildEmptyState(tdTheme)
+                : _buildTree(modules, tdTheme),
           ),
 
           // Status bar
-          _buildStatusBar(modules, theme, colorScheme, tdTheme),
+          _buildStatusBar(modules, tdTheme),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(ThemeData theme, ColorScheme colorScheme, TDThemeData tdTheme) {
+  Widget _buildHeader(TDThemeData tdTheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
+        color: tdTheme.bgColorSecondaryContainer,
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentBorderColor,
             width: 1,
           ),
         ),
@@ -138,25 +137,27 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
       child: Row(
         children: [
           // Collapse/Expand all
-          IconButton(
-            icon: const Icon(TDIcons.unfold_more, size: 18),
-            onPressed: () {
+          TDButton(
+            icon: TDIcons.unfold_more,
+            size: TDButtonSize.small,
+            type: TDButtonType.text,
+            theme: TDButtonTheme.defaultTheme,
+            onTap: () {
               setState(() {
                 _expandedModules.addAll(widget.project.modules.map((m) => m.id));
               });
             },
-            tooltip: 'Expand all',
-            visualDensity: VisualDensity.compact,
           ),
-          IconButton(
-            icon: const Icon(TDIcons.unfold_less, size: 18),
-            onPressed: () {
+          TDButton(
+            icon: TDIcons.unfold_less,
+            size: TDButtonSize.small,
+            type: TDButtonType.text,
+            theme: TDButtonTheme.defaultTheme,
+            onTap: () {
               setState(() {
                 _expandedModules.clear();
               });
             },
-            tooltip: 'Collapse all',
-            visualDensity: VisualDensity.compact,
           ),
           const Spacer(),
           // Add module button
@@ -174,7 +175,7 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme, ColorScheme colorScheme, TDThemeData tdTheme) {
+  Widget _buildEmptyState(TDThemeData tdTheme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -184,13 +185,13 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
             Icon(
               TDIcons.view_module,
               size: 48,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             TDText(
               'No modules',
               font: tdTheme.fontBodyMedium,
-              textColor: tdTheme.fontGyColor3,
+              textColor: tdTheme.textColorSecondary,
             ),
             const SizedBox(height: 8),
             if (widget.onAddModule != null)
@@ -208,7 +209,7 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
     );
   }
 
-  Widget _buildTree(List<Module> modules, ThemeData theme, ColorScheme colorScheme, TDThemeData tdTheme) {
+  Widget _buildTree(List<Module> modules, TDThemeData tdTheme) {
     return ListView.builder(
       itemCount: modules.length,
       itemBuilder: (context, index) {
@@ -235,24 +236,22 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
               _showRenameEntityDialog(entity, module, context),
           onOpenRelation: () =>
               ref.read(tabProvider.notifier).openRelation(module.id, module.name),
-          theme: theme,
-          colorScheme: colorScheme,
           tdTheme: tdTheme,
         );
       },
     );
   }
 
-  Widget _buildStatusBar(List<Module> modules, ThemeData theme, ColorScheme colorScheme, TDThemeData tdTheme) {
+  Widget _buildStatusBar(List<Module> modules, TDThemeData tdTheme) {
     final entityCount = modules.fold<int>(0, (sum, m) => sum + m.entities.length);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
+        color: tdTheme.bgColorSecondaryContainer,
         border: Border(
           top: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: tdTheme.componentBorderColor,
             width: 1,
           ),
         ),
@@ -262,25 +261,25 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
           Icon(
             TDIcons.view_module,
             size: 14,
-            color: tdTheme.fontGyColor3,
+            color: tdTheme.textColorSecondary,
           ),
           const SizedBox(width: 4),
           TDText(
             '${modules.length}',
             font: tdTheme.fontBodySmall,
-            textColor: tdTheme.fontGyColor3,
+            textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(width: 12),
           Icon(
             TDIcons.table,
             size: 14,
-            color: tdTheme.fontGyColor3,
+            color: tdTheme.textColorSecondary,
           ),
           const SizedBox(width: 4),
           TDText(
             '$entityCount',
             font: tdTheme.fontBodySmall,
-            textColor: tdTheme.fontGyColor3,
+            textColor: tdTheme.textColorSecondary,
           ),
         ],
       ),
@@ -425,8 +424,6 @@ class _ModuleTreeItem extends StatelessWidget {
   final VoidCallback onRenameModule;
   final Function(Entity) onRenameEntity;
   final VoidCallback onOpenRelation;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
   final TDThemeData tdTheme;
 
   const _ModuleTreeItem({
@@ -443,8 +440,6 @@ class _ModuleTreeItem extends StatelessWidget {
     required this.onRenameModule,
     required this.onRenameEntity,
     required this.onOpenRelation,
-    required this.theme,
-    required this.colorScheme,
     required this.tdTheme,
   });
 
@@ -480,7 +475,7 @@ class _ModuleTreeItem extends StatelessWidget {
                     child: Icon(
                       TDIcons.chevron_right,
                       size: 18,
-                      color: tdTheme.fontGyColor3,
+                      color: tdTheme.textColorSecondary,
                     ),
                   ),
                 ),
@@ -493,7 +488,7 @@ class _ModuleTreeItem extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? tdTheme.brandNormalColor.withValues(alpha: 0.15)
-                        : colorScheme.surfaceContainerHighest,
+                        : tdTheme.bgColorSecondaryContainer,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
@@ -501,7 +496,7 @@ class _ModuleTreeItem extends StatelessWidget {
                     size: 14,
                     color: isSelected
                         ? tdTheme.brandNormalColor
-                        : tdTheme.fontGyColor3,
+                        : tdTheme.textColorSecondary,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -521,7 +516,7 @@ class _ModuleTreeItem extends StatelessWidget {
                       TDText(
                         module.chnname,
                         font: tdTheme.fontBodySmall,
-                        textColor: tdTheme.fontGyColor3,
+                        textColor: tdTheme.textColorSecondary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -534,13 +529,13 @@ class _ModuleTreeItem extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
+                      color: tdTheme.bgColorSecondaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TDText(
                       '${module.entities.length}',
                       font: tdTheme.fontBodySmall,
-                      textColor: tdTheme.fontGyColor3,
+                      textColor: tdTheme.textColorSecondary,
                     ),
                   ),
 
@@ -559,8 +554,6 @@ class _ModuleTreeItem extends StatelessWidget {
                 onSelect: () => onSelectEntity(entity),
                 onDelete: () => onDeleteEntity(entity),
                 onRename: () => onRenameEntity(entity),
-                theme: theme,
-                colorScheme: colorScheme,
                 tdTheme: tdTheme,
               )),
 
@@ -586,14 +579,14 @@ class _ModuleTreeItem extends StatelessWidget {
       icon: Icon(
         TDIcons.more,
         size: 16,
-        color: tdTheme.fontGyColor3,
+        color: tdTheme.textColorSecondary,
       ),
       itemBuilder: (context) => [
         PopupMenuItem(
           value: 'open_relation',
           child: Row(
             children: [
-              Icon(TDIcons.link, size: 18, color: tdTheme.fontGyColor2),
+              Icon(TDIcons.link, size: 18, color: tdTheme.textColorSecondary),
               const SizedBox(width: 8),
               TDText('Open Relation', font: tdTheme.fontBodyMedium),
             ],
@@ -604,7 +597,7 @@ class _ModuleTreeItem extends StatelessWidget {
           value: 'rename',
           child: Row(
             children: [
-              Icon(TDIcons.edit, size: 18, color: tdTheme.fontGyColor2),
+              Icon(TDIcons.edit, size: 18, color: tdTheme.textColorSecondary),
               const SizedBox(width: 8),
               TDText('Rename', font: tdTheme.fontBodyMedium),
             ],
@@ -614,7 +607,7 @@ class _ModuleTreeItem extends StatelessWidget {
           value: 'add_entity',
           child: Row(
             children: [
-              Icon(TDIcons.add, size: 18, color: tdTheme.fontGyColor2),
+              Icon(TDIcons.add, size: 18, color: tdTheme.textColorSecondary),
               const SizedBox(width: 8),
               TDText('Add Entity', font: tdTheme.fontBodyMedium),
             ],
@@ -663,8 +656,6 @@ class _EntityTreeItem extends StatelessWidget {
   final VoidCallback onSelect;
   final VoidCallback onDelete;
   final VoidCallback onRename;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
   final TDThemeData tdTheme;
 
   const _EntityTreeItem({
@@ -673,8 +664,6 @@ class _EntityTreeItem extends StatelessWidget {
     required this.onSelect,
     required this.onDelete,
     required this.onRename,
-    required this.theme,
-    required this.colorScheme,
     required this.tdTheme,
   });
 
@@ -701,7 +690,7 @@ class _EntityTreeItem extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected
                     ? tdTheme.brandNormalColor.withValues(alpha: 0.15)
-                    : colorScheme.surfaceContainerHighest,
+                    : tdTheme.bgColorSecondaryContainer,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Icon(
@@ -709,7 +698,7 @@ class _EntityTreeItem extends StatelessWidget {
                 size: 12,
                 color: isSelected
                     ? tdTheme.brandNormalColor
-                    : tdTheme.fontGyColor3,
+                    : tdTheme.textColorSecondary,
               ),
             ),
             const SizedBox(width: 8),
@@ -729,7 +718,7 @@ class _EntityTreeItem extends StatelessWidget {
                   TDText(
                     entity.chnname,
                     font: tdTheme.fontBodySmall,
-                    textColor: tdTheme.fontGyColor3,
+                    textColor: tdTheme.textColorSecondary,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -742,13 +731,13 @@ class _EntityTreeItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
+                  color: tdTheme.bgColorSecondaryContainer,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TDText(
                   '${entity.fields.length}',
                   font: tdTheme.fontBodySmall,
-                  textColor: tdTheme.fontGyColor3,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ),
 
@@ -765,14 +754,14 @@ class _EntityTreeItem extends StatelessWidget {
       icon: Icon(
         TDIcons.more,
         size: 14,
-        color: tdTheme.fontGyColor3,
+        color: tdTheme.textColorSecondary,
       ),
       itemBuilder: (context) => [
         PopupMenuItem(
           value: 'rename',
           child: Row(
             children: [
-              Icon(TDIcons.edit, size: 18, color: tdTheme.fontGyColor2),
+              Icon(TDIcons.edit, size: 18, color: tdTheme.textColorSecondary),
               const SizedBox(width: 8),
               TDText('Rename', font: tdTheme.fontBodyMedium),
             ],

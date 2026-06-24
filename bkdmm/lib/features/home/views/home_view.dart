@@ -7,6 +7,7 @@ import '../../../shared/models/models.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../project/views/create_project_dialog.dart';
 import '../../project/views/open_project_dialog.dart';
+import '../../settings/views/settings_view.dart';
 import '../../workspace/views/workspace_view.dart';
 import '../widgets/history_list_tile.dart';
 
@@ -36,7 +37,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
           type: TDButtonType.text,
           theme: TDButtonTheme.defaultTheme,
           onTap: () {
-            // TODO: Navigate to settings
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const SettingsView(),
+              ),
+            );
           },
         ),
         TDButton(
