@@ -90,6 +90,7 @@ class _FieldTableState extends State<FieldTable> {
                 text: 'Add Field',
                 icon: TDIcons.add,
                 theme: TDButtonTheme.primary,
+                type: TDButtonType.fill,
                 onTap: () => _showAddFieldDialog(),
               ),
               const SizedBox(width: 8),
@@ -97,7 +98,8 @@ class _FieldTableState extends State<FieldTable> {
               TDButton(
                 text: 'Delete',
                 icon: TDIcons.delete,
-                theme: TDButtonTheme.outline,
+                theme: TDButtonTheme.defaultTheme,
+                type: TDButtonType.outline,
                 onTap: _deleteSelectedFields,
               ),
             ],
@@ -206,7 +208,7 @@ class _FieldTableState extends State<FieldTable> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => TDAlertDialog(
           title: 'Add Field',
-          content: SingleChildScrollView(
+          contentWidget: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -214,7 +216,8 @@ class _FieldTableState extends State<FieldTable> {
                   controller: nameController,
                   leftLabel: 'Field Name *',
                   hintText: 'e.g., user_id',
-                  prefixIcon: TDIcons.code,
+                  leftIcon: const Icon(TDIcons.code),
+                  backgroundColor: Colors.transparent,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -240,13 +243,14 @@ class _FieldTableState extends State<FieldTable> {
                   controller: chnnameController,
                   leftLabel: 'Chinese Name',
                   hintText: 'e.g., 用户ID',
-                  prefixIcon: TDIcons.translate,
+                  leftIcon: const Icon(TDIcons.translate),
+                  backgroundColor: Colors.transparent,
                 ),
                 const SizedBox(height: 16),
                 TDCheckbox(
                   title: 'Primary Key',
                   checked: isPk,
-                  onChange: (checked) {
+                  onCheckBoxChanged: (checked) {
                     setState(() {
                       isPk = checked;
                       if (isPk) {
@@ -260,7 +264,7 @@ class _FieldTableState extends State<FieldTable> {
                   title: 'Not Null',
                   checked: isNotNull,
                   enable: !isPk,
-                  onChange: isPk ? null : (checked) {
+                  onCheckBoxChanged: isPk ? null : (checked) {
                     setState(() => isNotNull = checked);
                   },
                 ),
@@ -268,7 +272,7 @@ class _FieldTableState extends State<FieldTable> {
                 TDCheckbox(
                   title: 'Auto Increment',
                   checked: isAutoIncrement,
-                  onChange: (checked) {
+                  onCheckBoxChanged: (checked) {
                     setState(() => isAutoIncrement = checked);
                   },
                 ),
@@ -277,35 +281,44 @@ class _FieldTableState extends State<FieldTable> {
                   controller: remarkController,
                   leftLabel: 'Remark',
                   hintText: 'Field description',
+                  backgroundColor: Colors.transparent,
                   maxLines: 2,
                 ),
               ],
             ),
           ),
-          leftBtnText: 'Cancel',
-          rightBtnText: 'Add',
-          onRightBtnTap: () {
-            if (nameController.text.trim().isEmpty) {
-              TDToast.showText('Field name is required', context: context);
-              return;
-            }
-            widget.onAddField(Field(
-              id: '',
-              name: nameController.text.trim(),
-              type: selectedType,
-              chnname: chnnameController.text.trim().isNotEmpty
-                  ? chnnameController.text.trim()
-                  : nameController.text.trim(),
-              pk: isPk,
-              notNull: isNotNull,
-              autoIncrement: isAutoIncrement,
-              remark: remarkController.text.trim().isNotEmpty
-                  ? remarkController.text.trim()
-                  : null,
-            ));
-            Navigator.pop(context);
-          },
-          onLeftBtnTap: () => Navigator.pop(context),
+          leftBtn: TDDialogButtonOptions(
+            title: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            action: () => Navigator.pop(context),
+          ),
+          rightBtn: TDDialogButtonOptions(
+            title: 'Add',
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            action: () {
+              if (nameController.text.trim().isEmpty) {
+                TDToast.showText('Field name is required', context: context);
+                return;
+              }
+              widget.onAddField(Field(
+                id: '',
+                name: nameController.text.trim(),
+                type: selectedType,
+                chnname: chnnameController.text.trim().isNotEmpty
+                    ? chnnameController.text.trim()
+                    : nameController.text.trim(),
+                pk: isPk,
+                notNull: isNotNull,
+                autoIncrement: isAutoIncrement,
+                remark: remarkController.text.trim().isNotEmpty
+                    ? remarkController.text.trim()
+                    : null,
+              ));
+              Navigator.pop(context);
+            },
+          ),
         ),
       ),
     );
@@ -322,30 +335,38 @@ class _FieldTableState extends State<FieldTable> {
       context: context,
       builder: (context) => TDAlertDialog(
         title: 'Delete Fields',
-        content: Text('Are you sure you want to delete ${selectedRows.length} field(s)?'),
-        leftBtnText: 'Cancel',
-        rightBtnText: 'Delete',
-        onLeftBtnTap: () => Navigator.pop(context),
-        onRightBtnTap: () {
-          for (final row in selectedRows) {
-            // Get the field name from the row's cells
-            final cells = row.getCells();
-            String? fieldName;
-            for (final cell in cells) {
-              if (cell.columnName == 'name') {
-                fieldName = cell.value as String;
-                break;
+        content: 'Are you sure you want to delete ${selectedRows.length} field(s)?',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: 'Delete',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          action: () {
+            for (final row in selectedRows) {
+              // Get the field name from the row's cells
+              final cells = row.getCells();
+              String? fieldName;
+              for (final cell in cells) {
+                if (cell.columnName == 'name') {
+                  fieldName = cell.value as String;
+                  break;
+                }
               }
+              if (fieldName == null) continue;
+              final fieldObj = widget.fields.firstWhere(
+                (f) => f.name == fieldName,
+                orElse: () => widget.fields.first,
+              );
+              widget.onDeleteField(fieldObj.id);
             }
-            if (fieldName == null) continue;
-            final fieldObj = widget.fields.firstWhere(
-              (f) => f.name == fieldName,
-              orElse: () => widget.fields.first,
-            );
-            widget.onDeleteField(fieldObj.id);
-          }
-          Navigator.pop(context);
-        },
+            Navigator.pop(context);
+          },
+        ),
       ),
     );
   }

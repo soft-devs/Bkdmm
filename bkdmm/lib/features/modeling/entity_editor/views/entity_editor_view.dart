@@ -444,7 +444,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         child: Column(
                           children: [
                             Icon(
-                              TDIcons.unordered_list,
+                              TDIcons.view_list,
                               size: 48,
                               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                             ),

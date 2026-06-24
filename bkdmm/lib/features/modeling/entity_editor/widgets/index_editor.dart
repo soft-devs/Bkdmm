@@ -58,6 +58,7 @@ class _IndexEditorState extends State<IndexEditor> {
                 text: 'Add Index',
                 icon: TDIcons.add,
                 theme: TDButtonTheme.primary,
+                type: TDButtonType.fill,
                 onTap: _showAddIndexDialog,
               ),
             ],
@@ -150,16 +151,17 @@ class _IndexEditorState extends State<IndexEditor> {
                 // Edit button
                 TDButton(
                   icon: TDIcons.edit,
-                  theme: TDButtonTheme.text,
-                  size: TDButtonSize.extraSmall,
+                  theme: TDButtonTheme.defaultTheme,
+                  type: TDButtonType.text,
+                  size: TDButtonSize.small,
                   onTap: () => _showEditIndexDialog(index),
                 ),
                 // Delete button
                 TDButton(
                   icon: TDIcons.delete,
-                  theme: TDButtonTheme.text,
-                  size: TDButtonSize.extraSmall,
-                  iconColor: colorScheme.error,
+                  theme: TDButtonTheme.danger,
+                  type: TDButtonType.text,
+                  size: TDButtonSize.small,
                   onTap: () => _confirmDeleteIndex(index),
                 ),
               ],
@@ -172,10 +174,9 @@ class _IndexEditorState extends State<IndexEditor> {
               runSpacing: 4,
               children: index.fields.map((fieldName) {
                 return TDTag(
-                  text: fieldName,
+                  fieldName,
                   theme: TDTagTheme.primary,
                   size: TDTagSize.small,
-                  icon: TDIcons.chevron_right,
                 );
               }).toList(),
             ),
@@ -201,7 +202,7 @@ class _IndexEditorState extends State<IndexEditor> {
       case IndexType.unique:
         return TDIcons.check_circle;
       case IndexType.fulltext:
-        return TDIcons.text_fields;
+        return TDIcons.edit;
       case IndexType.normal:
         return TDIcons.filter;
     }
@@ -250,7 +251,7 @@ class _IndexEditorState extends State<IndexEditor> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => TDAlertDialog(
           title: existingIndex == null ? 'Add Index' : 'Edit Index',
-          content: SizedBox(
+          contentWidget: SizedBox(
             width: 400,
             child: SingleChildScrollView(
               child: Column(
@@ -261,14 +262,15 @@ class _IndexEditorState extends State<IndexEditor> {
                     controller: nameController,
                     leftLabel: 'Index Name *',
                     hintText: 'e.g., idx_user_id',
-                    prefixIcon: TDIcons.label,
+                    leftIcon: const Icon(TDIcons.edit),
+                    backgroundColor: Colors.transparent,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<IndexType>(
                     value: selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Index Type',
-                      prefixIcon: Icon(TDIcons.category),
+                      prefixIcon: Icon(TDIcons.setting),
                     ),
                     items: IndexType.values.map((type) {
                       return DropdownMenuItem(
@@ -328,7 +330,7 @@ class _IndexEditorState extends State<IndexEditor> {
                                   title: field.name,
                                   subTitle: '${field.chnname} (${field.type})',
                                   checked: isSelected,
-                                  onChange: (checked) {
+                                  onCheckBoxChanged: (checked) {
                                     setState(() {
                                       if (checked) {
                                         selectedFields.add(field.name);
@@ -347,42 +349,51 @@ class _IndexEditorState extends State<IndexEditor> {
                     controller: remarkController,
                     leftLabel: 'Remark',
                     hintText: 'Optional description',
+                    backgroundColor: Colors.transparent,
                     maxLines: 2,
                   ),
                 ],
               ),
             ),
           ),
-          leftBtnText: 'Cancel',
-          rightBtnText: existingIndex == null ? 'Add' : 'Save',
-          onLeftBtnTap: () => Navigator.pop(context),
-          onRightBtnTap: () {
-            if (nameController.text.trim().isEmpty) {
-              TDToast.showText('Index name is required', context: context);
-              return;
-            }
-            if (selectedFields.isEmpty) {
-              TDToast.showText('Select at least one field', context: context);
-              return;
-            }
+          leftBtn: TDDialogButtonOptions(
+            title: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            action: () => Navigator.pop(context),
+          ),
+          rightBtn: TDDialogButtonOptions(
+            title: existingIndex == null ? 'Add' : 'Save',
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            action: () {
+              if (nameController.text.trim().isEmpty) {
+                TDToast.showText('Index name is required', context: context);
+                return;
+              }
+              if (selectedFields.isEmpty) {
+                TDToast.showText('Select at least one field', context: context);
+                return;
+              }
 
-            final index = Index(
-              id: existingIndex?.id ?? '',
-              name: nameController.text.trim(),
-              fields: selectedFields.toList(),
-              type: selectedType,
-              remark: remarkController.text.trim().isNotEmpty
-                  ? remarkController.text.trim()
-                  : null,
-            );
+              final index = Index(
+                id: existingIndex?.id ?? '',
+                name: nameController.text.trim(),
+                fields: selectedFields.toList(),
+                type: selectedType,
+                remark: remarkController.text.trim().isNotEmpty
+                    ? remarkController.text.trim()
+                    : null,
+              );
 
-            if (existingIndex == null) {
-              widget.onAddIndex(index);
-            } else {
-              widget.onUpdateIndex(existingIndex.id, index);
-            }
-            Navigator.pop(context);
-          },
+              if (existingIndex == null) {
+                widget.onAddIndex(index);
+              } else {
+                widget.onUpdateIndex(existingIndex.id, index);
+              }
+              Navigator.pop(context);
+            },
+          ),
         ),
       ),
     );
@@ -393,15 +404,22 @@ class _IndexEditorState extends State<IndexEditor> {
       context: context,
       builder: (context) => TDAlertDialog(
         title: 'Delete Index',
-        content: Text('Are you sure you want to delete index "${index.name}"?'),
-        leftBtnText: 'Cancel',
-        rightBtnText: 'Delete',
-        rightBtnTheme: TDButtonTheme.danger,
-        onLeftBtnTap: () => Navigator.pop(context),
-        onRightBtnTap: () {
-          widget.onDeleteIndex(index.id);
-          Navigator.pop(context);
-        },
+        content: 'Are you sure you want to delete index "${index.name}"?',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: 'Delete',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          action: () {
+            widget.onDeleteIndex(index.id);
+            Navigator.pop(context);
+          },
+        ),
       ),
     );
   }
