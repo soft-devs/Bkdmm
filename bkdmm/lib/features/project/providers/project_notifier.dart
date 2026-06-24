@@ -461,14 +461,26 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
   void updateModule(String moduleId, Module module) {
     if (!state.hasProject) return;
 
+    // 验证并修复ID问题
+    Module validatedModule = module;
+    if (!module.validateAllIds()) {
+      // 自动修复空ID和重复ID
+      validatedModule = module.fixAllIds();
+    }
+
     final modules = state.project!.modules.map((m) {
-      return m.id == moduleId ? module : m;
+      return m.id == moduleId ? validatedModule : m;
     }).toList();
     final updated = state.project!.copyWith(
       modules: modules,
       updatedAt: DateTime.now(),
     );
     updateProject(updated);
+  }
+
+  /// Update a module with validation (safer version)
+  void updateModuleWithValidation(String moduleId, Module module) {
+    updateModule(moduleId, module); // updateModule now includes validation
   }
 
   /// Clear error

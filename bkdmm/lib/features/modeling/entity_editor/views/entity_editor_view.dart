@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../utils/id_generator.dart';
 import '../providers/entity_provider.dart';
 import '../widgets/field_table.dart';
 import '../widgets/index_editor.dart';
@@ -550,10 +551,14 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     return FieldTable(
       fields: entity.fields,
       dataTypes: dataTypes,
-      onAddField: (field) {
+      onAddField: (fieldData) {
+        // 确保生成唯一ID，UI层传递的fieldData可能没有有效ID
+        final newField = fieldData.id.isEmpty
+            ? fieldData.copyWith(id: IdGenerator.generate())
+            : fieldData;
         ref.read(projectNotifierProvider.notifier).updateModule(
           widget.moduleId,
-          _getUpdatedModule(entity, fields: [...entity.fields, field]),
+          _getUpdatedModule(entity, fields: [...entity.fields, newField]),
         );
       },
       onUpdateField: (fieldId, updatedField) {
@@ -588,10 +593,14 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     return IndexEditor(
       indexes: entity.indexes,
       availableFields: entity.fields,
-      onAddIndex: (index) {
+      onAddIndex: (indexData) {
+        // 确保生成唯一ID，UI层传递的indexData可能没有有效ID
+        final newIndex = indexData.id.isEmpty
+            ? indexData.copyWith(id: IdGenerator.generate())
+            : indexData;
         ref.read(projectNotifierProvider.notifier).updateModule(
           widget.moduleId,
-          _getUpdatedModule(entity, indexes: [...entity.indexes, index]),
+          _getUpdatedModule(entity, indexes: [...entity.indexes, newIndex]),
         );
       },
       onUpdateIndex: (indexId, updatedIndex) {

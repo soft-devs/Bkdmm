@@ -67,6 +67,27 @@ class Entity {
 
   /// 获取主键字段
   List<Field> get primaryKeys => fields.where((f) => f.pk).toList();
+
+  /// 验证字段ID唯一性
+  bool validateFieldIds() {
+    final ids = fields.map((f) => f.id).toSet();
+    return ids.length == fields.length && !ids.contains('');
+  }
+
+  /// 验证索引ID唯一性
+  bool validateIndexIds() {
+    final ids = indexes.map((i) => i.id).toSet();
+    return ids.length == indexes.length && !ids.contains('');
+  }
+
+  /// 验证所有ID
+  bool validateAllIds() => validateFieldIds() && validateIndexIds();
+
+  /// 检查是否有空ID字段
+  bool hasEmptyFieldIds() => fields.any((f) => f.id.isEmpty);
+
+  /// 检查是否有空ID索引
+  bool hasEmptyIndexIds() => indexes.any((i) => i.id.isEmpty);
 }
 
 /// 字段模型
@@ -179,6 +200,22 @@ class Index {
 
   factory Index.fromJson(Map<String, dynamic> json) => _$IndexFromJson(json);
   Map<String, dynamic> toJson() => _$IndexToJson(this);
+
+  Index copyWith({
+    String? id,
+    String? name,
+    List<String>? fieldIds,
+    IndexType? type,
+    String? remark,
+  }) {
+    return Index(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      fieldIds: fieldIds ?? this.fieldIds,
+      type: type ?? this.type,
+      remark: remark ?? this.remark,
+    );
+  }
 
   /// Get field names from field IDs (for backward compatibility and code generation)
   List<String> getFieldNames(List<Field> fields) {

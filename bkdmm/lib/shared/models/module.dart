@@ -1,6 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 
 import 'entity.dart';
+import '../../utils/id_generator.dart';
 
 part 'module.g.dart';
 
@@ -65,6 +66,77 @@ class Module {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  /// 验证所有Entity的ID唯一性
+  bool validateEntityIds() {
+    final ids = entities.map((e) => e.id).toSet();
+    return ids.length == entities.length && !ids.contains('');
+  }
+
+  /// 验证模块内所有ID（包括Entity、Field、Index）
+  bool validateAllIds() {
+    if (!validateEntityIds()) return false;
+    for (final entity in entities) {
+      if (!entity.validateAllIds()) return false;
+    }
+    return true;
+  }
+
+  /// 检查是否有空ID
+  bool hasEmptyIds() {
+    if (entities.any((e) => e.id.isEmpty)) return true;
+    for (final entity in entities) {
+      if (entity.hasEmptyFieldIds() || entity.hasEmptyIndexIds()) return true;
+    }
+    return false;
+  }
+
+  /// 修复所有空ID和重复ID
+  Module fixAllIds() {
+    final seenEntityIds = <String>{};
+    final fixedEntities = <Entity>[];
+
+    for (final entity in entities) {
+      // 修复entity ID
+      String entityId = entity.id;
+      if (entityId.isEmpty || seenEntityIds.contains(entityId)) {
+        entityId = IdGenerator.generate();
+      }
+      seenEntityIds.add(entityId);
+
+      // 修复字段ID
+      final seenFieldIds = <String>{};
+      final fixedFields = <Field>[];
+      for (final field in entity.fields) {
+        String fieldId = field.id;
+        if (fieldId.isEmpty || seenFieldIds.contains(fieldId)) {
+          fieldId = IdGenerator.generate();
+        }
+        seenFieldIds.add(fieldId);
+        fixedFields.add(field.copyWith(id: fieldId));
+      }
+
+      // 修复索引ID
+      final seenIndexIds = <String>{};
+      final fixedIndexes = <Index>[];
+      for (final index in entity.indexes) {
+        String indexId = index.id;
+        if (indexId.isEmpty || seenIndexIds.contains(indexId)) {
+          indexId = IdGenerator.generate();
+        }
+        seenIndexIds.add(indexId);
+        fixedIndexes.add(index.copyWith(id: indexId));
+      }
+
+      fixedEntities.add(entity.copyWith(
+        id: entityId,
+        fields: fixedFields,
+        indexes: fixedIndexes,
+      ));
+    }
+
+    return copyWith(entities: fixedEntities);
   }
 }
 
