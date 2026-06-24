@@ -81,6 +81,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
     return TDAlertDialog(
       title: 'Create New Project',
+      content: '',
       contentWidget: SizedBox(
         width: dialogWidth,
         child: SingleChildScrollView(
@@ -90,107 +91,108 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-              // Project name field
-              TDInput(
-                controller: _nameController,
-                leftLabel: 'Project Name *',
-                hintText: 'Enter project name',
-                backgroundColor: Colors.transparent,
-                leftIcon: const Icon(TDIcons.folder),
-                onChanged: (_) => _clearError(),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-
-              // Description field (multiline)
-              TDInput(
-                controller: _descriptionController,
-                leftLabel: 'Description',
-                hintText: 'Enter project description (optional)',
-                backgroundColor: Colors.transparent,
-                leftIcon: const Icon(TDIcons.edit),
-                maxLines: 3,
-                onChanged: (_) => _clearError(),
-              ),
-              const SizedBox(height: 16),
-
-              // File path field
-              Row(
-                children: [
-                  Expanded(
-                    child: TDInput(
-                      controller: _pathController,
-                      leftLabel: 'Save Location *',
-                      hintText: 'Choose save location',
-                      backgroundColor: Colors.transparent,
-                      leftIcon: const Icon(TDIcons.save),
-                      onChanged: (_) => _clearError(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  TDButton(
-                    onTap: _pickSaveLocation,
-                    icon: TDIcons.folder_open,
-                    type: TDButtonType.outline,
-                    theme: TDButtonTheme.defaultTheme,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Quick location buttons
-              Wrap(
-                spacing: 8,
-                children: [
-                  TDButton(
-                    onTap: () => _setQuickLocation('Documents'),
-                    icon: TDIcons.file,
-                    text: 'Documents',
-                    type: TDButtonType.text,
-                    theme: TDButtonTheme.defaultTheme,
-                    size: TDButtonSize.small,
-                  ),
-                  TDButton(
-                    onTap: () => _setQuickLocation('Desktop'),
-                    icon: TDIcons.desktop,
-                    text: 'Desktop',
-                    type: TDButtonType.text,
-                    theme: TDButtonTheme.defaultTheme,
-                    size: TDButtonSize.small,
-                  ),
-                ],
-              ),
-
-              // Error message
-              if (_error != null) ...[
+                // Project name field
+                TDInput(
+                  controller: _nameController,
+                  leftLabel: 'Project Name *',
+                  hintText: 'Enter project name',
+                  backgroundColor: Colors.transparent,
+                  leftIcon: const Icon(TDIcons.folder),
+                  onChanged: (_) => _clearError(),
+                  autofocus: true,
+                ),
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        TDIcons.close_circle,
-                        color: colorScheme.onErrorContainer,
-                        size: 20,
+
+                // Description field (multiline)
+                TDInput(
+                  controller: _descriptionController,
+                  leftLabel: 'Description',
+                  hintText: 'Enter project description (optional)',
+                  backgroundColor: Colors.transparent,
+                  leftIcon: const Icon(TDIcons.edit),
+                  maxLines: 3,
+                  onChanged: (_) => _clearError(),
+                ),
+                const SizedBox(height: 16),
+
+                // File path field
+                Row(
+                  children: [
+                    Expanded(
+                      child: TDInput(
+                        controller: _pathController,
+                        leftLabel: 'Save Location *',
+                        hintText: 'Choose save location',
+                        backgroundColor: Colors.transparent,
+                        leftIcon: const Icon(TDIcons.save),
+                        onChanged: (_) => _clearError(),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _error!,
-                          style: TextStyle(
-                            color: colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    TDButton(
+                      onTap: _pickSaveLocation,
+                      icon: TDIcons.folder_open,
+                      type: TDButtonType.outline,
+                      theme: TDButtonTheme.defaultTheme,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Quick location buttons
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    TDButton(
+                      onTap: () => _setQuickLocation('Documents'),
+                      icon: TDIcons.file,
+                      text: 'Documents',
+                      type: TDButtonType.text,
+                      theme: TDButtonTheme.defaultTheme,
+                      size: TDButtonSize.small,
+                    ),
+                    TDButton(
+                      onTap: () => _setQuickLocation('Desktop'),
+                      icon: TDIcons.desktop,
+                      text: 'Desktop',
+                      type: TDButtonType.text,
+                      theme: TDButtonTheme.defaultTheme,
+                      size: TDButtonSize.small,
+                    ),
+                  ],
+                ),
+
+                // Error message
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          TDIcons.close_circle,
+                          color: colorScheme.onErrorContainer,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: TextStyle(
+                              color: colorScheme.onErrorContainer,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

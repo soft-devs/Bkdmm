@@ -90,6 +90,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             TDIcons.data,
@@ -136,7 +137,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
             icon: TDIcons.history,
             onTap: () => _showRestoreDefaultsDialog(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           TDButton(
             text: 'Add Type',
             theme: TDButtonTheme.primary,
@@ -150,8 +151,9 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
 
   Widget _buildSearchBar(TDThemeData tdTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Search field
           Expanded(
@@ -179,7 +181,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
               size: TDTagSize.medium,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: () {
               setState(() {
@@ -267,6 +269,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     TDThemeData tdTheme,
   ) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(icon, size: 18, color: tdTheme.brandNormalColor),
         const SizedBox(width: 8),
@@ -328,6 +331,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
             children: [
               // Header row
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -347,6 +351,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             TDText(
                               type.name,
@@ -423,20 +428,21 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           font: tdTheme.fontBodySmall,
           textColor: tdTheme.fontGyColor2,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Wrap(
-          spacing: 8,
+          spacing: 12,
           runSpacing: 8,
           children: DatabaseCodes.all.map((dbCode) {
             final dbType = type.apply[dbCode];
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: tdTheme.grayColor2,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   TDText(
                     DatabaseCodes.getDisplayName(dbCode),
@@ -458,8 +464,9 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           }).toList(),
         ),
         if (type.java != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               TDText(
                 'Java: ',

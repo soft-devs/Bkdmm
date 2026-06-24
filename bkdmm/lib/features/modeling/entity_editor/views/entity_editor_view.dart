@@ -138,6 +138,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Entity icon
           Container(
@@ -157,12 +158,14 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TDText(
                   entity.title,
                   font: tdTheme.fontTitleMedium,
                   fontWeight: FontWeight.w600,
                 ),
+                const SizedBox(height: 2),
                 TDText(
                   entity.chnname,
                   font: tdTheme.fontBodySmall,
@@ -171,6 +174,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
               ],
             ),
           ),
+
+          const SizedBox(width: 12),
 
           // Statistics
           Container(
@@ -181,6 +186,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(TDIcons.view_list, size: 14, color: tdTheme.textColorSecondary),
                 const SizedBox(width: 4),
@@ -201,7 +207,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             ),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
           // Save indicator
           if (projectState.isDirty)
@@ -213,6 +219,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(TDIcons.circle, size: 8, color: tdTheme.brandNormalColor),
                   const SizedBox(width: 4),
@@ -245,14 +252,16 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 TDText(
                   'Basic Information',
                   font: tdTheme.fontTitleSmall,
                   fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: TDInput(
@@ -279,7 +288,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 TDInput(
                   controller: _remarkController,
                   leftLabel: 'Remark',
@@ -289,9 +298,10 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                   maxLines: 3,
                   onChanged: (value) => _markDirty(),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     if (_hasLocalChanges)
                       TDButton(
@@ -300,7 +310,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         type: TDButtonType.outline,
                         onTap: _resetBasicInfo,
                       ),
-                    const SizedBox(width: 8),
+                    if (_hasLocalChanges)
+                      const SizedBox(width: 8),
                     TDButton(
                       text: 'Save Changes',
                       icon: TDIcons.save,
@@ -327,14 +338,16 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 TDText(
                   'Statistics',
                   font: tdTheme.fontTitleSmall,
                   fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: _StatCard(
@@ -344,7 +357,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         color: tdTheme.brandNormalColor,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: _StatCard(
                         icon: TDIcons.lock_on,
@@ -353,7 +366,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         color: tdTheme.successColor5,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: _StatCard(
                         icon: TDIcons.filter,
@@ -380,9 +393,11 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     TDText(
                       'Fields Preview',
@@ -398,19 +413,21 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 if (entity.fields.isEmpty)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(
                             TDIcons.view_list,
                             size: 48,
                             color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           TDText(
                             'No fields defined yet',
                             font: tdTheme.fontBodyMedium,
@@ -709,8 +726,10 @@ class _StatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(icon, size: 20, color: color),
               const SizedBox(width: 8),

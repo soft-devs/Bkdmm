@@ -15,6 +15,7 @@ class AppScaffold extends StatefulWidget {
   const AppScaffold({
     super.key,
     required this.title,
+    this.leading,
     this.actions,
     this.floatingActionButton,
     this.body,
@@ -27,6 +28,9 @@ class AppScaffold extends StatefulWidget {
 
   /// The title displayed in the nav bar.
   final String title;
+
+  /// Optional leading widget for the nav bar (e.g., back button).
+  final Widget? leading;
 
   /// Actions to display in the nav bar.
   final List<Widget>? actions;
@@ -85,6 +89,14 @@ class _AppScaffoldState extends State<AppScaffold> {
         preferredSize: const Size.fromHeight(48),
         child: TDNavBar(
           title: widget.title,
+          leftBarItems: widget.leading != null
+              ? [
+                  TDNavBarItem(
+                    iconWidget: widget.leading!,
+                    action: () {},
+                  ),
+                ]
+              : null,
           rightBarItems: _buildRightBarItems(),
           backgroundColor: tdTheme.bgColorContainer,
           useDefaultBack: false,

@@ -121,6 +121,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Database selector
           _buildDatabaseSelector(tdTheme, state),
@@ -187,6 +188,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
       size: TDButtonSize.medium,
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(TDIcons.data_base, size: 18, color: tdTheme.brandNormalColor),
           const SizedBox(width: 8),
@@ -208,47 +210,54 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     showDialog(
       context: context,
-      builder: (context) => TDAlertDialog(
-        title: 'Select Database',
-        content: '',
-        contentWidget: SizedBox(
-          width: 390, // 300 * 1.3
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: databases.length,
-            itemBuilder: (context, index) {
-              final db = databases[index];
-              final isSelected = db.code == currentSelection;
-              final cellStyle = TDCellStyle(context: context);
-              if (isSelected) {
-                cellStyle.leftIconColor = tdTheme.brandNormalColor;
-                cellStyle.rightIconColor = tdTheme.brandNormalColor;
-              } else {
-                cellStyle.leftIconColor = tdTheme.textColorSecondary;
-              }
+      builder: (dialogContext) {
+        final screenWidth = MediaQuery.of(dialogContext).size.width;
+        const minWidth = 300.0;
+        final maxWidth = minWidth * 1.3;
+        final dialogWidth = (screenWidth * 0.85).clamp(minWidth, maxWidth);
 
-              return TDCell(
-                leftIcon: TDIcons.data_base,
-                title: db.name,
-                description: db.code.toUpperCase(),
-                arrow: false,
-                onClick: (_) {
-                  ref.read(codegenProvider.notifier).selectDatabase(db.code);
-                  Navigator.pop(context);
-                },
-                rightIcon: isSelected ? TDIcons.check : null,
-                style: cellStyle,
-              );
-            },
+        return TDAlertDialog(
+          title: 'Select Database',
+          content: '',
+          contentWidget: SizedBox(
+            width: dialogWidth,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: databases.length,
+              itemBuilder: (context, index) {
+                final db = databases[index];
+                final isSelected = db.code == currentSelection;
+                final cellStyle = TDCellStyle(context: context);
+                if (isSelected) {
+                  cellStyle.leftIconColor = tdTheme.brandNormalColor;
+                  cellStyle.rightIconColor = tdTheme.brandNormalColor;
+                } else {
+                  cellStyle.leftIconColor = tdTheme.textColorSecondary;
+                }
+
+                return TDCell(
+                  leftIcon: TDIcons.data_base,
+                  title: db.name,
+                  description: db.code.toUpperCase(),
+                  arrow: false,
+                  onClick: (_) {
+                    ref.read(codegenProvider.notifier).selectDatabase(db.code);
+                    Navigator.pop(dialogContext);
+                  },
+                  rightIcon: isSelected ? TDIcons.check : null,
+                  style: cellStyle,
+                );
+              },
+            ),
           ),
-        ),
-        leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
-          theme: TDButtonTheme.defaultTheme,
-          type: TDButtonType.text,
-          action: () => Navigator.pop(context),
-        ),
-      ),
+          leftBtn: TDDialogButtonOptions(
+            title: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            action: () => Navigator.pop(dialogContext),
+          ),
+        );
+      },
     );
   }
 
@@ -264,6 +273,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
       size: TDButtonSize.medium,
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(TDIcons.code, size: 18, color: tdTheme.brandNormalColor),
           const SizedBox(width: 8),
@@ -312,47 +322,54 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     showDialog(
       context: context,
-      builder: (context) => TDAlertDialog(
-        title: 'Select DDL Type',
-        content: '',
-        contentWidget: SizedBox(
-          width: 390, // 300 * 1.3
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: ddlTypes.length,
-            itemBuilder: (context, index) {
-              final (type, label, description) = ddlTypes[index];
-              final isSelected = type == currentSelection;
-              final cellStyle = TDCellStyle(context: context);
-              if (isSelected) {
-                cellStyle.leftIconColor = tdTheme.brandNormalColor;
-                cellStyle.rightIconColor = tdTheme.brandNormalColor;
-              } else {
-                cellStyle.leftIconColor = tdTheme.textColorSecondary;
-              }
+      builder: (dialogContext) {
+        final screenWidth = MediaQuery.of(dialogContext).size.width;
+        const minWidth = 300.0;
+        final maxWidth = minWidth * 1.3;
+        final dialogWidth = (screenWidth * 0.85).clamp(minWidth, maxWidth);
 
-              return TDCell(
-                leftIcon: TDIcons.code,
-                title: label,
-                description: description,
-                arrow: false,
-                onClick: (_) {
-                  ref.read(codegenProvider.notifier).setDdlType(type);
-                  Navigator.pop(context);
-                },
-                rightIcon: isSelected ? TDIcons.check : null,
-                style: cellStyle,
-              );
-            },
+        return TDAlertDialog(
+          title: 'Select DDL Type',
+          content: '',
+          contentWidget: SizedBox(
+            width: dialogWidth,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: ddlTypes.length,
+              itemBuilder: (context, index) {
+                final (type, label, description) = ddlTypes[index];
+                final isSelected = type == currentSelection;
+                final cellStyle = TDCellStyle(context: context);
+                if (isSelected) {
+                  cellStyle.leftIconColor = tdTheme.brandNormalColor;
+                  cellStyle.rightIconColor = tdTheme.brandNormalColor;
+                } else {
+                  cellStyle.leftIconColor = tdTheme.textColorSecondary;
+                }
+
+                return TDCell(
+                  leftIcon: TDIcons.code,
+                  title: label,
+                  description: description,
+                  arrow: false,
+                  onClick: (_) {
+                    ref.read(codegenProvider.notifier).setDdlType(type);
+                    Navigator.pop(dialogContext);
+                  },
+                  rightIcon: isSelected ? TDIcons.check : null,
+                  style: cellStyle,
+                );
+              },
+            ),
           ),
-        ),
-        leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
-          theme: TDButtonTheme.defaultTheme,
-          type: TDButtonType.text,
-          action: () => Navigator.pop(context),
-        ),
-      ),
+          leftBtn: TDDialogButtonOptions(
+            title: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            action: () => Navigator.pop(dialogContext),
+          ),
+        );
+      },
     );
   }
 
@@ -375,6 +392,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(TDIcons.tree_square_dot, size: 20, color: tdTheme.brandNormalColor),
                 const SizedBox(width: 8),
@@ -424,6 +442,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         color: isSelected ? tdTheme.brandLightColor : null,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               TDIcons.folder,
@@ -504,6 +523,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         padding: const EdgeInsets.only(left: 56, right: 16, top: 8, bottom: 8),
         color: isSelected ? tdTheme.brandLightColor : null,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               TDIcons.table,
@@ -514,6 +534,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   TDText(
                     entity.title,
@@ -521,6 +542,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
                     textColor: isSelected ? tdTheme.brandNormalColor : tdTheme.textColorPrimary,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
+                  const SizedBox(height: 2),
                   TDText(
                     entity.chnname,
                     font: tdTheme.fontBodySmall,
@@ -580,6 +602,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(TDIcons.code, size: 16, color: tdTheme.brandNormalColor),
                 const SizedBox(width: 8),
@@ -714,6 +737,8 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             TDIcons.folder_open,
@@ -742,6 +767,8 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             TDIcons.gesture_click,
@@ -770,6 +797,8 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             TDIcons.close_circle,

@@ -147,11 +147,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Project name
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   TDIcons.folder_open,
@@ -190,6 +192,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               onTap: _saveProject,
             ),
 
+          const SizedBox(width: 8),
+
           // Toggle properties panel
           TDButton(
             icon: _showPropertiesPanel ? TDIcons.fullscreen_exit : TDIcons.fullscreen,
@@ -202,6 +206,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               });
             },
           ),
+
+          const SizedBox(width: 8),
 
           // More actions menu
           TDPopupMenuButton(
@@ -358,6 +364,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   TDIcons.view_module,
@@ -504,6 +511,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                   ),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Icon(
                       TDIcons.table,
@@ -602,6 +610,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   TDIcons.relation,
@@ -647,6 +656,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
                               TDIcons.arrow_right,
@@ -657,11 +667,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   TDText(
                                     '${edge.source} -> ${edge.target}',
                                     font: listTheme.fontBodyMedium,
                                   ),
+                                  const SizedBox(height: 2),
                                   TDText(
                                     edge.label ?? 'No label',
                                     font: listTheme.fontBodySmall,
@@ -699,6 +711,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   TDIcons.setting,
@@ -790,6 +803,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TDText(
@@ -993,11 +1007,13 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Project info
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   TDIcons.folder,
@@ -1025,6 +1041,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   TDIcons.view_module,
@@ -1048,6 +1065,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
                     TDIcons.circle,
@@ -1067,6 +1085,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
                     TDIcons.check,
@@ -1357,6 +1376,7 @@ class _StatTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             icon,

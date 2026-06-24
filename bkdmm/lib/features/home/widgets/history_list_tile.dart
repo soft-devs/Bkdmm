@@ -63,6 +63,7 @@ class HistoryListTile extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 40,
@@ -80,6 +81,8 @@ class HistoryListTile extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TDText(
                       history.name,
@@ -88,7 +91,7 @@ class HistoryListTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     TDText(
                       history.path,
                       font: tdTheme.fontBodySmall,
@@ -96,7 +99,7 @@ class HistoryListTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     TDText(
                       _formatDateTime(history.lastOpenedAt),
                       font: tdTheme.fontBodySmall,
@@ -105,6 +108,7 @@ class HistoryListTile extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               trailing ?? _buildPopupMenu(context, tdTheme),
             ],
           ),
@@ -240,6 +244,7 @@ class HistoryListTileSimple extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 40,
@@ -257,13 +262,15 @@ class HistoryListTileSimple extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TDText(
                       title,
                       font: tdTheme.fontBodyLarge,
                       fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     TDText(
                       subtitle ?? _formatTimestamp(timestamp),
                       font: tdTheme.fontBodyMedium,
@@ -272,6 +279,7 @@ class HistoryListTileSimple extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               if (onDelete != null)
                 TDButton(
                   icon: TDIcons.close,

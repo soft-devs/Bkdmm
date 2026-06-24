@@ -28,6 +28,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
     return AppScaffold(
       title: 'Settings',
+      leading: TDButton(
+        type: TDButtonType.ghost,
+        theme: TDButtonTheme.defaultTheme,
+        icon: TDIcons.chevron_left,
+        onTap: () => Navigator.of(context).pop(),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

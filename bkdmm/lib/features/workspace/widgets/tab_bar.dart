@@ -89,6 +89,7 @@ class _WorkspaceTabBarState extends ConsumerState<WorkspaceTabBar> {
             ),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Left scroll button
               if (widget.showScrollButtons && _showLeftScroll && hasOverflow)
@@ -290,6 +291,7 @@ class _TabItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Icon
             Icon(
