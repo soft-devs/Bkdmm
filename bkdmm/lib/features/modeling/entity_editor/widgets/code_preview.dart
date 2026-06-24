@@ -342,28 +342,8 @@ class _CodePreviewState extends State<CodePreview> {
           ),
           child: Row(
             children: [
-              // Database selector
-              DropdownButton<String>(
-                value: widget.selectedDatabase,
-                items: widget.databases.map((db) {
-                  return DropdownMenuItem(
-                    value: db.code,
-                    child: Row(
-                      children: [
-                        const Icon(TDIcons.data_base, size: 18),
-                        const SizedBox(width: 8),
-                        Text(db.name),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    widget.onDatabaseChanged(value);
-                  }
-                },
-                underline: const SizedBox(),
-              ),
+              // Database selector with TDesign style
+              _buildDatabaseSelector(tdTheme),
               const Spacer(),
               // Copy button
               TDButton(
@@ -445,6 +425,56 @@ class _CodePreviewState extends State<CodePreview> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDatabaseSelector(TDThemeData tdTheme) {
+    final currentDb = widget.databases.firstWhere(
+      (d) => d.code == widget.selectedDatabase,
+      orElse: () => widget.databases.first,
+    );
+
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => TDMultiPicker(
+            title: 'Select Database',
+            data: [widget.databases.map((db) => db.name).toList()],
+            initialIndexes: [widget.databases.indexOf(currentDb)],
+            onConfirm: (selected) {
+              if (selected.isNotEmpty && selected[0] < widget.databases.length) {
+                widget.onDatabaseChanged(widget.databases[selected[0]].code);
+              }
+              Navigator.pop(ctx);
+            },
+            onCancel: (_) => Navigator.pop(ctx),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: tdTheme.bgColorSecondaryContainer,
+          borderRadius: BorderRadius.circular(tdTheme.radiusSmall),
+          border: Border.all(color: tdTheme.componentBorderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(TDIcons.data_base, size: 18, color: tdTheme.brandNormalColor),
+            const SizedBox(width: 8),
+            TDText(
+              currentDb.name,
+              font: tdTheme.fontBodyMedium,
+              textColor: tdTheme.textColorPrimary,
+            ),
+            const SizedBox(width: 4),
+            Icon(TDIcons.chevron_down, size: 16, color: tdTheme.textColorSecondary),
+          ],
+        ),
+      ),
     );
   }
 

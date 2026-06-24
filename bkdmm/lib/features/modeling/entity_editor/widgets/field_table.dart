@@ -304,17 +304,28 @@ class _FieldTableState extends State<FieldTable> {
   void _showTypeSelector(int index, String currentType, TDThemeData tdTheme) {
     final field = widget.fields[index];
 
-    // Use TDPicker for type selection
-    TDPicker.show(
-      context,
-      title: 'Select Data Type',
-      options: widget.dataTypes.map((dt) => dt.name).toList(),
-      defaultValue: currentType,
-    ).then((result) {
-      if (result != null && result != currentType) {
-        _updateFieldProperty(field, 'type', result);
-      }
-    });
+    // Use TDMultiPicker in a bottom sheet
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => TDMultiPicker(
+        title: 'Select Data Type',
+        data: [widget.dataTypes.map((dt) => dt.name).toList()],
+        initialIndexes: [
+          widget.dataTypes.indexWhere((dt) => dt.name == currentType),
+        ],
+        onConfirm: (selected) {
+          if (selected.isNotEmpty && selected[0] < widget.dataTypes.length) {
+            final newType = widget.dataTypes[selected[0]].name;
+            if (newType != currentType) {
+              _updateFieldProperty(field, 'type', newType);
+            }
+          }
+          Navigator.pop(context);
+        },
+        onCancel: (_) => Navigator.pop(context),
+      ),
+    );
   }
 
   void _updateFieldProperty(Field field, String property, dynamic value) {
@@ -468,18 +479,25 @@ class _FieldTableState extends State<FieldTable> {
 
     return GestureDetector(
       onTap: () {
-        TDPicker.show(
-          context,
-          title: 'Select Data Type',
-          options: widget.dataTypes.map((dt) => '${dt.name} (${dt.chnname})').toList(),
-          defaultValue: '${selectedType} (${widget.dataTypes.firstWhere((dt) => dt.name == selectedType, orElse: () => widget.dataTypes.first).chnname})',
-        ).then((result) {
-          if (result != null) {
-            // Extract type name from "TypeName (ChineseName)" format
-            final typeName = result.split(' ').first;
-            onTypeChanged(typeName);
-          }
-        });
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => TDMultiPicker(
+            title: 'Select Data Type',
+            data: [widget.dataTypes.map((dt) => '${dt.name} (${dt.chnname})').toList()],
+            initialIndexes: [
+              widget.dataTypes.indexWhere((dt) => dt.name == selectedType),
+            ],
+            onConfirm: (selected) {
+              if (selected.isNotEmpty && selected[0] < widget.dataTypes.length) {
+                final newType = widget.dataTypes[selected[0]].name;
+                onTypeChanged(newType);
+              }
+              Navigator.pop(ctx);
+            },
+            onCancel: (_) => Navigator.pop(ctx),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

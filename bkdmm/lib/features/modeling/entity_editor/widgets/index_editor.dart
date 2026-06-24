@@ -31,8 +31,7 @@ class IndexEditor extends StatefulWidget {
 class _IndexEditorState extends State<IndexEditor> {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return Column(
       children: [
@@ -40,18 +39,17 @@ class _IndexEditorState extends State<IndexEditor> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
+            color: tdTheme.bgColorSecondaryContainer,
             border: Border(
-              bottom: BorderSide(color: colorScheme.outlineVariant),
+              bottom: BorderSide(color: tdTheme.componentBorderColor),
             ),
           ),
           child: Row(
             children: [
-              Text(
+              TDText(
                 'Indexes (${widget.indexes.length})',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                font: tdTheme.fontTitleSmall,
+                fontWeight: FontWeight.w600,
               ),
               const Spacer(),
               TDButton(
@@ -75,21 +73,19 @@ class _IndexEditorState extends State<IndexEditor> {
                       Icon(
                         TDIcons.filter,
                         size: 64,
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
                       ),
                       const SizedBox(height: 16),
-                      Text(
+                      TDText(
                         'No indexes defined',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        font: tdTheme.fontTitleMedium,
+                        textColor: tdTheme.textColorSecondary,
                       ),
                       const SizedBox(height: 8),
-                      Text(
+                      TDText(
                         'Click "Add Index" to create a new index',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                        ),
+                        font: tdTheme.fontBodyMedium,
+                        textColor: tdTheme.textColorSecondary.withValues(alpha: 0.7),
                       ),
                     ],
                   ),
@@ -99,7 +95,7 @@ class _IndexEditorState extends State<IndexEditor> {
                   itemCount: widget.indexes.length,
                   itemBuilder: (context, index) {
                     final idx = widget.indexes[index];
-                    return _buildIndexCard(idx, theme, colorScheme);
+                    return _buildIndexCard(idx, tdTheme);
                   },
                 ),
         ),
@@ -107,92 +103,92 @@ class _IndexEditorState extends State<IndexEditor> {
     );
   }
 
-  Widget _buildIndexCard(Index index, ThemeData theme, ColorScheme colorScheme) {
-    return Card(
+  Widget _buildIndexCard(Index index, TDThemeData tdTheme) {
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            Row(
-              children: [
-                Icon(
-                  _getIndexTypeIcon(index.type),
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    index.name,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                // Type chip
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getIndexTypeColor(index.type, colorScheme),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _getIndexTypeLabel(index.type),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Edit button
-                TDButton(
-                  icon: TDIcons.edit,
-                  theme: TDButtonTheme.defaultTheme,
-                  type: TDButtonType.text,
-                  size: TDButtonSize.small,
-                  onTap: () => _showEditIndexDialog(index),
-                ),
-                // Delete button
-                TDButton(
-                  icon: TDIcons.delete,
-                  theme: TDButtonTheme.danger,
-                  type: TDButtonType.text,
-                  size: TDButtonSize.small,
-                  onTap: () => _confirmDeleteIndex(index),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Fields
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: index.fields.map((fieldName) {
-                return TDTag(
-                  fieldName,
-                  theme: TDTagTheme.primary,
-                  size: TDTagSize.small,
-                );
-              }).toList(),
-            ),
-
-            // Remark
-            if (index.remark != null && index.remark!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                index.remark!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+      decoration: BoxDecoration(
+        color: tdTheme.bgColorContainer,
+        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+        border: Border.all(color: tdTheme.componentBorderColor),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            children: [
+              Icon(
+                _getIndexTypeIcon(index.type),
+                size: 20,
+                color: tdTheme.brandNormalColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TDText(
+                  index.name,
+                  font: tdTheme.fontTitleSmall,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+              // Type chip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getIndexTypeColor(index.type, tdTheme),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TDText(
+                  _getIndexTypeLabel(index.type),
+                  font: tdTheme.fontMarkExtraSmall,
+                  textColor: tdTheme.textColorPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Edit button
+              TDButton(
+                icon: TDIcons.edit,
+                theme: TDButtonTheme.defaultTheme,
+                type: TDButtonType.text,
+                size: TDButtonSize.small,
+                onTap: () => _showEditIndexDialog(index),
+              ),
+              // Delete button
+              TDButton(
+                icon: TDIcons.delete,
+                theme: TDButtonTheme.danger,
+                type: TDButtonType.text,
+                size: TDButtonSize.small,
+                onTap: () => _confirmDeleteIndex(index),
+              ),
             ],
+          ),
+          const SizedBox(height: 12),
+
+          // Fields
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: index.fields.map((fieldName) {
+              return TDTag(
+                fieldName,
+                theme: TDTagTheme.primary,
+                size: TDTagSize.small,
+              );
+            }).toList(),
+          ),
+
+          // Remark
+          if (index.remark != null && index.remark!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            TDText(
+              index.remark!,
+              font: tdTheme.fontBodySmall,
+              textColor: tdTheme.textColorSecondary,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -208,14 +204,14 @@ class _IndexEditorState extends State<IndexEditor> {
     }
   }
 
-  Color _getIndexTypeColor(IndexType type, ColorScheme colorScheme) {
+  Color _getIndexTypeColor(IndexType type, TDThemeData tdTheme) {
     switch (type) {
       case IndexType.unique:
-        return colorScheme.primaryContainer;
+        return tdTheme.brandLightColor;
       case IndexType.fulltext:
-        return colorScheme.tertiaryContainer;
+        return tdTheme.warningColor5.withValues(alpha: 0.2);
       case IndexType.normal:
-        return colorScheme.secondaryContainer;
+        return tdTheme.bgColorSecondaryContainer;
     }
   }
 
@@ -249,151 +245,201 @@ class _IndexEditorState extends State<IndexEditor> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => TDAlertDialog(
-          title: existingIndex == null ? 'Add Index' : 'Edit Index',
-          contentWidget: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TDInput(
-                    controller: nameController,
-                    leftLabel: 'Index Name *',
-                    hintText: 'e.g., idx_user_id',
-                    leftIcon: const Icon(TDIcons.edit),
-                    backgroundColor: Colors.transparent,
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<IndexType>(
-                    value: selectedType,
-                    decoration: const InputDecoration(
-                      labelText: 'Index Type',
-                      prefixIcon: Icon(TDIcons.setting),
+        builder: (context, setState) {
+          final tdTheme = TDTheme.of(context);
+          return TDAlertDialog(
+            title: existingIndex == null ? 'Add Index' : 'Edit Index',
+            contentWidget: SizedBox(
+              width: 500,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TDInput(
+                      controller: nameController,
+                      leftLabel: 'Index Name *',
+                      hintText: 'e.g., idx_user_id',
+                      leftIcon: const Icon(TDIcons.edit),
+                      backgroundColor: Colors.transparent,
                     ),
-                    items: IndexType.values.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Row(
-                          children: [
-                            Icon(_getIndexTypeIcon(type), size: 18),
-                            const SizedBox(width: 8),
-                            Text(_getIndexTypeLabel(type)),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => selectedType = value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Select Fields:',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  // Fixed height container for field selection
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxHeight: 200,
-                      minHeight: 50,
+                    const SizedBox(height: 16),
+                    // Type selector using TDesign style
+                    _buildTypeSelector(
+                      context: context,
+                      selectedType: selectedType,
+                      onTypeChanged: (type) => setState(() => selectedType = type),
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).colorScheme.outline),
-                        borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 16),
+                    TDText(
+                      'Select Fields:',
+                      font: tdTheme.fontTitleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    // Fixed height container for field selection
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxHeight: 200,
+                        minHeight: 50,
                       ),
-                      child: widget.availableFields.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  'No fields available',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: tdTheme.bgColorSecondaryContainer,
+                          border: Border.all(color: tdTheme.componentBorderColor),
+                          borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+                        ),
+                        child: widget.availableFields.isEmpty
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: TDText(
+                                    'No fields available',
+                                    font: tdTheme.fontBodyMedium,
+                                    textColor: tdTheme.textColorSecondary,
                                   ),
                                 ),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                itemCount: widget.availableFields.length,
+                                itemBuilder: (ctx, index) {
+                                  final field = widget.availableFields[index];
+                                  final isSelected = selectedFields.contains(field.name);
+                                  return TDCheckbox(
+                                    title: field.name,
+                                    subTitle: '${field.chnname} (${field.type})',
+                                    checked: isSelected,
+                                    onCheckBoxChanged: (checked) {
+                                      setState(() {
+                                        if (checked) {
+                                          selectedFields.add(field.name);
+                                        } else {
+                                          selectedFields.remove(field.name);
+                                        }
+                                      });
+                                    },
+                                  );
+                                },
                               ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              padding: EdgeInsets.zero,
-                              itemCount: widget.availableFields.length,
-                              itemBuilder: (context, index) {
-                                final field = widget.availableFields[index];
-                                final isSelected = selectedFields.contains(field.name);
-                                return TDCheckbox(
-                                  title: field.name,
-                                  subTitle: '${field.chnname} (${field.type})',
-                                  checked: isSelected,
-                                  onCheckBoxChanged: (checked) {
-                                    setState(() {
-                                      if (checked) {
-                                        selectedFields.add(field.name);
-                                      } else {
-                                        selectedFields.remove(field.name);
-                                      }
-                                    });
-                                  },
-                                );
-                              },
-                            ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TDInput(
-                    controller: remarkController,
-                    leftLabel: 'Remark',
-                    hintText: 'Optional description',
-                    backgroundColor: Colors.transparent,
-                    maxLines: 2,
+                    const SizedBox(height: 16),
+                    TDInput(
+                      controller: remarkController,
+                      leftLabel: 'Remark',
+                      hintText: 'Optional description',
+                      backgroundColor: Colors.transparent,
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            leftBtn: TDDialogButtonOptions(
+              title: 'Cancel',
+              theme: TDButtonTheme.defaultTheme,
+              type: TDButtonType.text,
+              action: () => Navigator.pop(context),
+            ),
+            rightBtn: TDDialogButtonOptions(
+              title: existingIndex == null ? 'Add' : 'Save',
+              theme: TDButtonTheme.primary,
+              type: TDButtonType.fill,
+              action: () {
+                if (nameController.text.trim().isEmpty) {
+                  TDToast.showText('Index name is required', context: context);
+                  return;
+                }
+                if (selectedFields.isEmpty) {
+                  TDToast.showText('Select at least one field', context: context);
+                  return;
+                }
+
+                final index = Index(
+                  id: existingIndex?.id ?? '',
+                  name: nameController.text.trim(),
+                  fields: selectedFields.toList(),
+                  type: selectedType,
+                  remark: remarkController.text.trim().isNotEmpty
+                      ? remarkController.text.trim()
+                      : null,
+                );
+
+                if (existingIndex == null) {
+                  widget.onAddIndex(index);
+                } else {
+                  widget.onUpdateIndex(existingIndex.id, index);
+                }
+                Navigator.pop(context);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTypeSelector({
+    required BuildContext context,
+    required IndexType selectedType,
+    required Function(IndexType) onTypeChanged,
+  }) {
+    final tdTheme = TDTheme.of(context);
+
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => TDMultiPicker(
+            title: 'Select Index Type',
+            data: [IndexType.values.map((t) => _getIndexTypeLabel(t)).toList()],
+            initialIndexes: [IndexType.values.indexOf(selectedType)],
+            onConfirm: (selected) {
+              if (selected.isNotEmpty && selected[0] < IndexType.values.length) {
+                onTypeChanged(IndexType.values[selected[0]]);
+              }
+              Navigator.pop(ctx);
+            },
+            onCancel: (_) => Navigator.pop(ctx),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: tdTheme.bgColorSecondaryContainer,
+          borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+          border: Border.all(color: tdTheme.componentBorderColor),
+        ),
+        child: Row(
+          children: [
+            Icon(TDIcons.setting, size: 20, color: tdTheme.textColorSecondary),
+            const SizedBox(width: 12),
+            TDText(
+              'Index Type',
+              font: tdTheme.fontBodyMedium,
+              textColor: tdTheme.textColorSecondary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(_getIndexTypeIcon(selectedType), size: 18, color: tdTheme.brandNormalColor),
+                  const SizedBox(width: 8),
+                  TDText(
+                    _getIndexTypeLabel(selectedType),
+                    font: tdTheme.fontBodyMedium,
+                    textColor: tdTheme.textColorPrimary,
                   ),
                 ],
               ),
             ),
-          ),
-          leftBtn: TDDialogButtonOptions(
-            title: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            type: TDButtonType.text,
-            action: () => Navigator.pop(context),
-          ),
-          rightBtn: TDDialogButtonOptions(
-            title: existingIndex == null ? 'Add' : 'Save',
-            theme: TDButtonTheme.primary,
-            type: TDButtonType.fill,
-            action: () {
-              if (nameController.text.trim().isEmpty) {
-                TDToast.showText('Index name is required', context: context);
-                return;
-              }
-              if (selectedFields.isEmpty) {
-                TDToast.showText('Select at least one field', context: context);
-                return;
-              }
-
-              final index = Index(
-                id: existingIndex?.id ?? '',
-                name: nameController.text.trim(),
-                fields: selectedFields.toList(),
-                type: selectedType,
-                remark: remarkController.text.trim().isNotEmpty
-                    ? remarkController.text.trim()
-                    : null,
-              );
-
-              if (existingIndex == null) {
-                widget.onAddIndex(index);
-              } else {
-                widget.onUpdateIndex(existingIndex.id, index);
-              }
-              Navigator.pop(context);
-            },
-          ),
+            const SizedBox(width: 8),
+            Icon(TDIcons.chevron_down, size: 18, color: tdTheme.textColorSecondary),
+          ],
         ),
       ),
     );

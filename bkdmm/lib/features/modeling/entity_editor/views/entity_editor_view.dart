@@ -9,23 +9,6 @@ import '../widgets/index_editor.dart';
 import '../widgets/code_preview.dart';
 
 /// Entity editor view - Main editor for database tables
-///
-/// Layout:
-/// ```
-/// ┌─────────────────────────────────────────────────────┐
-/// │ Entity Header: TableName[中文名]        [Save]     │
-/// ├─────────────────────────────────────────────────────┤
-/// │ [摘要] [字段] [索引] [代码预览]                      │
-/// ├─────────────────────────────────────────────────────┤
-/// │                                                     │
-/// │   Tab Content:                                      │
-/// │   - 摘要: Basic info form                           │
-/// │   - 字段: Syncfusion DataGrid with fields           │
-/// │   - 索引: Index management UI                       │
-/// │   - 代码预览: Generated DDL preview                 │
-/// │                                                     │
-/// └─────────────────────────────────────────────────────┘
-/// ```
 class EntityEditorView extends ConsumerStatefulWidget {
   final Entity entity;
   final String moduleId;
@@ -71,13 +54,11 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
 
   void _onTabChanged() {
     if (_tabController.indexIsChanging) return;
-    // Could trigger any tab-specific logic here
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
     final projectState = ref.watch(projectProvider);
     final project = projectState.project;
 
@@ -89,7 +70,6 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           final found = module.entities.where((e) => e.id == widget.entity.id).firstOrNull;
           if (found != null) {
             currentEntity = found;
-            // Update controllers if entity changed externally
             if (_titleController.text != found.title) {
               _titleController.text = found.title;
             }
@@ -108,23 +88,23 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     return Column(
       children: [
         // Entity header
-        _buildEntityHeader(currentEntity, theme, colorScheme, projectState),
+        _buildEntityHeader(currentEntity, tdTheme, projectState),
 
         // Tab bar
         Container(
-          color: colorScheme.surfaceContainerLow,
+          color: tdTheme.bgColorSecondaryContainer,
           child: TabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(icon: Icon(TDIcons.info_circle), text: 'Summary'),
-              Tab(icon: Icon(TDIcons.view_list), text: 'Fields'),
-              Tab(icon: Icon(TDIcons.filter), text: 'Indexes'),
-              Tab(icon: Icon(TDIcons.code), text: 'Preview'),
+            tabs: [
+              Tab(icon: Icon(TDIcons.info_circle, color: tdTheme.textColorSecondary), text: 'Summary'),
+              Tab(icon: Icon(TDIcons.view_list, color: tdTheme.textColorSecondary), text: 'Fields'),
+              Tab(icon: Icon(TDIcons.filter, color: tdTheme.textColorSecondary), text: 'Indexes'),
+              Tab(icon: Icon(TDIcons.code, color: tdTheme.textColorSecondary), text: 'Preview'),
             ],
-            labelColor: colorScheme.primary,
-            unselectedLabelColor: colorScheme.onSurfaceVariant,
-            indicatorColor: colorScheme.primary,
-            dividerColor: colorScheme.outlineVariant,
+            labelColor: tdTheme.brandNormalColor,
+            unselectedLabelColor: tdTheme.textColorSecondary,
+            indicatorColor: tdTheme.brandNormalColor,
+            dividerColor: tdTheme.componentBorderColor,
           ),
         ),
 
@@ -133,10 +113,10 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           child: TabBarView(
             controller: _tabController,
             children: [
-              _buildSummaryTab(currentEntity, theme, colorScheme),
-              _buildFieldsTab(currentEntity, theme, colorScheme),
-              _buildIndexesTab(currentEntity, theme, colorScheme),
-              _buildPreviewTab(currentEntity, theme, colorScheme),
+              _buildSummaryTab(currentEntity, tdTheme),
+              _buildFieldsTab(currentEntity),
+              _buildIndexesTab(currentEntity),
+              _buildPreviewTab(currentEntity),
             ],
           ),
         ),
@@ -146,16 +126,15 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
 
   Widget _buildEntityHeader(
     Entity entity,
-    ThemeData theme,
-    ColorScheme colorScheme,
+    TDThemeData tdTheme,
     ProjectState projectState,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: tdTheme.bgColorContainer,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
+          bottom: BorderSide(color: tdTheme.componentBorderColor),
         ),
       ),
       child: Row(
@@ -164,12 +143,12 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
+              color: tdTheme.brandLightColor,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               TDIcons.table,
-              color: colorScheme.onPrimaryContainer,
+              color: tdTheme.brandNormalColor,
             ),
           ),
           const SizedBox(width: 12),
@@ -179,17 +158,15 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TDText(
                   entity.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  font: tdTheme.fontTitleMedium,
+                  fontWeight: FontWeight.w600,
                 ),
-                Text(
+                TDText(
                   entity.chnname,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontBodySmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ],
             ),
@@ -199,28 +176,26 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
+              color: tdTheme.bgColorSecondaryContainer,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(TDIcons.view_list, size: 14, color: colorScheme.onSurfaceVariant),
+                Icon(TDIcons.view_list, size: 14, color: tdTheme.textColorSecondary),
                 const SizedBox(width: 4),
-                Text(
+                TDText(
                   '${entity.fields.length} fields',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontMarkExtraSmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
                 const SizedBox(width: 12),
-                Icon(TDIcons.filter, size: 14, color: colorScheme.onSurfaceVariant),
+                Icon(TDIcons.filter, size: 14, color: tdTheme.textColorSecondary),
                 const SizedBox(width: 4),
-                Text(
+                TDText(
                   '${entity.indexes.length} indexes',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  font: tdTheme.fontMarkExtraSmall,
+                  textColor: tdTheme.textColorSecondary,
                 ),
               ],
             ),
@@ -233,19 +208,18 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
+                color: tdTheme.brandLightColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(TDIcons.circle, size: 8, color: colorScheme.primary),
+                  Icon(TDIcons.circle, size: 8, color: tdTheme.brandNormalColor),
                   const SizedBox(width: 4),
-                  Text(
+                  TDText(
                     'Unsaved',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                    ),
+                    font: tdTheme.fontMarkExtraSmall,
+                    textColor: tdTheme.brandNormalColor,
                   ),
                 ],
               ),
@@ -255,243 +229,229 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     );
   }
 
-  Widget _buildSummaryTab(
-    Entity entity,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildSummaryTab(Entity entity, TDThemeData tdTheme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Basic Info Card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: colorScheme.outlineVariant),
+          Container(
+            decoration: BoxDecoration(
+              color: tdTheme.bgColorContainer,
+              borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+              border: Border.all(color: tdTheme.componentBorderColor),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Basic Information',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TDText(
+                  'Basic Information',
+                  font: tdTheme.fontTitleSmall,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TDInput(
+                        controller: _titleController,
+                        leftLabel: 'Table Name (English)',
+                        hintText: 'e.g., user',
+                        leftIcon: const Icon(TDIcons.code),
+                        backgroundColor: Colors.transparent,
+                        onChanged: (value) => _markDirty(),
+                        onSubmitted: (value) => _saveBasicInfo(),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TDInput(
-                          controller: _titleController,
-                          leftLabel: 'Table Name (English)',
-                          hintText: 'e.g., user',
-                          leftIcon: const Icon(TDIcons.code),
-                          backgroundColor: Colors.transparent,
-                          onChanged: (value) => _markDirty(),
-                          onSubmitted: (value) => _saveBasicInfo(),
-                        ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TDInput(
+                        controller: _chnnameController,
+                        leftLabel: 'Chinese Name',
+                        hintText: 'e.g., 用户表',
+                        leftIcon: const Icon(TDIcons.translate),
+                        backgroundColor: Colors.transparent,
+                        onChanged: (value) => _markDirty(),
+                        onSubmitted: (value) => _saveBasicInfo(),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TDInput(
-                          controller: _chnnameController,
-                          leftLabel: 'Chinese Name',
-                          hintText: 'e.g., 用户表',
-                          leftIcon: const Icon(TDIcons.translate),
-                          backgroundColor: Colors.transparent,
-                          onChanged: (value) => _markDirty(),
-                          onSubmitted: (value) => _saveBasicInfo(),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  TDInput(
-                    controller: _remarkController,
-                    leftLabel: 'Remark',
-                    hintText: 'Table description',
-                    leftIcon: const Icon(TDIcons.edit),
-                    backgroundColor: Colors.transparent,
-                    maxLines: 3,
-                    onChanged: (value) => _markDirty(),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (_hasLocalChanges)
-                        TDButton(
-                          text: 'Reset',
-                          theme: TDButtonTheme.defaultTheme,
-                          type: TDButtonType.outline,
-                          onTap: _resetBasicInfo,
-                        ),
-                      const SizedBox(width: 8),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TDInput(
+                  controller: _remarkController,
+                  leftLabel: 'Remark',
+                  hintText: 'Table description',
+                  leftIcon: const Icon(TDIcons.edit),
+                  backgroundColor: Colors.transparent,
+                  maxLines: 3,
+                  onChanged: (value) => _markDirty(),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (_hasLocalChanges)
                       TDButton(
-                        text: 'Save Changes',
-                        icon: TDIcons.save,
-                        theme: TDButtonTheme.primary,
-                        type: TDButtonType.fill,
-                        disabled: !_hasLocalChanges,
-                        onTap: _saveBasicInfo,
+                        text: 'Reset',
+                        theme: TDButtonTheme.defaultTheme,
+                        type: TDButtonType.outline,
+                        onTap: _resetBasicInfo,
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    TDButton(
+                      text: 'Save Changes',
+                      icon: TDIcons.save,
+                      theme: TDButtonTheme.primary,
+                      type: TDButtonType.fill,
+                      disabled: !_hasLocalChanges,
+                      onTap: _saveBasicInfo,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 
           const SizedBox(height: 24),
 
           // Statistics Card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: colorScheme.outlineVariant),
+          Container(
+            decoration: BoxDecoration(
+              color: tdTheme.bgColorContainer,
+              borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+              border: Border.all(color: tdTheme.componentBorderColor),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Statistics',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TDText(
+                  'Statistics',
+                  font: tdTheme.fontTitleSmall,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        icon: TDIcons.view_list,
+                        label: 'Fields',
+                        value: entity.fields.length.toString(),
+                        color: tdTheme.brandNormalColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          icon: TDIcons.view_list,
-                          label: 'Fields',
-                          value: entity.fields.length.toString(),
-                          color: colorScheme.primary,
-                        ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _StatCard(
+                        icon: TDIcons.lock_on,
+                        label: 'Primary Keys',
+                        value: entity.primaryKeys.length.toString(),
+                        color: tdTheme.successColor5,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _StatCard(
-                          icon: TDIcons.lock_on,
-                          label: 'Primary Keys',
-                          value: entity.primaryKeys.length.toString(),
-                          color: colorScheme.tertiary,
-                        ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _StatCard(
+                        icon: TDIcons.filter,
+                        label: 'Indexes',
+                        value: entity.indexes.length.toString(),
+                        color: tdTheme.warningColor5,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _StatCard(
-                          icon: TDIcons.filter,
-                          label: 'Indexes',
-                          value: entity.indexes.length.toString(),
-                          color: colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 
           const SizedBox(height: 24),
 
           // Fields Preview Card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: colorScheme.outlineVariant),
+          Container(
+            decoration: BoxDecoration(
+              color: tdTheme.bgColorContainer,
+              borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+              border: Border.all(color: tdTheme.componentBorderColor),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Fields Preview',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TDText(
+                      'Fields Preview',
+                      font: tdTheme.fontTitleSmall,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    TDButton(
+                      text: 'Edit Fields',
+                      icon: TDIcons.edit,
+                      theme: TDButtonTheme.defaultTheme,
+                      type: TDButtonType.text,
+                      onTap: () => _tabController.animateTo(1),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (entity.fields.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          Icon(
+                            TDIcons.view_list,
+                            size: 48,
+                            color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          TDText(
+                            'No fields defined yet',
+                            font: tdTheme.fontBodyMedium,
+                            textColor: tdTheme.textColorSecondary,
+                          ),
+                        ],
                       ),
-                      TDButton(
-                        text: 'Edit Fields',
-                        icon: TDIcons.edit,
-                        theme: TDButtonTheme.defaultTheme,
-                        type: TDButtonType.text,
-                        onTap: () => _tabController.animateTo(1),
-                      ),
+                    ),
+                  )
+                else
+                  DataTable(
+                    headingRowColor: WidgetStateProperty.all(tdTheme.bgColorSecondaryContainer),
+                    columns: const [
+                      DataColumn(label: Text('PK')),
+                      DataColumn(label: Text('Name')),
+                      DataColumn(label: Text('Type')),
+                      DataColumn(label: Text('Chinese Name')),
                     ],
+                    rows: entity.fields.take(10).map((field) {
+                      return DataRow(
+                        cells: [
+                          DataCell(field.pk
+                              ? Icon(TDIcons.lock_on, size: 16, color: tdTheme.brandNormalColor)
+                              : const SizedBox()),
+                          DataCell(TDText(field.name, font: tdTheme.fontBodySmall)),
+                          DataCell(TDText(field.type, font: tdTheme.fontBodySmall)),
+                          DataCell(TDText(field.chnname, font: tdTheme.fontBodySmall)),
+                        ],
+                      );
+                    }).toList(),
                   ),
-                  const SizedBox(height: 16),
-                  if (entity.fields.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          children: [
-                            Icon(
-                              TDIcons.view_list,
-                              size: 48,
-                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No fields defined yet',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    DataTable(
-                      columns: const [
-                        DataColumn(label: Text('PK')),
-                        DataColumn(label: Text('Name')),
-                        DataColumn(label: Text('Type')),
-                        DataColumn(label: Text('Chinese Name')),
-                      ],
-                      rows: entity.fields.take(10).map((field) {
-                        return DataRow(
-                          cells: [
-                            DataCell(field.pk
-                                ? Icon(TDIcons.lock_on, size: 16, color: colorScheme.primary)
-                                : const SizedBox()),
-                            DataCell(Text(field.name)),
-                            DataCell(Text(field.type)),
-                            DataCell(Text(field.chnname)),
-                          ],
-                        );
-                      }).toList(),
+                if (entity.fields.length > 10)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: TDText(
+                      'And ${entity.fields.length - 10} more fields...',
+                      font: tdTheme.fontBodySmall,
+                      textColor: tdTheme.textColorSecondary,
                     ),
-                  if (entity.fields.length > 10)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        'And ${entity.fields.length - 10} more fields...',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -499,11 +459,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     );
   }
 
-  Widget _buildFieldsTab(
-    Entity entity,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildFieldsTab(Entity entity) {
     final dataTypes = ref.watch(dataTypeProvider);
 
     return FieldTable(
@@ -543,11 +499,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     );
   }
 
-  Widget _buildIndexesTab(
-    Entity entity,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildIndexesTab(Entity entity) {
     return IndexEditor(
       indexes: entity.indexes,
       availableFields: entity.fields,
@@ -576,20 +528,14 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     );
   }
 
-  Widget _buildPreviewTab(
-    Entity entity,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildPreviewTab(Entity entity) {
     final databases = ref.watch(databaseProvider);
 
     return CodePreview(
       entity: entity,
       databases: databases,
       selectedDatabase: 'MYSQL',
-      onDatabaseChanged: (db) {
-        // Could store preference per entity
-      },
+      onDatabaseChanged: (db) {},
     );
   }
 
@@ -685,8 +631,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -701,21 +646,19 @@ class _StatCard extends StatelessWidget {
             children: [
               Icon(icon, size: 20, color: color),
               const SizedBox(width: 8),
-              Text(
+              TDText(
                 label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                font: tdTheme.fontBodySmall,
+                textColor: tdTheme.textColorSecondary,
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
+          TDText(
             value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            font: tdTheme.fontHeadlineMedium,
+            fontWeight: FontWeight.bold,
+            textColor: color,
           ),
         ],
       ),
