@@ -162,58 +162,83 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               // Basic info section
               _buildSectionHeader('Basic Info', Icons.info_outline),
               const SizedBox(height: 12),
-              TextField(
+              TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Type Name (English)',
                   hintText: 'e.g., MyCustomType',
                   prefixIcon: const Icon(Icons.code),
-                  helperText: 'Unique identifier for this type',
-                  errorText: _nameController.text.trim().isEmpty
+                  helperText: _nameController.text.trim().isEmpty
                       ? 'Name is required'
                       : ref.read(dataTypeNotifierProvider).nameExists(
                                 _nameController.text.trim(),
                                 excludeId: widget.existingType?.id,
                               )
                           ? 'Name already exists'
-                          : null,
-                  enabled: !_isDefaultType,
+                          : 'Unique identifier for this type',
+                  helperStyle: TextStyle(
+                    color: _nameController.text.trim().isEmpty ||
+                            ref.read(dataTypeNotifierProvider).nameExists(
+                                  _nameController.text.trim(),
+                                  excludeId: widget.existingType?.id,
+                                )
+                        ? colorScheme.error
+                        : null,
+                  ),
                 ),
+                readOnly: _isDefaultType,
                 autofocus: widget.existingType == null,
-                textCapitalization: TextCapitalization.words,
+                onChanged: (text) {
+                  setState(() {});
+                  _validate();
+                },
               ),
               const SizedBox(height: 16),
-              TextField(
+              TextFormField(
                 controller: _chnnameController,
                 decoration: InputDecoration(
                   labelText: 'Chinese Name',
                   hintText: 'e.g., 自定义类型',
                   prefixIcon: const Icon(Icons.translate),
-                  helperText: 'Display name in Chinese',
-                  errorText: _chnnameController.text.trim().isEmpty
+                  helperText: _chnnameController.text.trim().isEmpty
                       ? 'Chinese name is required'
-                      : null,
+                      : 'Display name in Chinese',
+                  helperStyle: TextStyle(
+                    color: _chnnameController.text.trim().isEmpty
+                        ? colorScheme.error
+                        : null,
+                  ),
                 ),
+                onChanged: (text) {
+                  setState(() {});
+                  _validate();
+                },
               ),
               const SizedBox(height: 16),
-              TextField(
+              TextFormField(
                 controller: _remarkController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Remark',
                   hintText: 'Description of this data type',
-                  prefixIcon: const Icon(Icons.note),
+                  prefixIcon: Icon(Icons.note),
                 ),
                 maxLines: 2,
+                onChanged: (text) {
+                  setState(() {});
+                },
               ),
               const SizedBox(height: 16),
-              TextField(
+              TextFormField(
                 controller: _javaController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Java Type',
                   hintText: 'e.g., String, Integer, BigDecimal',
-                  prefixIcon: const Icon(Icons.code),
+                  prefixIcon: Icon(Icons.code),
                   helperText: 'Java type mapping for code generation',
                 ),
+                onChanged: (text) {
+                  setState(() {});
+                },
               ),
 
               const SizedBox(height: 24),
@@ -231,16 +256,20 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
 
               // Database mappings
               ...DatabaseCodes.all.map((dbCode) {
+                final defaultMapping = _getDefaultMapping(dbCode);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: TextField(
+                  child: TextFormField(
                     controller: _dbTypeControllers[dbCode],
                     decoration: InputDecoration(
                       labelText: DatabaseCodes.getDisplayName(dbCode),
                       hintText: 'e.g., VARCHAR(255)',
                       prefixIcon: _buildDatabaseIcon(dbCode),
-                      helperText: _getDefaultMapping(dbCode),
+                      helperText: defaultMapping.isNotEmpty ? 'Default: $defaultMapping' : null,
                     ),
+                    onChanged: (text) {
+                      setState(() {});
+                    },
                   ),
                 );
               }),

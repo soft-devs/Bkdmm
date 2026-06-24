@@ -312,9 +312,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   void _navigateToDataTypes() {
     // TODO: Navigate to data type management page
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Data type management coming soon')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data type management coming soon')));
   }
 
   void _showResetConfirmation() {
@@ -334,9 +332,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             onPressed: () {
               ref.read(settingsProvider.notifier).resetToDefaults();
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings reset to defaults')),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings reset to defaults'), backgroundColor: Colors.green));
             },
             child: const Text('Reset'),
           ),

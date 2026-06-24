@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/providers/providers.dart';
 import '../../../shared/models/models.dart';
@@ -29,19 +30,21 @@ class _HomeViewState extends ConsumerState<HomeView> {
       title: 'Bkdmm',
       isLoading: _isCreating || projectState.isLoading,
       actions: [
-        IconButton(
-          icon: const Icon(Icons.settings_outlined),
-          onPressed: () {
+        TDButton(
+          icon: TDIcons.setting,
+          size: TDButtonSize.small,
+          type: TDButtonType.text,
+          onTap: () {
             // TODO: Navigate to settings
           },
-          tooltip: 'Settings',
         ),
-        IconButton(
-          icon: const Icon(Icons.account_circle_outlined),
-          onPressed: () {
+        TDButton(
+          icon: TDIcons.user_circle,
+          size: TDButtonSize.small,
+          type: TDButtonType.text,
+          onTap: () {
             // TODO: Navigate to profile
           },
-          tooltip: 'Profile',
         ),
       ],
       // Remove FAB - quick actions are available in the body
@@ -114,8 +117,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.storage,
+          child: Icon(
+            TDIcons.database,
             size: 40,
             color: Colors.white,
           ),
@@ -167,7 +170,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                 children: [
                   Expanded(
                     child: _QuickActionCard(
-                      icon: Icons.add,
+                      icon: TDIcons.add,
                       label: 'New Project',
                       description: 'Create a new project',
                       onTap: _isCreating ? null : _showCreateProjectDialog,
@@ -176,7 +179,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _QuickActionCard(
-                      icon: Icons.folder_open_outlined,
+                      icon: TDIcons.folder_open,
                       label: 'Open Project',
                       description: 'Open an existing project',
                       onTap: _showOpenProjectDialog,
@@ -185,16 +188,12 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _QuickActionCard(
-                      icon: Icons.download_outlined,
+                      icon: TDIcons.download,
                       label: 'Import',
                       description: 'Import from file',
                       onTap: () {
                         // TODO: Import project
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Import feature coming soon'),
-                          ),
-                        );
+                        TDToast.showText('Import feature coming soon', context: context);
                       },
                     ),
                   ),
@@ -208,27 +207,23 @@ class _HomeViewState extends ConsumerState<HomeView> {
               runSpacing: 12,
               children: [
                 _QuickActionCard(
-                  icon: Icons.add,
+                  icon: TDIcons.add,
                   label: 'New Project',
                   description: 'Create a new project',
                   onTap: _isCreating ? null : _showCreateProjectDialog,
                 ),
                 _QuickActionCard(
-                  icon: Icons.folder_open_outlined,
+                  icon: TDIcons.folder_open,
                   label: 'Open Project',
                   description: 'Open an existing project',
                   onTap: _showOpenProjectDialog,
                 ),
                 _QuickActionCard(
-                  icon: Icons.download_outlined,
+                  icon: TDIcons.download,
                   label: 'Import',
                   description: 'Import from file',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Import feature coming soon'),
-                      ),
-                    );
+                    TDToast.showText('Import feature coming soon', context: context);
                   },
                 ),
               ],
@@ -259,10 +254,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
               ),
             ),
             if (historyList.isNotEmpty)
-              TextButton.icon(
-                onPressed: () => _showAllHistory(historyList),
-                icon: const Icon(Icons.history, size: 18),
-                label: const Text('View All'),
+              TDButton(
+                text: 'View All',
+                icon: TDIcons.history,
+                theme: TDButtonTheme.defaultTheme,
+                type: TDButtonType.text,
+                size: TDButtonSize.small,
+                onTap: () => _showAllHistory(historyList),
               ),
           ],
         ),
@@ -292,7 +290,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
       child: Column(
         children: [
           Icon(
-            Icons.folder_open_outlined,
+            TDIcons.folder_open,
             size: 64,
             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
@@ -312,10 +310,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _isCreating ? null : _showCreateProjectDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Create New Project'),
+          TDButton(
+            text: 'Create New Project',
+            icon: TDIcons.add,
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            disabled: _isCreating,
+            onTap: _showCreateProjectDialog,
           ),
         ],
       ),
@@ -380,7 +381,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to create project: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -426,7 +427,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to open project: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -447,7 +448,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Removed from recent projects')),
+          const SnackBar(
+            content: Text('Removed from recent projects'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -455,7 +459,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to remove: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -466,7 +470,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('All Recent Projects'),
+        title: const Text(
+          'All Recent Projects',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         content: SizedBox(
           width: 500,
           height: 400,
@@ -490,9 +497,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Close'),
+          TDButton(
+            text: 'Close',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            onTap: () => Navigator.of(dialogContext).pop(),
           ),
         ],
       ),

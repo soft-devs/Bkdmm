@@ -51,49 +51,61 @@ class HistoryListTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            Icons.description_outlined,
-            color: colorScheme.primary,
-          ),
-        ),
-        title: Text(
-          history.name,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              history.path,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              _formatDateTime(history.lastOpenedAt),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
-        trailing: trailing ?? _buildPopupMenu(context),
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.description_outlined,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      history.name,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      history.path,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatDateTime(history.lastOpenedAt),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              trailing ?? _buildPopupMenu(context),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -120,37 +132,45 @@ class HistoryListTile extends StatelessWidget {
       itemBuilder: (context) => [
         const PopupMenuItem(
           value: 'open',
-          child: ListTile(
-            leading: Icon(Icons.open_in_new),
-            title: Text('Open'),
-            contentPadding: EdgeInsets.zero,
+          child: Row(
+            children: [
+              Icon(Icons.open_in_new),
+              SizedBox(width: 12),
+              Text('Open'),
+            ],
           ),
         ),
         PopupMenuItem(
           value: 'favorite',
-          child: ListTile(
-            leading: Icon(
-              isFavorite ? Icons.star : Icons.star_outline,
-            ),
-            title: Text(isFavorite ? 'Remove from Favorites' : 'Add to Favorites'),
-            contentPadding: EdgeInsets.zero,
+          child: Row(
+            children: [
+              Icon(
+                isFavorite ? Icons.star : Icons.star_outline,
+              ),
+              const SizedBox(width: 12),
+              Text(isFavorite ? 'Remove from Favorites' : 'Add to Favorites'),
+            ],
           ),
         ),
         if (onDuplicate != null)
           const PopupMenuItem(
             value: 'duplicate',
-            child: ListTile(
-              leading: Icon(Icons.content_copy),
-              title: Text('Duplicate'),
-              contentPadding: EdgeInsets.zero,
+            child: Row(
+              children: [
+                Icon(Icons.content_copy),
+                SizedBox(width: 12),
+                Text('Duplicate'),
+              ],
             ),
           ),
         const PopupMenuItem(
           value: 'delete',
-          child: ListTile(
-            leading: Icon(Icons.delete_outline),
-            title: Text('Remove from List'),
-            contentPadding: EdgeInsets.zero,
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline),
+              SizedBox(width: 12),
+              Text('Remove from List'),
+            ],
           ),
         ),
       ],
@@ -226,35 +246,50 @@ class HistoryListTileSimple extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: colorScheme.primaryContainer,
-          child: Icon(
-            icon,
-            color: colorScheme.onPrimaryContainer,
-          ),
-        ),
-        title: Text(
-          title,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        subtitle: Text(
-          subtitle ?? _formatTimestamp(timestamp),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        trailing: onDelete != null
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                iconSize: 18,
-                onPressed: onDelete,
-                tooltip: 'Remove from list',
-              )
-            : null,
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: colorScheme.primaryContainer,
+                child: Icon(
+                  icon,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle ?? _formatTimestamp(timestamp),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onDelete != null)
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: onDelete,
+                  tooltip: 'Remove',
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'app/app.dart';
 import 'shared/services/services.dart';
 
@@ -11,7 +12,10 @@ void main() async {
 
   runApp(
     const ProviderScope(
-      child: BkdmmApp(),
+      child: TDTheme(
+        data: TDThemeData.defaultData(),
+        child: BkdmmApp(),
+      ),
     ),
   );
 }

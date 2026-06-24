@@ -445,27 +445,13 @@ class _CodePreviewState extends State<CodePreview> {
 
   void _copyToClipboard() {
     Clipboard.setData(ClipboardData(text: _sqlController.text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('DDL copied to clipboard'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('DDL copied to clipboard'), backgroundColor: Colors.green));
   }
 
   void _downloadSql() {
     // In a web context, this would trigger a download
     // For desktop, we'd save to a file
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('DDL ready for ${widget.entity.title}.sql'),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: 'Copy',
-          onPressed: _copyToClipboard,
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('DDL ready for ${widget.entity.title}.sql'), backgroundColor: Colors.green));
   }
 }
 

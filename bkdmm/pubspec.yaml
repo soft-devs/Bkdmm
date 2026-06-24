@@ -15,6 +15,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   material_design_icons_flutter: ^7.0.0
 
+  # TDesign 企业级 UI 组件库 (兼容 Flutter 3.32)
+  tdesign_flutter: ^0.2.7
+  tdesign_flutter_adaptation: ^3.32.0
+
   # 状态管理 - Riverpod
   flutter_riverpod: ^2.4.0
   riverpod_annotation: ^2.3.0

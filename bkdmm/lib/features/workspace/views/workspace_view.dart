@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
@@ -8,10 +9,7 @@ import '../providers/tab_provider.dart';
 import '../widgets/module_tree.dart';
 import '../widgets/tab_bar.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
-// v1 - 原始 ER 图编辑器
-// import '../../modeling/er_diagram/widgets/er_diagram_widget.dart';
-// v2 - 混合架构 ER 图编辑器
-import '../../modeling/er_diagram_v2/widgets/er_diagram_canvas.dart';
+import '../../modeling/er_diagram/widgets/er_diagram_canvas.dart';
 import '../../datatype/views/datatype_view.dart';
 
 /// Workspace view - Main project editing interface with tab management
@@ -187,25 +185,23 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
           // Actions
           if (projectState.isDirty)
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _saveProject,
-              tooltip: 'Save (Ctrl+S)',
+            TDButton(
+              icon: TDIcons.save,
+              size: TDButtonSize.small,
+              type: TDButtonType.text,
+              onTap: _saveProject,
             ),
 
           // Toggle properties panel
-          IconButton(
-            icon: Icon(
-              _showPropertiesPanel ? Icons.close_fullscreen : Icons.open_in_full,
-            ),
-            onPressed: () {
+          TDButton(
+            icon: _showPropertiesPanel ? TDIcons.fullscreen_exit : TDIcons.fullscreen,
+            size: TDButtonSize.small,
+            type: TDButtonType.text,
+            onTap: () {
               setState(() {
                 _showPropertiesPanel = !_showPropertiesPanel;
               });
             },
-            tooltip: _showPropertiesPanel
-                ? 'Hide Properties'
-                : 'Show Properties',
           ),
 
           // More actions menu
@@ -445,10 +441,12 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               ),
             ),
             const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: () => _showAddEntityDialog(module),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Entity'),
+            TDButton(
+              text: 'Add Entity',
+              icon: TDIcons.add,
+              theme: TDButtonTheme.primary,
+              type: TDButtonType.fill,
+              onTap: () => _showAddEntityDialog(module),
             ),
           ],
         ),
@@ -549,10 +547,11 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                       ),
                     ),
                     const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                      tooltip: 'Close',
+                    TDButton(
+                      icon: TDIcons.close,
+                      size: TDButtonSize.small,
+                      type: TDButtonType.text,
+                      onTap: () => Navigator.pop(context),
                     ),
                   ],
                 ),
@@ -579,12 +578,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
         title: const Text('Delete Entity'),
         content: Text('Are you sure you want to delete "${entity.title}"?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          TDButton(
+            text: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            onTap: () => Navigator.pop(context),
           ),
-          FilledButton(
-            onPressed: () {
+          TDButton(
+            text: 'Delete',
+            theme: TDButtonTheme.danger,
+            type: TDButtonType.fill,
+            onTap: () {
               final updatedEntities = module.entities.where((e) => e.id != entity.id).toList();
               final updatedModule = module.copyWith(
                 entities: updatedEntities,
@@ -593,10 +597,6 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
               ref.read(projectProvider.notifier).updateModule(module.id, updatedModule);
               Navigator.pop(context);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
           ),
         ],
       ),
@@ -677,7 +677,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                       final edge = module.graphCanvas.edges[index];
                       return ListTile(
                         leading: const Icon(Icons.arrow_forward),
-                        title: Text('${edge.source} → ${edge.target}'),
+                        title: Text('${edge.source} -> ${edge.target}'),
                         subtitle: Text(edge.label ?? 'No label'),
                       );
                     },
@@ -810,14 +810,15 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 18),
-                  onPressed: () {
+                TDButton(
+                  icon: TDIcons.close,
+                  size: TDButtonSize.small,
+                  type: TDButtonType.text,
+                  onTap: () {
                     setState(() {
                       _showPropertiesPanel = false;
                     });
                   },
-                  visualDensity: VisualDensity.compact,
                 ),
               ],
             ),
@@ -1089,18 +1090,11 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       await ref.read(projectProvider.notifier).saveProject();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Project saved')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project saved'), backgroundColor: Colors.green));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -1127,9 +1121,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
 
   Future<void> _saveProjectAs() async {
     // TODO: Implement save as dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Save As coming soon')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save As coming soon')));
   }
 
   Future<void> _closeProject() async {
@@ -1148,13 +1140,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
             'The project has unsaved changes. Do you want to save before closing?',
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Discard'),
+            TDButton(
+              text: 'Discard',
+              theme: TDButtonTheme.defaultTheme,
+              type: TDButtonType.text,
+              onTap: () => Navigator.pop(context, false),
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Save'),
+            TDButton(
+              text: 'Save',
+              theme: TDButtonTheme.primary,
+              type: TDButtonType.fill,
+              onTap: () => Navigator.pop(context, true),
             ),
           ],
         ),
@@ -1236,18 +1232,22 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+          TDButton(
+            text: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            onTap: () => Navigator.pop(context, false),
           ),
-          FilledButton.icon(
-            onPressed: () {
+          TDButton(
+            text: 'Create Module',
+            icon: TDIcons.add,
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            onTap: () {
               if (nameController.text.trim().isNotEmpty) {
                 Navigator.pop(context, true);
               }
             },
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Create Module'),
           ),
         ],
       ),
@@ -1327,18 +1327,22 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+          TDButton(
+            text: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            onTap: () => Navigator.pop(context, false),
           ),
-          FilledButton.icon(
-            onPressed: () {
+          TDButton(
+            text: 'Create Table',
+            icon: TDIcons.add,
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            onTap: () {
               if (titleController.text.trim().isNotEmpty) {
                 Navigator.pop(context, true);
               }
             },
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Create Table'),
           ),
         ],
       ),

@@ -675,18 +675,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   void _copyToClipboard() {
     final state = ref.read(codegenProvider);
     Clipboard.setData(ClipboardData(text: state.generatedDdl));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('DDL copied to clipboard'),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: 'Dismiss',
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('DDL copied to clipboard'), backgroundColor: Colors.green));
   }
 
   /// Download SQL file (placeholder - would use file_picker in real implementation)
@@ -694,17 +683,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     final state = ref.read(codegenProvider);
     final fileName = _getFileName(state);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ready to download: $fileName'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: 'Copy',
-          onPressed: _copyToClipboard,
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ready to download: $fileName'), backgroundColor: Colors.green));
   }
 
   /// Export all DDL for the project
@@ -714,11 +693,6 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
     ref.read(codegenProvider.notifier).selectProject();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Generating DDL for ${project.modules.length} modules...'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Generating DDL for ${project.modules.length} modules...'), backgroundColor: Colors.green));
   }
 }

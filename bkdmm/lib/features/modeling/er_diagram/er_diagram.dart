@@ -1,22 +1,13 @@
-/// ER Diagram visualization module
+/// ER 图编辑器
 ///
-/// Provides interactive visualization of entity-relationship diagrams
-/// with CustomPainter-based rendering.
-///
-/// Usage:
-/// ```dart
-/// ERDiagramWidget(
-///   moduleId: 'module-id',
-///   onEntityEdit: (entity) => // Open entity editor,
-///   onContextMenu: (position, entity) => // Show context menu,
-/// )
-/// ```
-library;
+/// 使用混合架构实现：
+/// - DiagramCanvas 基类提供通用画布功能
+/// - ERNodeRenderer/EREdgeRenderer 提供自定义渲染
+/// - GraphViewLayoutEngine 提供布局算法
 
-export 'widgets/er_diagram_widget.dart';
-export 'providers/graph_provider.dart';
-export 'painters/er_graph_painter.dart';
-export 'painters/node_painter.dart';
-export 'painters/edge_painter.dart';
-export 'layout/dagre_layout.dart';
-export 'export/image_export.dart';
+library er_diagram;
+
+export 'models/er_diagram_models.dart';
+export 'providers/er_diagram_provider.dart';
+export 'widgets/er_diagram_canvas.dart';
+export 'renderers/er_renderers.dart';

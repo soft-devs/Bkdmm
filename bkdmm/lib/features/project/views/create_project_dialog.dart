@@ -99,13 +99,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   }
                   return null;
                 },
-                autofocus: true,
-                textInputAction: TextInputAction.next,
                 onChanged: (_) => _clearError(),
+                autofocus: true,
               ),
               const SizedBox(height: 16),
 
-              // Description field
+              // Description field (multiline)
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -114,7 +113,6 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   prefixIcon: Icon(Icons.description_outlined),
                 ),
                 maxLines: 3,
-                textInputAction: TextInputAction.next,
                 onChanged: (_) => _clearError(),
               ),
               const SizedBox(height: 16),
@@ -378,6 +376,7 @@ class _CreateProjectFormState extends State<CreateProjectForm> {
             controller: _nameController,
             decoration: const InputDecoration(
               labelText: 'Project Name',
+              hintText: 'Enter project name',
               prefixIcon: Icon(Icons.folder_outlined),
             ),
             validator: (value) {
@@ -393,6 +392,7 @@ class _CreateProjectFormState extends State<CreateProjectForm> {
             controller: _descriptionController,
             decoration: const InputDecoration(
               labelText: 'Description (optional)',
+              hintText: 'Enter project description',
               prefixIcon: Icon(Icons.description_outlined),
             ),
             maxLines: 2,

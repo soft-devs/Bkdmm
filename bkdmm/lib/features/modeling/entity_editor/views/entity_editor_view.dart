@@ -266,6 +266,11 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
         children: [
           // Basic Info Card
           Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: colorScheme.outlineVariant),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -287,6 +292,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                             labelText: 'Table Name (English)',
                             hintText: 'e.g., user',
                             prefixIcon: Icon(Icons.code),
+                            border: OutlineInputBorder(),
                           ),
                           onChanged: (value) => _markDirty(),
                           onSubmitted: (value) => _saveBasicInfo(),
@@ -300,6 +306,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                             labelText: 'Chinese Name',
                             hintText: 'e.g., 用户表',
                             prefixIcon: Icon(Icons.translate),
+                            border: OutlineInputBorder(),
                           ),
                           onChanged: (value) => _markDirty(),
                           onSubmitted: (value) => _saveBasicInfo(),
@@ -314,6 +321,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                       labelText: 'Remark',
                       hintText: 'Table description',
                       prefixIcon: Icon(Icons.notes),
+                      border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
                     onChanged: (value) => _markDirty(),
@@ -329,8 +337,8 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         ),
                       const SizedBox(width: 8),
                       FilledButton.icon(
+                        icon: const Icon(Icons.save),
                         onPressed: _hasLocalChanges ? _saveBasicInfo : null,
-                        icon: const Icon(Icons.save, size: 18),
                         label: const Text('Save Changes'),
                       ),
                     ],
@@ -344,6 +352,11 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
 
           // Statistics Card
           Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: colorScheme.outlineVariant),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -395,6 +408,11 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
 
           // Fields Preview Card
           Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: colorScheme.outlineVariant),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -410,9 +428,9 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: () => _tabController.animateTo(1),
-                        icon: const Icon(Icons.edit, size: 16),
+                        icon: const Icon(Icons.edit, size: 18),
                         label: const Text('Edit Fields'),
+                        onPressed: () => _tabController.animateTo(1),
                       ),
                     ],
                   ),
@@ -641,7 +659,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Entity updated'),
-        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.green,
       ),
     );
   }

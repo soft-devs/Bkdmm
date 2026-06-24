@@ -1,7 +1,5 @@
 import 'dart:ui';
 import '../core/diagram_state.dart';
-import '../core/diagram_node.dart';
-import '../core/diagram_edge.dart';
 import 'layout_engine.dart';
 
 /// graphview 布局引擎适配器
@@ -184,7 +182,6 @@ class GraphViewLayoutEngine implements LayoutEngine {
     if (children.isEmpty) return;
 
     // 计算子节点位置
-    final node = state.getNode(nodeId);
     final spacing = config.nodeSpacing;
     final rankSpacing = config.rankSpacing;
 
