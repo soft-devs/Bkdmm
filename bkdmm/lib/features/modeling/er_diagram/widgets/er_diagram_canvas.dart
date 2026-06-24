@@ -1,10 +1,11 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphview/graphview.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 import '../core/er_graph_edge.dart';
 import '../core/field_anchor_registry.dart';
 import '../core/graph_sync.dart';
@@ -12,7 +13,6 @@ import '../layout/layout_adapter.dart';
 import '../models/er_diagram_models.dart';
 import '../providers/er_diagram_provider.dart';
 import 'er_node_builder.dart';
-import 'er_table_node_widget.dart';
 
 /// ER 图画布（基于 graphview）
 ///
@@ -200,7 +200,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
           TDButton(
             theme: _interactionMode == InteractionMode.edit
                 ? TDButtonTheme.primary
-                : TDButtonTheme.default,
+                : TDButtonTheme.defaultTheme,
             icon: _interactionMode == InteractionMode.edit
                 ? TDIcons.edit
                 : TDIcons.unfold_more,
@@ -323,8 +323,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
           notifier.addEdgeWithFields(
             source.nodeId,
             target.nodeId,
-            sourceFieldIndex: source.fieldIndex,
-            targetFieldIndex: target.fieldIndex,
+            sourceField: source.field.name,
+            targetField: target.field.name,
             relationType: relationType,
             label: label,
           );
@@ -423,7 +423,7 @@ class _ConnectionPreviewPainter extends CustomPainter {
 
     if (distance == 0) return;
 
-    final length = distance.sqrt();
+    final length = math.sqrt(distance);
     final unitX = dx / length;
     final unitY = dy / length;
 
@@ -449,17 +449,17 @@ class _ConnectionPreviewPainter extends CustomPainter {
 
     final dx = tip.dx - base.dx;
     final dy = tip.dy - base.dy;
-    final angle = (dy / dx).atan();
+    final angle = math.atan2(dy, dx);
 
     final path = Path();
     path.moveTo(tip.dx, tip.dy);
     path.lineTo(
-      tip.dx - arrowSize * (angle - 3.14159 / 6).cos(),
-      tip.dy - arrowSize * (angle - 3.14159 / 6).sin(),
+      tip.dx - arrowSize * math.cos(angle - math.pi / 6),
+      tip.dy - arrowSize * math.sin(angle - math.pi / 6),
     );
     path.lineTo(
-      tip.dx - arrowSize * (angle + 3.14159 / 6).cos(),
-      tip.dy - arrowSize * (angle + 3.14159 / 6).sin(),
+      tip.dx - arrowSize * math.cos(angle + math.pi / 6),
+      tip.dy - arrowSize * math.sin(angle + math.pi / 6),
     );
     path.close();
 
@@ -498,62 +498,15 @@ class _RelationDialogState extends State<_RelationDialog> {
   Widget build(BuildContext context) {
     return TDAlertDialog(
       title: '创建关系',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('源字段: ${widget.sourceField.name}'),
-          Text('目标字段: ${widget.targetField.name}'),
-          const SizedBox(height: 16),
-          const Text('关系类型:'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              TDRadio(
-                text: '1:1',
-                radioStyle: TDRadioStyle.circle,
-                checked: _relationType == '1:1',
-                onChange: (checked) {
-                  if (checked) setState(() => _relationType = '1:1');
-                },
-              ),
-              TDRadio(
-                text: '1:N',
-                radioStyle: TDRadioStyle.circle,
-                checked: _relationType == '1:N',
-                onChange: (checked) {
-                  if (checked) setState(() => _relationType = '1:N');
-                },
-              ),
-              TDRadio(
-                text: 'N:1',
-                radioStyle: TDRadioStyle.circle,
-                checked: _relationType == 'N:1',
-                onChange: (checked) {
-                  if (checked) setState(() => _relationType = 'N:1');
-                },
-              ),
-              TDRadio(
-                text: 'N:M',
-                radioStyle: TDRadioStyle.circle,
-                checked: _relationType == 'N:M',
-                onChange: (checked) {
-                  if (checked) setState(() => _relationType = 'N:M');
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
+      content: '源字段: ${widget.sourceField.name} → 目标字段: ${widget.targetField.name}\n\n关系类型: 1:N',
       leftBtn: TDDialogButtonOptions(
-        text: '取消',
+        title: '取消',
         action: () => Navigator.of(context).pop(),
       ),
       rightBtn: TDDialogButtonOptions(
-        text: '确定',
+        title: '确定',
         action: () {
-          widget.onConfirm(_relationType, _label);
+          widget.onConfirm('1:N', null);
           Navigator.of(context).pop();
         },
       ),

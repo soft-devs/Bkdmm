@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:graphview/graphview.dart';
-import '../../../shared/theme/td_theme.dart';
+import 'package:bkdmm/shared/theme/td_theme.dart';
 import '../core/er_graph_edge.dart';
 import '../core/field_anchor_registry.dart';
 

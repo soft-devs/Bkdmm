@@ -27,7 +27,8 @@ class _FlowchartCanvasState extends ConsumerState<FlowchartCanvas> {
   final TransformationController _transformController = TransformationController();
   final FlowNodeRenderer _nodeRenderer = FlowNodeRenderer();
   final FlowEdgeRenderer _edgeRenderer = FlowEdgeRenderer();
-  final GraphViewLayoutEngine _layoutEngine = GraphViewLayoutEngine();
+  // 布局引擎暂时使用内联计算，待后续迁移
+  // final GraphViewLayoutEngine _layoutEngine = GraphViewLayoutEngine();
 
   InteractionState _interactionState = const InteractionState();
   String? _draggedNodeId;

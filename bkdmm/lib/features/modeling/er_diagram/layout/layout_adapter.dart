@@ -58,7 +58,10 @@ class GraphViewLayoutAdapter {
 
   /// 创建圆形布局算法
   Algorithm _createCircleLayoutAlgorithm(CircularLayoutConfig config) {
-    return CircleLayoutAlgorithm(null);
+    return CircleLayoutAlgorithm(
+      CircleLayoutConfiguration(radius: config.radius),
+      null,
+    );
   }
 
   /// 映射布局方向

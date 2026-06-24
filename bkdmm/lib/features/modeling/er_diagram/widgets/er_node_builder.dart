@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphview/graphview.dart';
-import '../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 import '../core/field_anchor_registry.dart';
 import 'er_table_node_widget.dart';
 

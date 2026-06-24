@@ -75,9 +75,9 @@ class FieldAnchorRegistry {
   void registerFieldAnchors(
     String nodeId,
     Entity entity,
-    Offset nodePosition,
+    Offset nodePosition, {
     double nodeWidth = defaultWidth,
-  ) {
+  }) {
     _leftAnchors[nodeId] = {};
     _rightAnchors[nodeId] = {};
 
@@ -109,10 +109,10 @@ class FieldAnchorRegistry {
   void updateNodeAnchors(
     String nodeId,
     Entity entity,
-    Offset newPosition,
+    Offset newPosition, {
     double nodeWidth = defaultWidth,
-  ) {
-    registerFieldAnchors(nodeId, entity, newPosition, nodeWidth);
+  }) {
+    registerFieldAnchors(nodeId, entity, newPosition, nodeWidth: nodeWidth);
   }
 
   /// 获取指定锚点
@@ -121,9 +121,11 @@ class FieldAnchorRegistry {
     int fieldIndex,
     FieldAnchorDirection direction,
   ) {
-    return direction == FieldAnchorDirection.left
-        ? _leftAnchors[nodeId]?[fieldIndex]
-        : _rightAnchors[nodeId]?[fieldIndex];
+    if (direction == FieldAnchorDirection.left) {
+      return _leftAnchors[nodeId]?[fieldIndex];
+    } else {
+      return _rightAnchors[nodeId]?[fieldIndex];
+    }
   }
 
   /// 通过锚点 ID 获取锚点
@@ -248,14 +250,16 @@ class FieldAnchorRegistry {
   static Offset calculateFieldAnchorPosition(
     Offset nodePosition,
     int fieldIndex,
-    FieldAnchorDirection direction,
+    FieldAnchorDirection direction, {
     double nodeWidth = defaultWidth,
-  ) {
+  }) {
     final rowY = nodePosition.dy + headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
 
-    return direction == FieldAnchorDirection.left
-        ? Offset(nodePosition.dx - anchorOffset, rowY)
-        : Offset(nodePosition.dx + nodeWidth + anchorOffset, rowY);
+    if (direction == FieldAnchorDirection.left) {
+      return Offset(nodePosition.dx - anchorOffset, rowY);
+    } else {
+      return Offset(nodePosition.dx + nodeWidth + anchorOffset, rowY);
+    }
   }
 
   /// 计算节点高度

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graphview/graphview.dart';
-import '../../shared/models/models.dart';
-import '../../shared/theme/td_theme.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/theme/td_theme.dart';
 import '../core/field_anchor_registry.dart';
 
 /// ER 图表格节点 Widget
@@ -265,7 +265,7 @@ class ERTableNodeWidget extends StatelessWidget {
     return GestureDetector(
       onTap: () => onAnchorTap?.call(anchor),
       child: MouseRegion(
-        cursor: SystemMouseCursors.crosshair,
+        cursor: SystemMouseCursors.cell,
         child: Container(
           width: fieldAnchorSize,
           height: fieldAnchorSize,

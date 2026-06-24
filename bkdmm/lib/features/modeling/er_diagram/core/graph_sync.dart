@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:graphview/graphview.dart';
 import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
 import '../models/er_diagram_models.dart';
 import 'field_anchor_registry.dart';
 import 'er_graph_edge.dart';
@@ -51,7 +52,7 @@ class ERDiagramGraphSync {
         entry.key,
         erNode.entity,
         erNode.position,
-        erNode.size.width,
+        nodeWidth: erNode.size.width,
       );
     }
 
@@ -110,7 +111,7 @@ class ERDiagramGraphSync {
       erNode.id,
       erNode.entity,
       erNode.position,
-      erNode.size.width,
+      nodeWidth: erNode.size.width,
     );
 
     return node;
@@ -249,7 +250,7 @@ class ERDiagramGraphSync {
         entry.key,
         erNode.entity,
         erNode.position,
-        erNode.size.width,
+        nodeWidth: erNode.size.width,
       );
     }
   }
