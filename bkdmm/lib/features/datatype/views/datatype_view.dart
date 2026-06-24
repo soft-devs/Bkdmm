@@ -96,7 +96,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
       child: Row(
         children: [
           Icon(
-            TDIcons.data_object,
+            TDIcons.data,
             color: colorScheme.primary,
           ),
           const SizedBox(width: 8),
@@ -138,7 +138,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           TDButton(
             text: 'Restore Defaults',
             theme: TDButtonTheme.defaultTheme,
-            icon: TDIcons.restore,
+            icon: TDIcons.history,
             onTap: () => _showRestoreDefaultsDialog(),
           ),
           const SizedBox(width: 8),
@@ -161,22 +161,13 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           // Search field
           Expanded(
             child: TDInput(
+              hintText: 'Search types...',
+              leftIcon: TDIcons.search,
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
                 });
               },
-              decoration: InputDecoration(
-                hintText: 'Search types...',
-                prefixIcon: const Icon(TDIcons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                isDense: true,
-                filled: true,
-                fillColor: colorScheme.surfaceContainerLowest,
-              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -211,7 +202,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            TDIcons.data_object_outlined,
+            TDIcons.data,
             size: 64,
             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
@@ -389,31 +380,31 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                   ),
                   // Actions
                   PopupMenuButton<String>(
-                    icon: const Icon(TDIcons.more_vert),
+                    icon: Icon(TDIcons.more),
                     onSelected: (action) => _handleTypeAction(type, action),
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'edit',
                         child: ListTile(
                           leading: Icon(TDIcons.edit),
-                          title: Text('Edit'),
+                          title: const Text('Edit'),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'duplicate',
                         child: ListTile(
                           leading: Icon(TDIcons.copy),
-                          title: Text('Duplicate'),
+                          title: const Text('Duplicate'),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       if (!isDefault)
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'delete',
                           child: ListTile(
                             leading: Icon(TDIcons.delete, color: Colors.red),
-                            title: Text('Delete', style: TextStyle(color: Colors.red)),
+                            title: const Text('Delete', style: TextStyle(color: Colors.red)),
                             contentPadding: EdgeInsets.zero,
                           ),
                         ),
@@ -517,25 +508,25 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
       case 'idorkey':
         return TDIcons.key;
       case 'name':
-        return TDIcons.label;
+        return TDIcons.edit;
       case 'intro':
-        return TDIcons.short_text;
+        return TDIcons.edit;
       case 'longtext':
-        return TDIcons.notes;
+        return TDIcons.article;
       case 'integer':
         return TDIcons.filter_1;
       case 'long':
-        return TDIcons.filter_9_plus;
+        return TDIcons.filter;
       case 'money':
-        return TDIcons.attach_money;
+        return TDIcons.money;
       case 'datetime':
-        return TDIcons.schedule;
+        return TDIcons.time;
       case 'yesno':
-        return TDIcons.check_box;
+        return TDIcons.check;
       case 'dict':
         return TDIcons.book;
       default:
-        return TDIcons.data_object;
+        return TDIcons.data;
     }
   }
 
@@ -600,47 +591,34 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: const Text('Delete Data Type'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Are you sure you want to delete "${type.name}"?'),
-            const SizedBox(height: 8),
-            Text(
-              'This action cannot be undone.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-            ),
-          ],
+        title: 'Delete Data Type',
+        content: 'Are you sure you want to delete "${type.name}"? This action cannot be undone.',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
         ),
-        actions: [
-          TDButton(
-            text: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            onTap: () => Navigator.pop(context),
-          ),
-          TDButton(
-            text: 'Delete',
-            theme: TDButtonTheme.danger,
-            onTap: () {
-              final usage = ref
-                  .read(dataTypeNotifierProvider.notifier)
-                  .deleteDataType(type.id, modules);
+        rightBtn: TDDialogButtonOptions(
+          title: 'Delete',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          action: () {
+            final usage = ref
+                .read(dataTypeNotifierProvider.notifier)
+                .deleteDataType(type.id, modules);
 
-              if (usage != null && usage.isNotEmpty) {
-                // Type is in use, show warning
-                Navigator.pop(context);
-                _showUsageWarning(type, usage);
-              } else if (usage == null) {
-                // Deleted successfully
-                Navigator.pop(context);
-                _updateProject();
-              }
-            },
-          ),
-        ],
+            if (usage != null && usage.isNotEmpty) {
+              // Type is in use, show warning
+              Navigator.pop(context);
+              _showUsageWarning(type, usage);
+            } else if (usage == null) {
+              // Deleted successfully
+              Navigator.pop(context);
+              _updateProject();
+            }
+          },
+        ),
       ),
     );
   }
@@ -649,58 +627,24 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: const Text('Type In Use'),
-        content: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('The type "${type.name}" is used in the following fields:'),
-              const SizedBox(height: 16),
-              ...usage.entries.map((entry) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      const Icon(TDIcons.table_chart, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${entry.key}: ${entry.value.join(', ')}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              const SizedBox(height: 16),
-              Text(
-                'Do you want to delete it anyway? Fields using this type may break.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-              ),
-            ],
-          ),
+        title: 'Type In Use',
+        content: 'The type "${type.name}" is used in the following fields: ${usage.entries.map((e) => "${e.key}: ${e.value.join(', ')}").join("; ")}. Do you want to delete it anyway? Fields using this type may break.',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
         ),
-        actions: [
-          TDButton(
-            text: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            onTap: () => Navigator.pop(context),
-          ),
-          TDButton(
-            text: 'Delete Anyway',
-            theme: TDButtonTheme.danger,
-            onTap: () {
-              ref.read(dataTypeNotifierProvider.notifier).forceDeleteDataType(type.id);
-              Navigator.pop(context);
-              _updateProject();
-            },
-          ),
-        ],
+        rightBtn: TDDialogButtonOptions(
+          title: 'Delete Anyway',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          action: () {
+            ref.read(dataTypeNotifierProvider.notifier).forceDeleteDataType(type.id);
+            Navigator.pop(context);
+            _updateProject();
+          },
+        ),
       ),
     );
   }
@@ -709,26 +653,24 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: const Text('Restore Defaults'),
-        content: const Text(
-          'This will restore all default data types to their original values. Custom types will not be affected.',
+        title: 'Restore Defaults',
+        content: 'This will restore all default data types to their original values. Custom types will not be affected.',
+        leftBtn: TDDialogButtonOptions(
+          title: 'Cancel',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
         ),
-        actions: [
-          TDButton(
-            text: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            onTap: () => Navigator.pop(context),
-          ),
-          TDButton(
-            text: 'Restore',
-            theme: TDButtonTheme.primary,
-            onTap: () {
-              ref.read(dataTypeNotifierProvider.notifier).restoreDefaults();
-              Navigator.pop(context);
-              _updateProject();
-            },
-          ),
-        ],
+        rightBtn: TDDialogButtonOptions(
+          title: 'Restore',
+          theme: TDButtonTheme.primary,
+          type: TDButtonType.fill,
+          action: () {
+            ref.read(dataTypeNotifierProvider.notifier).restoreDefaults();
+            Navigator.pop(context);
+            _updateProject();
+          },
+        ),
       ),
     );
   }

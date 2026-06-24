@@ -126,34 +126,9 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     final colorScheme = theme.colorScheme;
 
     return TDAlertDialog(
-      title: Row(
-        children: [
-          Icon(
-            widget.existingType != null ? TDIcons.edit : TDIcons.add,
-            color: colorScheme.primary,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            widget.existingType != null ? 'Edit Data Type' : 'Add Data Type',
-          ),
-          if (_isDefaultType)
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'Default',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-        ],
-      ),
-      content: SizedBox(
+      title: widget.existingType != null ? 'Edit Data Type' : 'Add Data Type',
+      content: '',
+      customContent: SizedBox(
         width: 600,
         child: SingleChildScrollView(
           child: Column(
@@ -161,14 +136,13 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Basic info section
-              _buildSectionHeader('Basic Info', TDIcons.info_outline),
+              _buildSectionHeader('Basic Info', TDIcons.info_circle, colorScheme),
               const SizedBox(height: 12),
               TDInput(
                 controller: _nameController,
                 leftLabel: 'Type Name (English)',
                 hintText: 'e.g., MyCustomType',
                 readOnly: _isDefaultType,
-                autofocus: widget.existingType == null,
                 onChanged: (text) {
                   setState(() {});
                   _validate();
@@ -207,7 +181,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               const SizedBox(height: 24),
 
               // Database mapping section
-              _buildSectionHeader('Database Type Mapping', TDIcons.storage),
+              _buildSectionHeader('Database Type Mapping', TDIcons.data_base, colorScheme),
               const SizedBox(height: 12),
               Text(
                 'Define how this type maps to each database',
@@ -219,7 +193,6 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
 
               // Database mappings
               ...DatabaseCodes.all.map((dbCode) {
-                final defaultMapping = _getDefaultMapping(dbCode);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: TDInput(
@@ -236,90 +209,38 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
           ),
         ),
       ),
-      actions: [
-        TDButton(
-          text: 'Cancel',
-          theme: TDButtonTheme.defaultTheme,
-          onTap: () => Navigator.of(context).pop(),
-        ),
-        if (widget.existingType != null && _isDefaultType)
-          TDButton(
-            text: 'Restore Default',
-            theme: TDButtonTheme.defaultTheme,
-            onTap: () {
-              // Restore default values
-              final defaultType = DefaultDataTypes.getById(widget.existingType!.id);
-              if (defaultType != null) {
-                _nameController.text = defaultType.name;
-                _chnnameController.text = defaultType.chnname;
-                _remarkController.text = defaultType.remark ?? '';
-                _javaController.text = defaultType.java ?? '';
-                for (final entry in defaultType.apply.entries) {
-                  _dbTypeControllers[entry.key]?.text = entry.value;
-                }
+      leftBtn: TDDialogButtonOptions(
+        title: 'Cancel',
+        theme: TDButtonTheme.defaultTheme,
+        type: TDButtonType.text,
+        action: () => Navigator.of(context).pop(),
+      ),
+      rightBtn: TDDialogButtonOptions(
+        title: 'Save',
+        theme: TDButtonTheme.primary,
+        type: TDButtonType.fill,
+        action: _isValid
+            ? () {
+                widget.onSave(_buildDataType());
+                Navigator.of(context).pop();
               }
-            },
-          ),
-        TDButton(
-          text: 'Save',
-          theme: TDButtonTheme.primary,
-          onTap: _isValid
-              ? () {
-                  widget.onSave(_buildDataType());
-                  Navigator.of(context).pop();
-                }
-              : null,
-        ),
-      ],
+            : null,
+      ),
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
+  Widget _buildSectionHeader(String title, IconData icon, ColorScheme colorScheme) {
     return Row(
       children: [
         Icon(icon, size: 18, color: colorScheme.primary),
         const SizedBox(width: 8),
         Text(
           title,
-          style: theme.textTheme.titleSmall?.copyWith(
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
       ],
     );
-  }
-
-  Widget _buildDatabaseIcon(String dbCode) {
-    IconData icon;
-    switch (dbCode) {
-      case DatabaseCodes.mysql:
-        icon = TDIcons.storage;
-        break;
-      case DatabaseCodes.postgresql:
-        icon = TDIcons.storage;
-        break;
-      case DatabaseCodes.oracle:
-        icon = TDIcons.business;
-        break;
-      case DatabaseCodes.sqlServer:
-        icon = TDIcons.business;
-        break;
-      case DatabaseCodes.sqlite:
-        icon = TDIcons.phone_android;
-        break;
-      default:
-        icon = TDIcons.storage;
-    }
-    return Icon(icon);
-  }
-
-  String _getDefaultMapping(String dbCode) {
-    final defaultType = widget.existingType != null
-        ? DefaultDataTypes.getById(widget.existingType!.id)
-        : null;
-    return defaultType?.apply[dbCode] ?? '';
   }
 }
