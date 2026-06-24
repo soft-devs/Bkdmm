@@ -163,30 +163,10 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               // Basic info section
               _buildSectionHeader('Basic Info', TDIcons.info_outline),
               const SizedBox(height: 12),
-              TextFormField(
+              TDInput(
                 controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Type Name (English)',
-                  hintText: 'e.g., MyCustomType',
-                  prefixIcon: const Icon(TDIcons.code),
-                  helperText: _nameController.text.trim().isEmpty
-                      ? 'Name is required'
-                      : ref.read(dataTypeNotifierProvider).nameExists(
-                                _nameController.text.trim(),
-                                excludeId: widget.existingType?.id,
-                              )
-                          ? 'Name already exists'
-                          : 'Unique identifier for this type',
-                  helperStyle: TextStyle(
-                    color: _nameController.text.trim().isEmpty ||
-                            ref.read(dataTypeNotifierProvider).nameExists(
-                                  _nameController.text.trim(),
-                                  excludeId: widget.existingType?.id,
-                                )
-                        ? colorScheme.error
-                        : null,
-                  ),
-                ),
+                leftLabel: 'Type Name (English)',
+                hintText: 'e.g., MyCustomType',
                 readOnly: _isDefaultType,
                 autofocus: widget.existingType == null,
                 onChanged: (text) {
@@ -195,48 +175,30 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              TDInput(
                 controller: _chnnameController,
-                decoration: InputDecoration(
-                  labelText: 'Chinese Name',
-                  hintText: 'e.g., 自定义类型',
-                  prefixIcon: Icon(TDIcons.translate),
-                  helperText: _chnnameController.text.trim().isEmpty
-                      ? 'Chinese name is required'
-                      : 'Display name in Chinese',
-                  helperStyle: TextStyle(
-                    color: _chnnameController.text.trim().isEmpty
-                        ? colorScheme.error
-                        : null,
-                  ),
-                ),
+                leftLabel: 'Chinese Name',
+                hintText: 'e.g., 自定义类型',
                 onChanged: (text) {
                   setState(() {});
                   _validate();
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              TDInput(
                 controller: _remarkController,
-                decoration: const InputDecoration(
-                  labelText: 'Remark',
-                  hintText: 'Description of this data type',
-                  prefixIcon: Icon(TDIcons.note),
-                ),
+                leftLabel: 'Remark',
+                hintText: 'Description of this data type',
                 maxLines: 2,
                 onChanged: (text) {
                   setState(() {});
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              TDInput(
                 controller: _javaController,
-                decoration: const InputDecoration(
-                  labelText: 'Java Type',
-                  hintText: 'e.g., String, Integer, BigDecimal',
-                  prefixIcon: Icon(Icons.code),
-                  helperText: 'Java type mapping for code generation',
-                ),
+                leftLabel: 'Java Type',
+                hintText: 'e.g., String, Integer, BigDecimal',
                 onChanged: (text) {
                   setState(() {});
                 },
@@ -260,14 +222,10 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 final defaultMapping = _getDefaultMapping(dbCode);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: TextFormField(
+                  child: TDInput(
                     controller: _dbTypeControllers[dbCode],
-                    decoration: InputDecoration(
-                      labelText: DatabaseCodes.getDisplayName(dbCode),
-                      hintText: 'e.g., VARCHAR(255)',
-                      prefixIcon: _buildDatabaseIcon(dbCode),
-                      helperText: defaultMapping.isNotEmpty ? 'Default: $defaultMapping' : null,
-                    ),
+                    leftLabel: DatabaseCodes.getDisplayName(dbCode),
+                    hintText: 'e.g., VARCHAR(255)',
                     onChanged: (text) {
                       setState(() {});
                     },
