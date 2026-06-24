@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../shared/models/models.dart';
 
 /// Index editor widget for managing table indexes
@@ -53,10 +54,11 @@ class _IndexEditorState extends State<IndexEditor> {
                 ),
               ),
               const Spacer(),
-              FilledButton.icon(
-                onPressed: _showAddIndexDialog,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Index'),
+              TDButton(
+                text: 'Add Index',
+                icon: TDIcons.add,
+                theme: TDButtonTheme.primary,
+                onTap: _showAddIndexDialog,
               ),
             ],
           ),
@@ -70,7 +72,7 @@ class _IndexEditorState extends State<IndexEditor> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.sort_outlined,
+                        TDIcons.filter,
                         size: 64,
                         color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
@@ -146,16 +148,19 @@ class _IndexEditorState extends State<IndexEditor> {
                 ),
                 const SizedBox(width: 8),
                 // Edit button
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 18),
-                  onPressed: () => _showEditIndexDialog(index),
-                  tooltip: 'Edit',
+                TDButton(
+                  icon: TDIcons.edit,
+                  theme: TDButtonTheme.text,
+                  size: TDButtonSize.extraSmall,
+                  onTap: () => _showEditIndexDialog(index),
                 ),
                 // Delete button
-                IconButton(
-                  icon: Icon(Icons.delete, size: 18, color: colorScheme.error),
-                  onPressed: () => _confirmDeleteIndex(index),
-                  tooltip: 'Delete',
+                TDButton(
+                  icon: TDIcons.delete,
+                  theme: TDButtonTheme.text,
+                  size: TDButtonSize.extraSmall,
+                  iconColor: colorScheme.error,
+                  onTap: () => _confirmDeleteIndex(index),
                 ),
               ],
             ),
@@ -166,14 +171,11 @@ class _IndexEditorState extends State<IndexEditor> {
               spacing: 8,
               runSpacing: 4,
               children: index.fields.map((fieldName) {
-                return Chip(
-                  label: Text(fieldName),
-                  avatar: Icon(
-                    Icons.arrow_right,
-                    size: 16,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  visualDensity: VisualDensity.compact,
+                return TDTag(
+                  text: fieldName,
+                  theme: TDTagTheme.primary,
+                  size: TDTagSize.small,
+                  icon: TDIcons.chevron_right,
                 );
               }).toList(),
             ),
@@ -197,11 +199,11 @@ class _IndexEditorState extends State<IndexEditor> {
   IconData _getIndexTypeIcon(IndexType type) {
     switch (type) {
       case IndexType.unique:
-        return Icons.verified_outlined;
+        return TDIcons.check_circle;
       case IndexType.fulltext:
-        return Icons.text_fields;
+        return TDIcons.text_fields;
       case IndexType.normal:
-        return Icons.sort;
+        return TDIcons.filter;
     }
   }
 
@@ -246,8 +248,8 @@ class _IndexEditorState extends State<IndexEditor> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(existingIndex == null ? 'Add Index' : 'Edit Index'),
+        builder: (context, setState) => TDAlertDialog(
+          title: existingIndex == null ? 'Add Index' : 'Edit Index',
           content: SizedBox(
             width: 400,
             child: SingleChildScrollView(
@@ -255,21 +257,18 @@ class _IndexEditorState extends State<IndexEditor> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
+                  TDInput(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Index Name *',
-                      hintText: 'e.g., idx_user_id',
-                      prefixIcon: Icon(Icons.label),
-                    ),
-                    autofocus: true,
+                    leftLabel: 'Index Name *',
+                    hintText: 'e.g., idx_user_id',
+                    prefixIcon: TDIcons.label,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<IndexType>(
                     value: selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Index Type',
-                      prefixIcon: Icon(Icons.category),
+                      prefixIcon: Icon(TDIcons.category),
                     ),
                     items: IndexType.values.map((type) {
                       return DropdownMenuItem(
@@ -325,82 +324,65 @@ class _IndexEditorState extends State<IndexEditor> {
                               itemBuilder: (context, index) {
                                 final field = widget.availableFields[index];
                                 final isSelected = selectedFields.contains(field.name);
-                                return CheckboxListTile(
-                                  title: Text(field.name),
-                                  subtitle: Text(
-                                    '${field.chnname} (${field.type})',
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                  value: isSelected,
-                                  onChanged: (value) {
+                                return TDCheckbox(
+                                  title: field.name,
+                                  subTitle: '${field.chnname} (${field.type})',
+                                  checked: isSelected,
+                                  onChange: (checked) {
                                     setState(() {
-                                      if (value == true) {
+                                      if (checked) {
                                         selectedFields.add(field.name);
                                       } else {
                                         selectedFields.remove(field.name);
                                       }
                                     });
                                   },
-                                  dense: true,
                                 );
                               },
                             ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  TDInput(
                     controller: remarkController,
-                    decoration: const InputDecoration(
-                      labelText: 'Remark',
-                      hintText: 'Optional description',
-                      prefixIcon: Icon(Icons.notes),
-                    ),
+                    leftLabel: 'Remark',
+                    hintText: 'Optional description',
                     maxLines: 2,
                   ),
                 ],
               ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (nameController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Index name is required')),
-                  );
-                  return;
-                }
-                if (selectedFields.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Select at least one field')),
-                  );
-                  return;
-                }
+          leftBtnText: 'Cancel',
+          rightBtnText: existingIndex == null ? 'Add' : 'Save',
+          onLeftBtnTap: () => Navigator.pop(context),
+          onRightBtnTap: () {
+            if (nameController.text.trim().isEmpty) {
+              TDToast.showText('Index name is required', context: context);
+              return;
+            }
+            if (selectedFields.isEmpty) {
+              TDToast.showText('Select at least one field', context: context);
+              return;
+            }
 
-                final index = Index(
-                  id: existingIndex?.id ?? '',
-                  name: nameController.text.trim(),
-                  fields: selectedFields.toList(),
-                  type: selectedType,
-                  remark: remarkController.text.trim().isNotEmpty
-                      ? remarkController.text.trim()
-                      : null,
-                );
+            final index = Index(
+              id: existingIndex?.id ?? '',
+              name: nameController.text.trim(),
+              fields: selectedFields.toList(),
+              type: selectedType,
+              remark: remarkController.text.trim().isNotEmpty
+                  ? remarkController.text.trim()
+                  : null,
+            );
 
-                if (existingIndex == null) {
-                  widget.onAddIndex(index);
-                } else {
-                  widget.onUpdateIndex(existingIndex.id, index);
-                }
-                Navigator.pop(context);
-              },
-              child: Text(existingIndex == null ? 'Add' : 'Save'),
-            ),
-          ],
+            if (existingIndex == null) {
+              widget.onAddIndex(index);
+            } else {
+              widget.onUpdateIndex(existingIndex.id, index);
+            }
+            Navigator.pop(context);
+          },
         ),
       ),
     );
@@ -409,25 +391,17 @@ class _IndexEditorState extends State<IndexEditor> {
   void _confirmDeleteIndex(Index index) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Index'),
+      builder: (context) => TDAlertDialog(
+        title: 'Delete Index',
         content: Text('Are you sure you want to delete index "${index.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              widget.onDeleteIndex(index.id);
-              Navigator.pop(context);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
+        leftBtnText: 'Cancel',
+        rightBtnText: 'Delete',
+        rightBtnTheme: TDButtonTheme.danger,
+        onLeftBtnTap: () => Navigator.pop(context),
+        onRightBtnTap: () {
+          widget.onDeleteIndex(index.id);
+          Navigator.pop(context);
+        },
       ),
     );
   }

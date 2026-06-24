@@ -204,27 +204,24 @@ class _FieldTableState extends State<FieldTable> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Add Field'),
+        builder: (context, setState) => TDAlertDialog(
+          title: 'Add Field',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
+                TDInput(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Field Name *',
-                    hintText: 'e.g., user_id',
-                    prefixIcon: Icon(Icons.code),
-                  ),
-                  autofocus: true,
+                  leftLabel: 'Field Name *',
+                  hintText: 'e.g., user_id',
+                  prefixIcon: TDIcons.code,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: selectedType,
                   decoration: const InputDecoration(
                     labelText: 'Data Type',
-                    prefixIcon: Icon(Icons.data_object),
+                    prefixIcon: Icon(TDIcons.data),
                   ),
                   items: widget.dataTypes.map((dt) {
                     return DropdownMenuItem(
@@ -239,92 +236,76 @@ class _FieldTableState extends State<FieldTable> {
                   },
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                TDInput(
                   controller: chnnameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Chinese Name',
-                    hintText: 'e.g., 用户ID',
-                    prefixIcon: Icon(Icons.translate),
-                  ),
+                  leftLabel: 'Chinese Name',
+                  hintText: 'e.g., 用户ID',
+                  prefixIcon: TDIcons.translate,
                 ),
                 const SizedBox(height: 16),
-                CheckboxListTile(
-                  title: const Text('Primary Key'),
-                  value: isPk,
-                  onChanged: (value) {
+                TDCheckbox(
+                  title: 'Primary Key',
+                  checked: isPk,
+                  onChange: (checked) {
                     setState(() {
-                      isPk = value ?? false;
+                      isPk = checked;
                       if (isPk) {
                         isNotNull = true;
                       }
                     });
                   },
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
                 ),
-                CheckboxListTile(
-                  title: const Text('Not Null'),
-                  value: isNotNull,
-                  onChanged: isPk ? null : (value) {
-                    setState(() => isNotNull = value ?? false);
+                const SizedBox(height: 8),
+                TDCheckbox(
+                  title: 'Not Null',
+                  checked: isNotNull,
+                  enable: !isPk,
+                  onChange: isPk ? null : (checked) {
+                    setState(() => isNotNull = checked);
                   },
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
                 ),
-                CheckboxListTile(
-                  title: const Text('Auto Increment'),
-                  value: isAutoIncrement,
-                  onChanged: (value) {
-                    setState(() => isAutoIncrement = value ?? false);
+                const SizedBox(height: 8),
+                TDCheckbox(
+                  title: 'Auto Increment',
+                  checked: isAutoIncrement,
+                  onChange: (checked) {
+                    setState(() => isAutoIncrement = checked);
                   },
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                TDInput(
                   controller: remarkController,
-                  decoration: const InputDecoration(
-                    labelText: 'Remark',
-                    hintText: 'Field description',
-                    prefixIcon: Icon(Icons.notes),
-                  ),
+                  leftLabel: 'Remark',
+                  hintText: 'Field description',
                   maxLines: 2,
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (nameController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Field name is required')),
-                  );
-                  return;
-                }
-                widget.onAddField(Field(
-                  id: '',
-                  name: nameController.text.trim(),
-                  type: selectedType,
-                  chnname: chnnameController.text.trim().isNotEmpty
-                      ? chnnameController.text.trim()
-                      : nameController.text.trim(),
-                  pk: isPk,
-                  notNull: isNotNull,
-                  autoIncrement: isAutoIncrement,
-                  remark: remarkController.text.trim().isNotEmpty
-                      ? remarkController.text.trim()
-                      : null,
-                ));
-                Navigator.pop(context);
-              },
-              child: const Text('Add'),
-            ),
-          ],
+          leftBtnText: 'Cancel',
+          rightBtnText: 'Add',
+          onRightBtnTap: () {
+            if (nameController.text.trim().isEmpty) {
+              TDToast.showText('Field name is required', context: context);
+              return;
+            }
+            widget.onAddField(Field(
+              id: '',
+              name: nameController.text.trim(),
+              type: selectedType,
+              chnname: chnnameController.text.trim().isNotEmpty
+                  ? chnnameController.text.trim()
+                  : nameController.text.trim(),
+              pk: isPk,
+              notNull: isNotNull,
+              autoIncrement: isAutoIncrement,
+              remark: remarkController.text.trim().isNotEmpty
+                  ? remarkController.text.trim()
+                  : null,
+            ));
+            Navigator.pop(context);
+          },
+          onLeftBtnTap: () => Navigator.pop(context),
         ),
       ),
     );
@@ -333,46 +314,38 @@ class _FieldTableState extends State<FieldTable> {
   void _deleteSelectedFields() {
     final selectedRows = _controller.selectedRows;
     if (selectedRows.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No fields selected')),
-      );
+      TDToast.showText('No fields selected', context: context);
       return;
     }
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Fields'),
+      builder: (context) => TDAlertDialog(
+        title: 'Delete Fields',
         content: Text('Are you sure you want to delete ${selectedRows.length} field(s)?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              for (final row in selectedRows) {
-                // Get the field name from the row's cells
-                final cells = row.getCells();
-                String? fieldName;
-                for (final cell in cells) {
-                  if (cell.columnName == 'name') {
-                    fieldName = cell.value as String;
-                    break;
-                  }
-                }
-                if (fieldName == null) continue;
-                final fieldObj = widget.fields.firstWhere(
-                  (f) => f.name == fieldName,
-                  orElse: () => widget.fields.first,
-                );
-                widget.onDeleteField(fieldObj.id);
+        leftBtnText: 'Cancel',
+        rightBtnText: 'Delete',
+        onLeftBtnTap: () => Navigator.pop(context),
+        onRightBtnTap: () {
+          for (final row in selectedRows) {
+            // Get the field name from the row's cells
+            final cells = row.getCells();
+            String? fieldName;
+            for (final cell in cells) {
+              if (cell.columnName == 'name') {
+                fieldName = cell.value as String;
+                break;
               }
-              Navigator.pop(context);
-            },
-            child: const Text('Delete'),
-          ),
-        ],
+            }
+            if (fieldName == null) continue;
+            final fieldObj = widget.fields.firstWhere(
+              (f) => f.name == fieldName,
+              orElse: () => widget.fields.first,
+            );
+            widget.onDeleteField(fieldObj.id);
+          }
+          Navigator.pop(context);
+        },
       ),
     );
   }
