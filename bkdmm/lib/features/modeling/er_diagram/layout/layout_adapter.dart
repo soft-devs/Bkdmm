@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:graphview/graphview.dart';
 
 /// graphview 布局算法适配器
@@ -38,27 +39,26 @@ class GraphViewLayoutAdapter {
   /// 创建 Sugiyama 层次布局算法
   Algorithm _createSugiyamaAlgorithm(HierarchicalLayoutConfig config) {
     final sugiyamaConfig = SugiyamaConfiguration()
-        ..nodeSeparation = config.nodeSpacing.toInt()
-        ..levelSeparation = config.rankSpacing.toInt()
-        ..orientation = _mapOrientation(config.direction)
-        ..iterations = config.maxIterations;
+      ..nodeSeparation = config.nodeSpacing.toInt()
+      ..levelSeparation = config.rankSpacing.toInt()
+      ..orientation = _mapOrientation(config.direction)
+      ..iterations = config.maxIterations;
 
     return SugiyamaAlgorithm(sugiyamaConfig);
   }
 
   /// 创建 Fruchterman-Reingold 力导向布局算法
   Algorithm _createFruchtermanReingoldAlgorithm(ForceDirectedLayoutConfig config) {
-    final frConfig = FruchtermanReingoldConfiguration()
-        ..area = config.idealEdgeLength * 100
-        ..gravity = config.gravityStrength
-        ..iterations = config.maxIterations;
-
-    return FruchtermanReingoldAlgorithm(frConfig);
+    return FruchtermanReingoldAlgorithm(
+      FruchtermanReingoldConfiguration(
+        iterations: config.maxIterations,
+      ),
+    );
   }
 
   /// 创建圆形布局算法
   Algorithm _createCircleLayoutAlgorithm(CircularLayoutConfig config) {
-    return CircleLayoutAlgorithm();
+    return CircleLayoutAlgorithm(null);
   }
 
   /// 映射布局方向
@@ -80,8 +80,8 @@ class GraphViewLayoutAdapter {
     if (_algorithm == null) return;
 
     // 默认居中布局
-    final centerX = 100000.0;
-    final centerY = 100000.0;
+    const centerX = 100000.0;
+    const centerY = 100000.0;
     _algorithm!.run(graph, centerX, centerY);
   }
 

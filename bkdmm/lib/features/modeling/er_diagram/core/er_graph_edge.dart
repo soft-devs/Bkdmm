@@ -1,5 +1,5 @@
 import 'package:graphview/graphview.dart';
-import '../../shared/models/models.dart';
+import '../../../shared/models/models.dart';
 import 'field_anchor_registry.dart';
 
 /// ER 图关系边

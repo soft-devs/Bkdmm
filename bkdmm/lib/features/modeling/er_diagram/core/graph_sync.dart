@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:graphview/graphview.dart';
-import '../../shared/models/models.dart';
+import '../../../shared/models/models.dart';
 import '../models/er_diagram_models.dart';
 import 'field_anchor_registry.dart';
 import 'er_graph_edge.dart';
@@ -67,7 +67,7 @@ class ERDiagramGraphSync {
           targetNode: targetNode,
           graphEdge: erEdge.graphEdge,
         );
-        graph.addEdge(edge);
+        graph.addEdge(edge.source, edge.destination);
         _edgeMap[entry.key] = edge;
       }
     }
@@ -149,7 +149,7 @@ class ERDiagramGraphSync {
       label: label,
     );
 
-    graph.addEdge(edge);
+    graph.addEdge(edge.source, edge.destination);
     final edgeId = '$sourceNodeId:$targetNodeId';
     _edgeMap[edgeId] = edge;
 
@@ -180,10 +180,7 @@ class ERDiagramGraphSync {
       if (graphNode != null) {
         // 更新位置
         newNodes[entry.key] = erNode.copyWith(
-          graphNode: erNode.graphNode.copyWith(
-            x: graphNode.x,
-            y: graphNode.y,
-          ),
+          graphNode: _copyGraphNode(erNode.graphNode, x: graphNode.x, y: graphNode.y),
         );
       } else {
         newNodes[entry.key] = erNode;
@@ -212,6 +209,15 @@ class ERDiagramGraphSync {
     return baseState.copyWith(
       nodes: newNodes,
       edges: newEdges,
+    );
+  }
+
+  /// 复制 GraphNode
+  GraphNode _copyGraphNode(GraphNode original, {double? x, double? y}) {
+    return GraphNode(
+      title: original.title,
+      x: x ?? original.x,
+      y: y ?? original.y,
     );
   }
 
@@ -246,20 +252,5 @@ class ERDiagramGraphSync {
         erNode.size.width,
       );
     }
-  }
-}
-
-/// GraphNode 扩展，支持 copyWith
-extension GraphNodeExtension on GraphNode {
-  GraphNode copyWith({
-    String? title,
-    double? x,
-    double? y,
-  }) {
-    return GraphNode(
-      title: title ?? this.title,
-      x: x ?? this.x,
-      y: y ?? this.y,
-    );
   }
 }

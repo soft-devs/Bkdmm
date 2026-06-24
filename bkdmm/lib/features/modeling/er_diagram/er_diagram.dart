@@ -5,9 +5,6 @@
 /// - SugiyamaAlgorithm 提供层次布局
 /// - 自定义 NodeWidgetBuilder 和 EdgeRenderer 实现 ER 特定渲染
 /// - 字段级锚点支持字段间连线
-///
-/// V1 (Canvas) - 基于 CustomPainter 的传统实现（已废弃）
-/// V2 (GraphView) - 基于 graphview 库的新实现
 
 library er_diagram;
 
@@ -15,14 +12,12 @@ library er_diagram;
 export 'models/er_diagram_models.dart';
 export 'providers/er_diagram_provider.dart';
 
-// V1: Canvas 实现（传统）
+// 画布和 Widget
 export 'widgets/er_diagram_canvas.dart';
-export 'renderers/er_renderers.dart';
-
-// V2: GraphView 实现（推荐）
-export 'widgets/er_diagram_canvas_v2.dart';
 export 'widgets/er_table_node_widget.dart';
 export 'widgets/er_node_builder.dart';
+
+// 渲染器
 export 'renderers/er_edge_renderer.dart';
 
 // 核心扩展
