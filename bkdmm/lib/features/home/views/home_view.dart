@@ -342,9 +342,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
             onDelete: () => _deleteHistory(history.path),
             onFavorite: () {
               // TODO: Implement favorite
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Favorite feature coming soon')),
-              );
+              TDToast.showText('Favorite feature coming soon', context: context);
             },
           ),
         );
@@ -378,12 +376,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to create project: $e'),
-              duration: const Duration(seconds: 3),
-            ),
-          );
+          TDToast.showText('Failed to create project: $e', context: context);
         }
       } finally {
         if (mounted) {
@@ -424,12 +417,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to open project: $e'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        TDToast.showText('Failed to open project: $e', context: context);
       }
     } finally {
       if (mounted) {
@@ -447,21 +435,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
       await ref.read(historyNotifierProvider.notifier).remove(path);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Removed from recent projects'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        TDToast.showSuccessToast('Removed from recent projects', context: context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to remove: $e'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        TDToast.showText('Failed to remove: $e', context: context);
       }
     }
   }
