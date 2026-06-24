@@ -5,9 +5,9 @@ import '../../../../shared/models/models.dart';
 /// Field table widget with custom table implementation
 ///
 /// Features:
-/// - Columns: Primary Key, Field Name, Data Type, Chinese Name, Not Null, Auto Increment, Remark
+/// - Columns: Primary Key, Field Name, Data Type, Chinese Name, Not Null, Auto Increment, Remark, Actions
 /// - Inline editing with checkboxes and type selector
-/// - Add/delete rows
+/// - Add/edit/delete rows
 /// - Row selection with highlight
 class FieldTable extends StatefulWidget {
   final List<Field> fields;
@@ -65,16 +65,6 @@ class _FieldTableState extends State<FieldTable> {
                 type: TDButtonType.fill,
                 onTap: () => _showAddFieldDialog(),
               ),
-              const SizedBox(width: 8),
-              // Delete selected button
-              TDButton(
-                text: 'Delete',
-                icon: TDIcons.delete,
-                theme: TDButtonTheme.danger,
-                type: TDButtonType.outline,
-                disabled: _selectedFieldIds.isEmpty,
-                onTap: _deleteSelectedFields,
-              ),
             ],
           ),
         ),
@@ -125,7 +115,8 @@ class _FieldTableState extends State<FieldTable> {
         final pkWidth = 48.0;
         final notNullWidth = 64.0;
         final autoIncWidth = 64.0;
-        final fixedTotal = pkWidth + notNullWidth + autoIncWidth;
+        final actionsWidth = 72.0;
+        final fixedTotal = pkWidth + notNullWidth + autoIncWidth + actionsWidth;
 
         final flexibleWidth = availableWidth - fixedTotal;
         final nameWidth = (flexibleWidth * 0.35).clamp(100.0, 300.0);
@@ -144,7 +135,7 @@ class _FieldTableState extends State<FieldTable> {
             child: Column(
               children: [
                 // Header row
-                _buildHeaderRow(tdTheme, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth),
+                _buildHeaderRow(tdTheme, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
 
                 // Data rows
                 Expanded(
@@ -165,6 +156,7 @@ class _FieldTableState extends State<FieldTable> {
                         notNullWidth,
                         autoIncWidth,
                         remarkWidth,
+                        actionsWidth,
                       );
                     },
                   ),
@@ -186,6 +178,7 @@ class _FieldTableState extends State<FieldTable> {
     double notNullWidth,
     double autoIncWidth,
     double remarkWidth,
+    double actionsWidth,
   ) {
     return Container(
       height: 44,
@@ -204,19 +197,22 @@ class _FieldTableState extends State<FieldTable> {
           _buildHeaderCell('Not Null', notNullWidth, tdTheme, centered: true),
           _buildHeaderCell('Auto Inc', autoIncWidth, tdTheme, centered: true),
           _buildHeaderCell('Remark', remarkWidth, tdTheme),
+          _buildHeaderCell('Actions', actionsWidth, tdTheme, centered: true, isLast: true),
         ],
       ),
     );
   }
 
-  Widget _buildHeaderCell(String title, double width, TDThemeData tdTheme, {bool centered = false}) {
+  Widget _buildHeaderCell(String title, double width, TDThemeData tdTheme, {bool centered = false, bool isLast = false}) {
     return Container(
       width: width,
       height: 44,
       alignment: centered ? Alignment.center : Alignment.centerLeft,
       padding: EdgeInsets.symmetric(horizontal: centered ? 4 : 12, vertical: 8),
       decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
+        border: isLast
+            ? null
+            : Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
       ),
       child: TDText(
         title,
@@ -240,6 +236,7 @@ class _FieldTableState extends State<FieldTable> {
     double notNullWidth,
     double autoIncWidth,
     double remarkWidth,
+    double actionsWidth,
   ) {
     final rowColor = isSelected
         ? tdTheme.brandNormalColor.withValues(alpha: 0.08)
@@ -267,18 +264,20 @@ class _FieldTableState extends State<FieldTable> {
           children: [
             // PK checkbox
             _buildCheckboxCell(field, 'pk', pkWidth, tdTheme, isSelected),
-            // Field name
-            _buildTextCell(field.name, nameWidth, tdTheme, isSelected),
+            // Field name - clickable for edit
+            _buildEditableTextCell(field.name, nameWidth, tdTheme, isSelected, () => _showEditFieldDialog(field)),
             // Data type
             _buildTypeCell(field, typeWidth, tdTheme, isSelected),
-            // Chinese name
-            _buildTextCell(field.chnname, chnnameWidth, tdTheme, isSelected),
+            // Chinese name - clickable for edit
+            _buildEditableTextCell(field.chnname, chnnameWidth, tdTheme, isSelected, () => _showEditFieldDialog(field)),
             // Not Null checkbox
             _buildCheckboxCell(field, 'notNull', notNullWidth, tdTheme, isSelected),
             // Auto Increment checkbox
             _buildCheckboxCell(field, 'autoIncrement', autoIncWidth, tdTheme, isSelected),
             // Remark
             _buildTextCell(field.remark ?? '', remarkWidth, tdTheme, isSelected),
+            // Actions
+            _buildActionsCell(field, actionsWidth, tdTheme),
           ],
         ),
       ),
@@ -354,6 +353,41 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
+  Widget _buildEditableTextCell(String value, double width, TDThemeData tdTheme, bool isRowSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: width,
+        height: 44,
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TDText(
+                value,
+                font: tdTheme.fontBodySmall,
+                textColor: isRowSelected
+                    ? tdTheme.brandNormalColor
+                    : tdTheme.textColorPrimary,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+            Icon(
+              TDIcons.edit,
+              size: 14,
+              color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTypeCell(Field field, double width, TDThemeData tdTheme, bool isRowSelected) {
     return Container(
       width: width,
@@ -386,6 +420,44 @@ class _FieldTableState extends State<FieldTable> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActionsCell(Field field, double width, TDThemeData tdTheme) {
+    return Container(
+      width: width,
+      height: 44,
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Edit button
+          InkWell(
+            onTap: () => _showEditFieldDialog(field),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(
+                TDIcons.edit,
+                size: 16,
+                color: tdTheme.textColorSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Delete button
+          InkWell(
+            onTap: () => _confirmDeleteField(field),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(
+                TDIcons.delete,
+                size: 16,
+                color: tdTheme.errorNormalColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -436,130 +508,138 @@ class _FieldTableState extends State<FieldTable> {
   }
 
   void _showAddFieldDialog() {
-    final nameController = TextEditingController();
-    final chnnameController = TextEditingController();
-    final remarkController = TextEditingController();
-    String selectedType = widget.dataTypes.isNotEmpty ? widget.dataTypes.first.name : 'String';
-    bool isPk = false;
-    bool isNotNull = false;
-    bool isAutoIncrement = false;
+    _showFieldDialog(null);
+  }
+
+  void _showEditFieldDialog(Field field) {
+    _showFieldDialog(field);
+  }
+
+  void _showFieldDialog(Field? existingField) {
+    final nameController = TextEditingController(text: existingField?.name ?? '');
+    final chnnameController = TextEditingController(text: existingField?.chnname ?? '');
+    final remarkController = TextEditingController(text: existingField?.remark ?? '');
+    String selectedType = existingField?.type ?? (widget.dataTypes.isNotEmpty ? widget.dataTypes.first.name : 'String');
+    bool isPk = existingField?.pk ?? false;
+    bool isNotNull = existingField?.notNull ?? false;
+    bool isAutoIncrement = existingField?.autoIncrement ?? false;
 
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        // Responsive dialog width calculation
-        final screenWidth = MediaQuery.of(dialogContext).size.width;
-        const minWidth = 650.0;
-        const maxWidth = 845.0; // 1.3x the base minimum width
-        final dialogWidth = (screenWidth * 0.85).clamp(minWidth, maxWidth);
-
-        return StatefulBuilder(
-          builder: (context, setState) => TDAlertDialog(
-            title: 'Add Field',
-            contentWidget: SizedBox(
-              width: dialogWidth,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TDInput(
-                      controller: nameController,
-                      leftLabel: 'Field Name *',
-                      hintText: 'e.g., user_id',
-                      leftIcon: const Icon(TDIcons.code),
-                      backgroundColor: Colors.transparent,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTypeSelectorFormField(
-                      context: dialogContext,
-                      selectedType: selectedType,
-                      onTypeChanged: (type) => setState(() => selectedType = type),
-                    ),
-                    const SizedBox(height: 16),
-                    TDInput(
-                      controller: chnnameController,
-                      leftLabel: 'Chinese Name',
-                      hintText: 'e.g., 用户ID',
-                      leftIcon: const Icon(TDIcons.translate),
-                      backgroundColor: Colors.transparent,
-                    ),
-                    const SizedBox(height: 16),
-                    TDCheckbox(
-                      title: 'Primary Key',
-                      checked: isPk,
-                      onCheckBoxChanged: (checked) {
-                        setState(() {
-                          isPk = checked;
-                          if (isPk) {
-                            isNotNull = true;
-                          }
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    TDCheckbox(
-                      title: 'Not Null',
-                      checked: isNotNull,
-                      enable: !isPk,
-                      onCheckBoxChanged: isPk ? null : (checked) {
-                        setState(() => isNotNull = checked);
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    TDCheckbox(
-                      title: 'Auto Increment',
-                      checked: isAutoIncrement,
-                      onCheckBoxChanged: (checked) {
-                        setState(() => isAutoIncrement = checked);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TDInput(
-                      controller: remarkController,
-                      leftLabel: 'Remark',
-                      hintText: 'Field description',
-                      backgroundColor: Colors.transparent,
-                      maxLines: 2,
-                    ),
-                  ],
-                ),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => TDAlertDialog(
+          title: existingField == null ? 'Add Field' : 'Edit Field',
+          content: '',
+          contentWidget: SizedBox(
+            width: 650,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TDInput(
+                    controller: nameController,
+                    leftLabel: 'Field Name *',
+                    hintText: 'e.g., user_id',
+                    leftIcon: const Icon(TDIcons.code),
+                    backgroundColor: Colors.transparent,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTypeSelectorFormField(
+                    context: context,
+                    selectedType: selectedType,
+                    onTypeChanged: (type) => setState(() => selectedType = type),
+                  ),
+                  const SizedBox(height: 16),
+                  TDInput(
+                    controller: chnnameController,
+                    leftLabel: 'Chinese Name',
+                    hintText: 'e.g., 用户ID',
+                    leftIcon: const Icon(TDIcons.translate),
+                    backgroundColor: Colors.transparent,
+                  ),
+                  const SizedBox(height: 16),
+                  TDCheckbox(
+                    title: 'Primary Key',
+                    checked: isPk,
+                    onCheckBoxChanged: (checked) {
+                      setState(() {
+                        isPk = checked;
+                        if (isPk) {
+                          isNotNull = true;
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TDCheckbox(
+                    title: 'Not Null',
+                    checked: isNotNull,
+                    enable: !isPk,
+                    onCheckBoxChanged: isPk ? null : (checked) {
+                      setState(() => isNotNull = checked);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TDCheckbox(
+                    title: 'Auto Increment',
+                    checked: isAutoIncrement,
+                    onCheckBoxChanged: (checked) {
+                      setState(() => isAutoIncrement = checked);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TDInput(
+                    controller: remarkController,
+                    leftLabel: 'Remark',
+                    hintText: 'Field description',
+                    backgroundColor: Colors.transparent,
+                    maxLines: 2,
+                  ),
+                ],
               ),
             ),
-            leftBtn: TDDialogButtonOptions(
-              title: 'Cancel',
-              theme: TDButtonTheme.defaultTheme,
-              type: TDButtonType.text,
-              action: () => Navigator.pop(dialogContext),
-            ),
-            rightBtn: TDDialogButtonOptions(
-              title: 'Add',
-              theme: TDButtonTheme.primary,
-              type: TDButtonType.fill,
-              action: () {
-                if (nameController.text.trim().isEmpty) {
-                  TDToast.showText('Field name is required', context: dialogContext);
-                  return;
-                }
-                widget.onAddField(Field(
-                  id: '',
-                  name: nameController.text.trim(),
-                  type: selectedType,
-                  chnname: chnnameController.text.trim().isNotEmpty
-                      ? chnnameController.text.trim()
-                      : nameController.text.trim(),
-                  pk: isPk,
-                  notNull: isNotNull,
-                  autoIncrement: isAutoIncrement,
-                  remark: remarkController.text.trim().isNotEmpty
-                      ? remarkController.text.trim()
-                      : null,
-                ));
-                Navigator.pop(dialogContext);
-              },
-            ),
           ),
-        );
-      },
+          leftBtn: TDDialogButtonOptions(
+            title: 'Cancel',
+            theme: TDButtonTheme.defaultTheme,
+            type: TDButtonType.text,
+            action: () => Navigator.pop(context),
+          ),
+          rightBtn: TDDialogButtonOptions(
+            title: existingField == null ? 'Add' : 'Save',
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            action: () {
+              if (nameController.text.trim().isEmpty) {
+                TDToast.showText('Field name is required', context: context);
+                return;
+              }
+
+              final updatedField = Field(
+                id: existingField?.id ?? '',
+                name: nameController.text.trim(),
+                type: selectedType,
+                chnname: chnnameController.text.trim().isNotEmpty
+                    ? chnnameController.text.trim()
+                    : nameController.text.trim(),
+                pk: isPk,
+                notNull: isNotNull,
+                autoIncrement: isAutoIncrement,
+                remark: remarkController.text.trim().isNotEmpty
+                    ? remarkController.text.trim()
+                    : null,
+              );
+
+              if (existingField == null) {
+                widget.onAddField(updatedField);
+              } else {
+                widget.onUpdateField(existingField.id, updatedField);
+              }
+              Navigator.pop(context);
+            },
+          ),
+        ),
+      ),
     );
   }
 
@@ -625,17 +705,12 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  void _deleteSelectedFields() {
-    if (_selectedFieldIds.isEmpty) {
-      TDToast.showText('No fields selected', context: context);
-      return;
-    }
-
+  void _confirmDeleteField(Field field) {
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: 'Delete Fields',
-        content: 'Are you sure you want to delete ${_selectedFieldIds.length} field(s)?',
+        title: 'Delete Field',
+        content: 'Are you sure you want to delete "${field.name}"?',
         leftBtn: TDDialogButtonOptions(
           title: 'Cancel',
           theme: TDButtonTheme.defaultTheme,
@@ -647,11 +722,9 @@ class _FieldTableState extends State<FieldTable> {
           theme: TDButtonTheme.danger,
           type: TDButtonType.fill,
           action: () {
-            for (final fieldId in _selectedFieldIds.toList()) {
-              widget.onDeleteField(fieldId);
-            }
+            widget.onDeleteField(field.id);
             setState(() {
-              _selectedFieldIds.clear();
+              _selectedFieldIds.remove(field.id);
             });
             Navigator.pop(context);
           },

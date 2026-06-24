@@ -93,13 +93,13 @@ class _AppScaffoldState extends State<AppScaffold> {
               ? [
                   TDNavBarItem(
                     iconWidget: widget.leading!,
-                    action: () {},
+                    action: () => Navigator.of(context).maybePop(),
                   ),
                 ]
               : null,
           rightBarItems: _buildRightBarItems(),
           backgroundColor: tdTheme.bgColorContainer,
-          useDefaultBack: false,
+          useDefaultBack: widget.leading == null && Navigator.canPop(context),
         ),
       ),
       body: widget.body,
