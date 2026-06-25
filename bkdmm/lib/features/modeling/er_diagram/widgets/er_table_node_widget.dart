@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:graphview/graphview.dart';
-import 'package:bkdmm/shared/models/models.dart';
-import 'package:bkdmm/shared/theme/td_theme.dart';
-import 'package:bkdmm/utils/utils.dart';
-import '../core/field_anchor_registry.dart';
 
-/// ER 图表格节点 Widget
+import '../../../../shared/models/models.dart';
+import '../../../../shared/theme/td_theme.dart';
+import '../models/er_diagram_ui_state.dart';
+
+/// ER 表格节点 Widget
 ///
 /// 使用 Flutter Widget 渲染 ER 图中的表节点
-/// 保持与原有 Canvas 渲染器的视觉一致性
 class ERTableNodeWidget extends StatelessWidget {
   /// graphview Node 实例
   final Node node;
@@ -16,20 +15,23 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 实体数据
   final Entity entity;
 
+  /// 图节点数据（位置等）
+  final GraphNode graphNode;
+
   /// 是否选中
   final bool isSelected;
 
-  /// 是否悬停
-  final bool isHovered;
-
   /// 是否显示锚点（编辑模式）
   final bool showAnchors;
+
+  /// 是否可拖动（编辑模式）
+  final bool isDraggable;
 
   /// 是否暗色模式
   final bool isDarkMode;
 
   /// 锚点点击回调
-  final void Function(FieldAnchor)? onAnchorTap;
+  final void Function(ERFieldAnchor)? onAnchorTap;
 
   /// 节点点击回调
   final VoidCallback? onTap;
@@ -46,27 +48,24 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 节点拖动结束回调
   final VoidCallback? onDragEnd;
 
-  /// 是否可拖动（编辑模式）
-  final bool isDraggable;
-
-  /// 布局常量（与 ERNodeRenderer 保持一致）
+  /// 布局常量
   static const double defaultWidth = 200.0;
   static const double headerHeight = 40.0;
   static const double fieldRowHeight = 28.0;
-  static const double padding = 12.0;
   static const double cornerRadius = 8.0;
   static const double anchorOffset = 8.0;
-  static const double fieldAnchorSize = 6.0;
+  static const double anchorVisualSize = 6.0;
+  static const double anchorHitSize = 20.0;
 
   const ERTableNodeWidget({
     super.key,
     required this.node,
     required this.entity,
+    required this.graphNode,
     this.isSelected = false,
-    this.isHovered = false,
     this.showAnchors = false,
-    this.isDarkMode = false,
     this.isDraggable = false,
+    this.isDarkMode = false,
     this.onAnchorTap,
     this.onTap,
     this.onDoubleTap,
@@ -79,9 +78,7 @@ class ERTableNodeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = isDarkMode || Theme.of(context).brightness == Brightness.dark;
 
-    logging.d('ERTableNodeWidget.build: showAnchors=$showAnchors, isDraggable=$isDraggable, entity.title=${entity.title}', tag: 'ERTableNodeWidget');
-
-    // 根据是否可拖动选择不同的手势处理
+    // 节点主体
     Widget content = GestureDetector(
       onTap: onTap,
       onDoubleTap: onDoubleTap,
@@ -109,51 +106,30 @@ class ERTableNodeWidget extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // 节点主体（带裁剪）
+              // 节点主体
               ClipRRect(
                 borderRadius: BorderRadius.circular(cornerRadius),
-                child: Container(
-                  width: defaultWidth,
-                  decoration: BoxDecoration(
-                    color: TDAppTheme.getNodeBgColor(isDark, isSelected),
-                    borderRadius: BorderRadius.circular(cornerRadius),
-                    border: isSelected
-                        ? Border.all(
-                            color: TDAppTheme.getSelectionBorderColor(isDark),
-                            width: 2,
-                          )
-                        : null,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 6,
-                        offset: const Offset(2, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildHeader(isDark),
-                      ...entity.fields.asMap().entries.map((entry) =>
-                          _buildFieldRow(context, entry.key, entry.value, isDark)),
-                    ],
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(isDark),
+                    ...entity.fields.asMap().entries.map((entry) =>
+                        _buildFieldRow(entry.key, entry.value, isDark)),
+                  ],
                 ),
               ),
-              // 字段锚点（仅在编辑模式显示，放在ClipRRect外部）
-              if (showAnchors) _buildFieldAnchors(isDark),
+              // 锚点层（编辑模式）
+              if (showAnchors) _buildAnchorLayer(isDark),
             ],
           ),
         ),
       ),
     );
 
-    // 如果可拖动，用 GestureDetector 包裹处理拖动
-    // 使用 HitTestBehavior.deferToChild 让锚点的手势优先处理
-    if (isDraggable) {
-      return GestureDetector(
+    // 如果可拖动，包裹拖动手势
+    if (isDraggable && onDragStart != null) {
+      content = GestureDetector(
         behavior: HitTestBehavior.deferToChild,
         onPanStart: onDragStart,
         onPanUpdate: onDragUpdate,
@@ -171,19 +147,21 @@ class ERTableNodeWidget extends StatelessWidget {
       height: headerHeight,
       decoration: BoxDecoration(
         color: TDAppTheme.getNodeHeaderColor(isDark),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(cornerRadius),
+          topRight: Radius.circular(cornerRadius),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: padding),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: [
-            // 表图标
             const Icon(
               Icons.table_rows,
               size: 16,
               color: Colors.white,
             ),
             const SizedBox(width: 8),
-            // 表名
             Expanded(
               child: Text(
                 entity.title,
@@ -196,7 +174,6 @@ class ERTableNodeWidget extends StatelessWidget {
                 maxLines: 1,
               ),
             ),
-            // 中文名
             if (entity.chnname.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 8),
@@ -217,12 +194,12 @@ class ERTableNodeWidget extends StatelessWidget {
   }
 
   /// 构建字段行
-  Widget _buildFieldRow(BuildContext context, int index, Field field, bool isDark) {
+  Widget _buildFieldRow(int index, Field field, bool isDark) {
     return Container(
       height: fieldRowHeight,
       color: index % 2 == 1 && !isDark ? Colors.grey.shade50 : null,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: padding),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: [
             // 主键图标
@@ -262,96 +239,70 @@ class ERTableNodeWidget extends StatelessWidget {
     );
   }
 
-  /// 构建字段锚点层
-  Widget _buildFieldAnchors(bool isDark) {
+  /// 构建锚点层
+  Widget _buildAnchorLayer(bool isDark) {
     return Positioned.fill(
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          for (int i = 0; i < entity.fields.length; i++)
-            ..._buildAnchorsForField(i, entity.fields[i], isDark),
+          for (int i = 0; i < entity.fields.length; i++) ...[
+            _buildAnchor(i, ERAnchorDirection.left, isDark),
+            _buildAnchor(i, ERAnchorDirection.right, isDark),
+          ],
         ],
       ),
     );
   }
 
-  /// 构建单个字段的左右锚点
-  List<Widget> _buildAnchorsForField(int index, Field field, bool isDark) {
-    final nodeId = node.key?.value.toString() ?? '';
-    final rowY = headerHeight + (index * fieldRowHeight) + fieldRowHeight / 2;
-    // 点击区域大小
-    const hitSize = 20.0;
+  /// 构建单个锚点
+  Widget _buildAnchor(int fieldIndex, ERAnchorDirection direction, bool isDark) {
+    final field = entity.fields[fieldIndex];
+    final rowY = headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
 
-    return [
-      // 左锚点（出边连接点）
-      Positioned(
-        left: -anchorOffset - hitSize / 2,
-        top: rowY - hitSize / 2,
-        child: _buildAnchorWidget(
-          FieldAnchor(
-            nodeId: nodeId,
-            fieldIndex: index,
-            position: Offset(node.x - anchorOffset, node.y + rowY),
-            direction: FieldAnchorDirection.left,
-            field: field,
-          ),
-          isDark,
-        ),
+    // 计算锚点位置
+    final left = direction == ERAnchorDirection.left
+        ? -anchorOffset - anchorHitSize / 2
+        : null;
+    final right = direction == ERAnchorDirection.right
+        ? -anchorOffset - anchorHitSize / 2
+        : null;
+
+    final anchor = ERFieldAnchor(
+      nodeId: entity.id,
+      fieldIndex: fieldIndex,
+      direction: direction,
+      position: Offset(
+        direction == ERAnchorDirection.left
+            ? graphNode.x - anchorOffset
+            : graphNode.x + defaultWidth + anchorOffset,
+        graphNode.y + rowY,
       ),
-      // 右锚点（入边连接点）
-      Positioned(
-        right: -anchorOffset - hitSize / 2,
-        top: rowY - hitSize / 2,
-        child: _buildAnchorWidget(
-          FieldAnchor(
-            nodeId: nodeId,
-            fieldIndex: index,
-            position: Offset(node.x + defaultWidth + anchorOffset, node.y + rowY),
-            direction: FieldAnchorDirection.right,
-            field: field,
-          ),
-          isDark,
-        ),
-      ),
-    ];
-  }
+    );
 
-  /// 构建单个锚点 Widget
-  Widget _buildAnchorWidget(FieldAnchor anchor, bool isDark) {
-    final color = TDAppTheme.getAnchorColor(anchor.field.pk);
+    final color = field.pk ? Colors.amber.shade600 : Colors.blue.shade500;
 
-    // 锚点视觉大小
-    const visualSize = 6.0;
-    // 点击区域大小（比视觉大，更容易点击）
-    const hitSize = 20.0;
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onAnchorTap?.call(anchor),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.cell,
-        child: SizedBox(
-          width: hitSize,
-          height: hitSize,
-          child: Center(
-            child: Container(
-              width: visualSize,
-              height: visualSize,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: color,
-                  width: 1.5,
-                ),
-              ),
-              child: Center(
-                child: CustomPaint(
-                  size: const Size(4, 4),
-                  painter: _AnchorDirectionPainter(
-                    direction: anchor.direction,
-                    color: color,
-                  ),
+    return Positioned(
+      left: left,
+      right: right,
+      top: rowY - anchorHitSize / 2,
+      child: Listener(
+        onPointerDown: (_) {
+          onAnchorTap?.call(anchor);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.cell,
+          child: SizedBox(
+            width: anchorHitSize,
+            height: anchorHitSize,
+            child: Center(
+              child: Container(
+                width: anchorVisualSize,
+                height: anchorVisualSize,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: color, width: 1.5),
                 ),
               ),
             ),
@@ -384,48 +335,5 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 计算节点尺寸
   static Size calculateNodeSize(int fieldCount) {
     return Size(defaultWidth, calculateNodeHeight(fieldCount));
-  }
-}
-
-/// 锚点方向指示器
-class _AnchorDirectionPainter extends CustomPainter {
-  final FieldAnchorDirection direction;
-  final Color color;
-
-  _AnchorDirectionPainter({
-    required this.direction,
-    required this.color,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0
-        ..strokeCap = StrokeCap.round;
-
-    final center = Offset(size.width / 2, size.height / 2);
-
-    if (direction == FieldAnchorDirection.left) {
-      // 左锚点：箭头向左（出边）
-      canvas.drawLine(
-        Offset(center.dx + 1, center.dy),
-        Offset(center.dx - 1, center.dy),
-        paint,
-      );
-    } else {
-      // 右锚点：箭头向右（入边）
-      canvas.drawLine(
-        Offset(center.dx - 1, center.dy),
-        Offset(center.dx + 1, center.dy),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _AnchorDirectionPainter oldDelegate) {
-    return direction != oldDelegate.direction || color != oldDelegate.color;
   }
 }
