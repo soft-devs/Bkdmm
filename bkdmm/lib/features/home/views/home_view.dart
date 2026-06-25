@@ -10,6 +10,7 @@ import '../../project/views/open_project_dialog.dart';
 import '../../settings/views/settings_view.dart';
 import '../../workspace/views/workspace_view.dart';
 import '../widgets/history_list_tile.dart';
+import '../widgets/quick_action_card.dart';
 
 /// Home view displaying project history and quick actions.
 class HomeView extends ConsumerStatefulWidget {
@@ -167,7 +168,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
               return Row(
                 children: [
                   Expanded(
-                    child: _QuickActionCard(
+                    child: QuickActionCard(
                       icon: TDIcons.add,
                       label: 'New Project',
                       description: 'Create a new project',
@@ -177,7 +178,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _QuickActionCard(
+                    child: QuickActionCard(
                       icon: TDIcons.folder_open,
                       label: 'Open Project',
                       description: 'Open an existing project',
@@ -187,7 +188,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _QuickActionCard(
+                    child: QuickActionCard(
                       icon: TDIcons.download,
                       label: 'Import',
                       description: 'Import from file',
@@ -206,21 +207,21 @@ class _HomeViewState extends ConsumerState<HomeView> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                _QuickActionCard(
+                QuickActionCard(
                   icon: TDIcons.add,
                   label: 'New Project',
                   description: 'Create a new project',
                   tdTheme: tdTheme,
                   onTap: _isCreating ? null : _showCreateProjectDialog,
                 ),
-                _QuickActionCard(
+                QuickActionCard(
                   icon: TDIcons.folder_open,
                   label: 'Open Project',
                   description: 'Open an existing project',
                   tdTheme: tdTheme,
                   onTap: _showOpenProjectDialog,
                 ),
-                _QuickActionCard(
+                QuickActionCard(
                   icon: TDIcons.download,
                   label: 'Import',
                   description: 'Import from file',
@@ -471,92 +472,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
           action: () => Navigator.of(dialogContext).pop(),
         ),
         rightBtn: null,
-      ),
-    );
-  }
-}
-
-/// Quick action card widget using TDTheme colors and TDText.
-class _QuickActionCard extends StatefulWidget {
-  const _QuickActionCard({
-    required this.icon,
-    required this.label,
-    required this.description,
-    required this.tdTheme,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String description;
-  final TDThemeData tdTheme;
-  final VoidCallback? onTap;
-
-  @override
-  State<_QuickActionCard> createState() => _QuickActionCardState();
-}
-
-class _QuickActionCardState extends State<_QuickActionCard> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final tdTheme = widget.tdTheme;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
-      child: AnimatedScale(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        scale: _isHovered ? 1.02 : 1.0,
-        child: Material(
-          color: _isHovered
-              ? tdTheme.bgColorContainerHover
-              : tdTheme.bgColorSecondaryContainer,
-          borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: tdTheme.brandLightColor,
-                      borderRadius: BorderRadius.circular(tdTheme.radiusExtraLarge),
-                    ),
-                    child: Icon(
-                      widget.icon,
-                      size: 24,
-                      color: tdTheme.brandNormalColor,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TDText(
-                    widget.label,
-                    font: tdTheme.fontTitleSmall,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  const SizedBox(height: 4),
-                  TDText(
-                    widget.description,
-                    font: tdTheme.fontBodySmall,
-                    textColor: tdTheme.textColorSecondary,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

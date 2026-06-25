@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
+import '../../../shared/widgets/td_popup_menu.dart';
 
 /// Individual module tree item widget
 class ModuleTreeItem extends StatelessWidget {

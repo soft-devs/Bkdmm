@@ -11,5 +11,8 @@ export 'services/data_migration.dart';
 export 'views/create_project_dialog.dart';
 export 'views/open_project_dialog.dart';
 
+// Widgets
+export 'widgets/widgets.dart';
+
 // Providers
 export 'providers/project_notifier.dart';

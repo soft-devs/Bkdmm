@@ -13,6 +13,9 @@ import '../widgets/toolbar/top_menu_bar.dart';
 import '../widgets/left_view/left_view_container.dart';
 import '../widgets/bottom_view/bottom_view_container.dart';
 import '../widgets/shortcuts/workspace_shortcuts.dart';
+import '../widgets/property_section.dart';
+import '../widgets/property_field.dart';
+import '../widgets/stat_tile.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
 import '../../modeling/er_diagram/widgets/er_diagram_canvas.dart';
 
@@ -490,17 +493,17 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _PropertySection(title: '实体信息'),
-        _PropertyField(label: '标题', value: entity.title),
-        _PropertyField(label: '中文名', value: entity.chnname),
-        _PropertyField(label: '备注', value: entity.remark ?? '无'),
+        PropertySection(title: '实体信息'),
+        PropertyField(label: '标题', value: entity.title),
+        PropertyField(label: '中文名', value: entity.chnname),
+        PropertyField(label: '备注', value: entity.remark ?? '无'),
         const SizedBox(height: 16),
-        _PropertySection(title: '统计'),
-        _StatTile(
+        PropertySection(title: '统计'),
+        StatTile(
             icon: TDIcons.view_list, label: '字段', value: '${entity.fields.length}'),
-        _StatTile(
+        StatTile(
             icon: TDIcons.key, label: '主键', value: '${entity.primaryKeys.length}'),
-        _StatTile(
+        StatTile(
             icon: TDIcons.chart, label: '索引', value: '${entity.indexes.length}'),
       ],
     );
@@ -520,12 +523,12 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _PropertySection(title: '模块信息'),
-        _PropertyField(label: '名称', value: module.name),
-        _PropertyField(label: '中文名', value: module.chnname),
+        PropertySection(title: '模块信息'),
+        PropertyField(label: '名称', value: module.name),
+        PropertyField(label: '中文名', value: module.chnname),
         const SizedBox(height: 16),
-        _PropertySection(title: '统计'),
-        _StatTile(
+        PropertySection(title: '统计'),
+        StatTile(
             icon: TDIcons.table, label: '表', value: '${module.entities.length}'),
       ],
     );
@@ -535,18 +538,18 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _PropertySection(title: '项目信息'),
-        _PropertyField(label: '名称', value: project.name),
-        _PropertyField(label: '描述', value: project.description ?? '无'),
-        _PropertyField(label: '版本', value: project.version),
+        PropertySection(title: '项目信息'),
+        PropertyField(label: '名称', value: project.name),
+        PropertyField(label: '描述', value: project.description ?? '无'),
+        PropertyField(label: '版本', value: project.version),
         const SizedBox(height: 16),
-        _PropertySection(title: '统计'),
-        _StatTile(
+        PropertySection(title: '统计'),
+        StatTile(
           icon: TDIcons.view_module,
           label: '模块',
           value: '${project.modules.length}',
         ),
-        _StatTile(
+        StatTile(
           icon: TDIcons.table,
           label: '表',
           value:
@@ -823,100 +826,5 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       // 打开新创建的表编辑器
       ref.read(tabProvider.notifier).openEntity(entity, module.id);
     }
-  }
-}
-
-/// 属性分组标题
-class _PropertySection extends StatelessWidget {
-  final String title;
-
-  const _PropertySection({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    final tdTheme = TDTheme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: TDText(
-        title,
-        font: tdTheme.fontTitleSmall,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-/// 属性字段
-class _PropertyField extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _PropertyField({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tdTheme = TDTheme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TDText(
-            label,
-            font: tdTheme.fontBodySmall,
-            textColor: tdTheme.textColorSecondary,
-          ),
-          const SizedBox(height: 2),
-          TDText(
-            value,
-            font: tdTheme.fontBodyMedium,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 统计项
-class _StatTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _StatTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tdTheme = TDTheme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: tdTheme.textColorSecondary),
-          const SizedBox(width: 8),
-          TDText(
-            label,
-            font: tdTheme.fontBodySmall,
-            textColor: tdTheme.textColorSecondary,
-          ),
-          const Spacer(),
-          TDText(
-            value,
-            font: tdTheme.fontBodySmall,
-            fontWeight: FontWeight.w600,
-          ),
-        ],
-      ),
-    );
   }
 }
