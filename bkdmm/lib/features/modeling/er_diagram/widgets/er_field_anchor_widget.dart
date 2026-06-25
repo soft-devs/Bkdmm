@@ -133,7 +133,8 @@ class ERFieldAnchorLayer extends StatelessWidget {
       height: ERFieldAnchorWidget.hitSize,
       child: Listener(
         behavior: HitTestBehavior.opaque, // 拦截事件，不传递给父级
-        onPointerDown: (_) {
+        onPointerDown: (event) {
+          debugPrint('[ERAnchor] onPointerDown: entityId=$entityId, fieldIndex=$fieldIndex, direction=$direction');
           // 创建锚点数据
           final anchor = ERFieldAnchor(
             nodeId: entityId,

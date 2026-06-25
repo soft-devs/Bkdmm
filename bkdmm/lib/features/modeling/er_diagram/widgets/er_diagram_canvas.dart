@@ -259,8 +259,11 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
   /// 指针按下事件（右键拖动画布 + 编辑模式框选）
   void _onPointerDown(PointerDownEvent event, ERDiagramUIState uiState) {
+    debugPrint('[ERCanvas] _onPointerDown: localPosition=${event.localPosition}, buttons=${event.buttons}, kind=${event.kind}');
+
     // 右键：编辑模式下拖动画布
     if (event.kind == PointerDeviceKind.mouse && event.buttons == kSecondaryMouseButton) {
+      debugPrint('[ERCanvas] 右键按下，编辑模式=${uiState.isEditMode}');
       if (uiState.isEditMode) {
         // 编辑模式下手动处理右键拖动画布
         _isRightDragging = true;
@@ -272,6 +275,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
     // 左键：编辑模式下开始框选（仅当点击在空白区域时）
     if (event.kind == PointerDeviceKind.mouse && event.buttons == kPrimaryMouseButton) {
+      debugPrint('[ERCanvas] 左键按下，编辑模式=${uiState.isEditMode}');
       if (uiState.isEditMode) {
         // 检查是否点击在节点上
         final project = ref.read(projectNotifierProvider).project;
@@ -283,8 +287,13 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
         bool clickedOnNode = false;
         if (module != null) {
           // 将屏幕坐标转换为画布坐标
+          // InteractiveViewer 的变换矩阵：canvas_pos = transform * screen_pos
+          // 我们需要：canvas_pos = inverse(transform) * screen_pos
           final transform = _transformationController.value;
-          final canvasPos = MatrixUtils.transformPoint(transform, event.localPosition);
+          final inverseTransform = Matrix4.inverted(transform);
+          final canvasPos = MatrixUtils.transformPoint(inverseTransform, event.localPosition);
+
+          debugPrint('[ERCanvas] 屏幕坐标=${event.localPosition}, 画布坐标=$canvasPos, 变换矩阵=$transform');
 
           // 检查每个节点
           for (final entity in module.entities) {
@@ -302,13 +311,18 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
               nodeSize.height,
             );
 
+            debugPrint('[ERCanvas] 节点 ${entity.title}: 位置=(${graphNode.x}, ${graphNode.y}), rect=$nodeRect');
+
             // 扩大点击区域以包含锚点
             final expandedRect = nodeRect.inflate(ERFieldAnchorWidget.hitSize);
             if (expandedRect.contains(canvasPos)) {
+              debugPrint('[ERCanvas] 点击在节点 ${entity.title} 上');
               clickedOnNode = true;
               break;
             }
           }
+
+          debugPrint('[ERCanvas] clickedOnNode=$clickedOnNode');
         }
 
         // 仅当点击在空白区域时启动框选

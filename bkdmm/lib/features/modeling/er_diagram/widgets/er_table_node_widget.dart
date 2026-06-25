@@ -104,7 +104,8 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
 
     // 使用 Listener 拦截指针事件，阻止事件向上传递到画布
     content = Listener(
-      onPointerDown: (_) {
+      onPointerDown: (event) {
+        debugPrint('[ERTableNode] Listener onPointerDown: ${widget.entity.title}, position=${event.localPosition}');
         // 拦截事件，不传递给父级（避免触发画布框选）
       },
       behavior: HitTestBehavior.opaque,
@@ -135,6 +136,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onTap() {
+    debugPrint('[ERTableNode] onTap: ${widget.entity.title}');
     // 检查是否按下 Ctrl 键
     final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
         .contains(LogicalKeyboardKey.controlLeft) ||
@@ -144,6 +146,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onPanStart(DragStartDetails details) {
+    debugPrint('[ERTableNode] onPanStart: ${widget.entity.title}, position=${details.localPosition}');
     _isDragging = true;
     widget.onDragStart?.call(details);
   }
@@ -154,6 +157,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onPanEnd(DragEndDetails details) {
+    debugPrint('[ERTableNode] onPanEnd: ${widget.entity.title}');
     _isDragging = false;
     widget.onDragEnd?.call();
   }
