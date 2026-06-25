@@ -110,7 +110,17 @@ class ERDiagramNotifier extends StateNotifier<ERDiagramState> {
 
     try {
       final module = project.modules.firstWhere((m) => m.id == moduleId);
-      state = ERDiagramState.fromModule(module);
+      final newState = ERDiagramState.fromModule(module);
+
+      // 检查是否有新创建的 GraphNode（需要保存到项目）
+      final hasNewNodes = module.graphCanvas.nodes.length != newState.nodes.length;
+
+      state = newState;
+
+      // 如果有新节点，同步到项目
+      if (hasNewNodes) {
+        _syncToProject();
+      }
     } catch (_) {
       // 模块未找到，保持当前状态（可能是新模块尚未添加到项目中）
       // 如果已初始化，设置为空状态

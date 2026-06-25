@@ -11,7 +11,7 @@ Bkdmm 日志服务基于 `logger` 包封装，提供：
 ## 文件结构
 
 ```
-lib/shared/services/logging/
+lib/utils/logging/
 ├── logging.dart           # 模块导出
 ├── logging_config.dart    # 配置类
 ├── logging_outputs.dart   # 输出器

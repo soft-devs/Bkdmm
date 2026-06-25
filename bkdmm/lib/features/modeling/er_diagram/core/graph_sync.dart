@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:graphview/graphview.dart';
 import 'package:bkdmm/shared/models/models.dart';
 import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
+import 'package:bkdmm/utils/logging/logging_service.dart';
 import '../models/er_diagram_models.dart';
 import 'field_anchor_registry.dart';
 import 'er_graph_edge.dart';
@@ -46,6 +47,8 @@ class ERDiagramGraphSync {
       final node = _createGraphNode(erNode);
       graph.addNode(node);
       _nodeMap[entry.key] = node;
+
+      logging.d('syncFromState: nodeId=${entry.key}, position=(${erNode.position.dx}, ${erNode.position.dy}), size=${erNode.size}', tag: 'ERDiagram');
 
       // 注册字段锚点
       anchorRegistry.registerFieldAnchors(

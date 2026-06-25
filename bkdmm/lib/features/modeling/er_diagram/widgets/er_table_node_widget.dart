@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graphview/graphview.dart';
 import 'package:bkdmm/shared/models/models.dart';
 import 'package:bkdmm/shared/theme/td_theme.dart';
+import 'package:bkdmm/utils/utils.dart';
 import '../core/field_anchor_registry.dart';
 
 /// ER 图表格节点 Widget
@@ -78,6 +79,8 @@ class ERTableNodeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = isDarkMode || Theme.of(context).brightness == Brightness.dark;
 
+    logging.d('ERTableNodeWidget.build: showAnchors=$showAnchors, isDraggable=$isDraggable, entity.title=${entity.title}', tag: 'ERTableNodeWidget');
+
     // 根据是否可拖动选择不同的手势处理
     Widget content = GestureDetector(
       onTap: onTap,
@@ -103,23 +106,45 @@ class ERTableNodeWidget extends StatelessWidget {
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(cornerRadius),
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(isDark),
-                    ...entity.fields.asMap().entries.map((entry) =>
-                        _buildFieldRow(context, entry.key, entry.value, isDark)),
-                  ],
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // 节点主体（带裁剪）
+              ClipRRect(
+                borderRadius: BorderRadius.circular(cornerRadius),
+                child: Container(
+                  width: defaultWidth,
+                  decoration: BoxDecoration(
+                    color: TDAppTheme.getNodeBgColor(isDark, isSelected),
+                    borderRadius: BorderRadius.circular(cornerRadius),
+                    border: isSelected
+                        ? Border.all(
+                            color: TDAppTheme.getSelectionBorderColor(isDark),
+                            width: 2,
+                          )
+                        : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(isDark),
+                      ...entity.fields.asMap().entries.map((entry) =>
+                          _buildFieldRow(context, entry.key, entry.value, isDark)),
+                    ],
+                  ),
                 ),
-                // 字段锚点（仅在编辑模式显示）
-                if (showAnchors) _buildFieldAnchors(isDark),
-              ],
-            ),
+              ),
+              // 字段锚点（仅在编辑模式显示，放在ClipRRect外部）
+              if (showAnchors) _buildFieldAnchors(isDark),
+            ],
           ),
         ),
       ),

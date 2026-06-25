@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/services.dart';
+import '../../utils/utils.dart';
 
 /// Application settings state
 class SettingsState {
@@ -196,7 +197,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       await _storageService.saveSetting(_settingsKey, state.toJson());
     } catch (e) {
       // Log error but don't crash
-      debugPrint('Failed to save settings: $e');
+      logging.e('Failed to save settings', error: e, tag: 'SettingsProvider');
     }
   }
 

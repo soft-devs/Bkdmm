@@ -5,6 +5,7 @@ import 'package:graphview/graphview.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/utils/utils.dart';
 import '../core/field_anchor_registry.dart';
 import '../core/graph_sync.dart';
 import '../layout/layout_adapter.dart';
@@ -165,7 +166,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     }
 
     // 当前是否是编辑模式
-    // final isEditMode = _interactionMode == InteractionMode.edit;
+    final isEditMode = _interactionMode == InteractionMode.edit;
+    logging.d('构建 GraphView: interactionMode=${_interactionMode}, isEditMode=$isEditMode', tag: 'ERDiagramCanvas');
 
     final builder = ERNodeWidgetBuilderState(
       selectedNodeIds: _selectedNodeIds,
@@ -181,6 +183,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       onNodeTap: _onNodeTap,
       onNodeDoubleTap: _onNodeDoubleTap,
     );
+
+    logging.d('ERNodeWidgetBuilderState: showAnchors=${builder.showAnchors}, isDraggable=${builder.isDraggable}', tag: 'ERDiagramCanvas');
 
     // 背景网格颜色
     final gridColor = isDark
