@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:graphview/graphview.dart';
 
 import '../../../../shared/models/models.dart';
@@ -32,8 +33,8 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 锚点点击回调
   final void Function(ERFieldAnchor anchor, GraphNode graphNode)? onAnchorTap;
 
-  /// 节点点击回调（编辑模式）
-  final VoidCallback? onTap;
+  /// 节点点击回调（编辑模式），参数为是否按下 Ctrl 键
+  final void Function(bool isCtrlPressed)? onTap;
 
   /// 节点双击回调
   final VoidCallback? onDoubleTap;
@@ -82,14 +83,21 @@ class ERTableNodeWidget extends StatelessWidget {
     // 节点主体
     Widget content = _buildNodeBody(isDark);
 
-    // 编辑模式：可拖动
+    // 编辑模式：可拖动和点击
     if (isEditMode && onDragStart != null) {
       content = GestureDetector(
         behavior: HitTestBehavior.translucent,
         onPanStart: onDragStart,
         onPanUpdate: onDragUpdate,
         onPanEnd: (_) => onDragEnd?.call(),
-        onTap: onTap,
+        onTap: () {
+          // 检查是否按下 Ctrl 键
+          final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
+              .contains(LogicalKeyboardKey.controlLeft) ||
+              HardwareKeyboard.instance.logicalKeysPressed
+              .contains(LogicalKeyboardKey.controlRight);
+          onTap?.call(isCtrlPressed);
+        },
         onDoubleTap: onDoubleTap,
         child: content,
       );

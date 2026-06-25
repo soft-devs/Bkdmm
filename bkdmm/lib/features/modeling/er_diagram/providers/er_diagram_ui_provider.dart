@@ -27,7 +27,8 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
   /// 设置交互模式
   void setInteractionMode(ERInteractionMode mode) {
     if (state.interactionMode != mode) {
-      state = state.copyWith(interactionMode: mode);
+      // 切换模式时清空选择
+      state = state.copyWith(interactionMode: mode, selectedNodeIds: const {});
     }
   }
 
@@ -51,67 +52,31 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 选择类型切换
+  // 节点选择（根据操作行为自动判断单选/多选）
   // ═══════════════════════════════════════════════════════════════════
 
-  /// 设置选择类型
-  void setSelectionType(ERSelectionType type) {
-    if (state.selectionType != type) {
-      // 切换到单选模式时，如果当前有多个选中，只保留第一个
-      Set<String>? newSelection;
-      if (type == ERSelectionType.single && state.selectedNodeIds.length > 1) {
-        newSelection = {state.selectedNodeIds.first};
-      }
-      state = state.copyWith(selectionType: type, selectedNodeIds: newSelection);
-    }
+  /// 单击选择节点（单选行为）
+  /// 点击节点时，清除之前的选择，只选中当前节点
+  void selectNodeSingle(String nodeId) {
+    state = state.copyWith(selectedNodeIds: {nodeId});
   }
 
-  /// 切换到单选模式
-  void enterSingleSelectionMode() {
-    setSelectionType(ERSelectionType.single);
-  }
-
-  /// 切换到多选模式
-  void enterMultipleSelectionMode() {
-    setSelectionType(ERSelectionType.multiple);
-  }
-
-  /// 切换选择类型
-  void toggleSelectionType() {
-    if (state.isSingleSelection) {
-      enterMultipleSelectionMode();
+  /// Ctrl+点击选择节点（多选行为）
+  /// 追加或移除选中节点
+  void selectNodeMultiple(String nodeId) {
+    final newSelection = Set<String>.from(state.selectedNodeIds);
+    if (newSelection.contains(nodeId)) {
+      newSelection.remove(nodeId);
     } else {
-      enterSingleSelectionMode();
+      newSelection.add(nodeId);
     }
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // 节点选择
-  // ═══════════════════════════════════════════════════════════════════
-
-  /// 选择节点
-  /// [addToSelection] 用于 Ctrl+点击多选
-  void selectNode(String nodeId, {bool addToSelection = false}) {
-    Set<String> newSelection;
-
-    if (state.isSingleSelection) {
-      // 单选模式：只能选中一个
-      newSelection = {nodeId};
-    } else {
-      // 多选模式
-      if (addToSelection) {
-        newSelection = Set<String>.from(state.selectedNodeIds);
-        if (newSelection.contains(nodeId)) {
-          newSelection.remove(nodeId);
-        } else {
-          newSelection.add(nodeId);
-        }
-      } else {
-        newSelection = {nodeId};
-      }
-    }
-
     state = state.copyWith(selectedNodeIds: newSelection);
+  }
+
+  /// 框选完成（多选行为）
+  /// 替换当前选择为框选区域内的节点
+  void selectNodesByRect(Set<String> nodeIds) {
+    state = state.copyWith(selectedNodeIds: nodeIds);
   }
 
   /// 取消选择
@@ -121,10 +86,6 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
 
   /// 全选
   void selectAll(List<String> nodeIds) {
-    if (state.isSingleSelection) {
-      // 单选模式不支持全选
-      return;
-    }
     state = state.copyWith(selectedNodeIds: Set<String>.from(nodeIds));
   }
 
@@ -141,6 +102,7 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
 
   /// 开始拖动节点
   /// 如果节点已选中且有多选，则拖动所有选中的节点
+  /// 否则只选中并拖动当前节点（单选行为）
   void startDragging(String nodeId) {
     Set<String> toDrag;
 
@@ -148,7 +110,7 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
       // 拖动已选中的节点，且有多选，则拖动所有选中的节点
       toDrag = Set<String>.from(state.selectedNodeIds);
     } else {
-      // 只拖动当前节点，并选中它
+      // 只拖动当前节点，并选中它（单选行为）
       toDrag = {nodeId};
       state = state.copyWith(selectedNodeIds: toDrag);
     }
@@ -231,11 +193,9 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
   // 框选操作
   // ═══════════════════════════════════════════════════════════════════
 
-  /// 开始框选（自动切换到多选模式）
+  /// 开始框选
   void startSelection(Offset startPoint) {
-    // 框选时自动切换到多选模式
     state = state.copyWith(
-      selectionType: ERSelectionType.multiple,
       selection: ERSelectionState(
         isSelecting: true,
         startPoint: startPoint,

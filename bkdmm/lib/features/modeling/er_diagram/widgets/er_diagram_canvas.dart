@@ -343,7 +343,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       isSelected: uiState.selectedNodeIds.contains(nodeId),
       interactionMode: uiState.interactionMode,
       isDarkMode: isDark,
-      onTap: () => _onNodeTap(nodeId, uiState),
+      onTap: (isCtrlPressed) => _onNodeTap(nodeId, isCtrlPressed),
       onDoubleTap: () => _onNodeDoubleTap(entity, uiState.isEditMode),
       onDragStart: uiState.isEditMode ? (details) => _onNodeDragStart(nodeId, details, graphNode ?? GraphNode(title: entity.title, x: 100, y: 100, moduleName: entity.id)) : null,
       onDragUpdate: uiState.isEditMode ? (details) => _onNodeDragUpdate(nodeId, details) : null,
@@ -410,29 +410,6 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
           const SizedBox(width: 8),
           Container(width: 1, height: 24, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
           const SizedBox(width: 8),
-          // 单选/多选模式按钮（仅编辑模式）
-          if (uiState.isEditMode) ...[
-            TDButton(
-              theme: uiState.isSingleSelection
-                  ? TDButtonTheme.primary
-                  : TDButtonTheme.defaultTheme,
-              icon: Icons.radio_button_checked,
-              size: TDButtonSize.small,
-              onTap: () => notifier.enterSingleSelectionMode(),
-            ),
-            const SizedBox(width: 4),
-            TDButton(
-              theme: uiState.isMultipleSelection
-                  ? TDButtonTheme.primary
-                  : TDButtonTheme.defaultTheme,
-              icon: Icons.checklist,
-              size: TDButtonSize.small,
-              onTap: () => notifier.enterMultipleSelectionMode(),
-            ),
-            const SizedBox(width: 8),
-            Container(width: 1, height: 24, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
-            const SizedBox(width: 8),
-          ],
           // 缩放按钮
           TDButton(
             icon: TDIcons.zoom_in,
@@ -523,14 +500,21 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   // 事件处理
   // ═══════════════════════════════════════════════════════════════════
 
-  void _onNodeTap(String nodeId, ERDiagramUIState uiState) {
-    // 编辑模式下才处理点击选择
-    if (!uiState.isEditMode) return;
-
+  /// 节点点击事件
+  /// [isCtrlPressed] 是否按下 Ctrl 键（用于多选）
+  void _onNodeTap(String nodeId, bool isCtrlPressed) {
     final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-    notifier.selectNode(nodeId, addToSelection: true);
+
+    if (isCtrlPressed) {
+      // Ctrl+点击：多选行为
+      notifier.selectNodeMultiple(nodeId);
+    } else {
+      // 单击：单选行为
+      notifier.selectNodeSingle(nodeId);
+    }
 
     // 取消框选（如果在框选）
+    final uiState = ref.read(erDiagramUIProvider(widget.moduleId));
     if (uiState.isSelecting) {
       notifier.cancelSelection();
     }
