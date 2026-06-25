@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:graphview/graphview.dart';
 import '../core/field_anchor_registry.dart';
 import '../renderers/er_edge_renderer.dart';
@@ -34,7 +35,13 @@ class NoOpLayoutAlgorithm extends Algorithm {
   @override
   Size run(Graph? graph, double shiftX, double shiftY) {
     // 不进行任何布局计算，保持节点现有位置
-    if (graph == null) return Size.zero;
+    if (graph == null) return const Size(2000, 2000);
+
+    // 调试：打印所有节点位置
+    debugPrint('NoOpLayoutAlgorithm.run() called with shiftX=$shiftX, shiftY=$shiftY');
+    for (final node in graph.nodes) {
+      debugPrint('  - node: key=${node.key?.value}, x=${node.x}, y=${node.y}, width=${node.width}, height=${node.height}');
+    }
 
     // 计算图的大小
     double minX = double.infinity;
@@ -43,15 +50,22 @@ class NoOpLayoutAlgorithm extends Algorithm {
     double maxY = double.negativeInfinity;
 
     for (final node in graph.nodes) {
-      minX = minX < node.x ? minX : node.x;
-      minY = minY < node.y ? minY : node.y;
-      maxX = maxX > node.x + node.width ? maxX : node.x + node.width;
-      maxY = maxY > node.y + node.height ? maxY : node.y + node.height;
+      if (node.x < minX) minX = node.x;
+      if (node.y < minY) minY = node.y;
+      if (node.x + node.width > maxX) maxX = node.x + node.width;
+      if (node.y + node.height > maxY) maxY = node.y + node.height;
     }
 
-    if (minX == double.infinity) return Size.zero;
+    if (minX == double.infinity) {
+      debugPrint('NoOpLayoutAlgorithm: returning default size');
+      return const Size(2000, 2000);
+    }
 
-    return Size(maxX - minX, maxY - minY);
+    final width = maxX - minX + 100;  // 添加一些边距
+    final height = maxY - minY + 100;
+    debugPrint('NoOpLayoutAlgorithm: calculated size = ${width}x$height');
+
+    return Size(width, height);
   }
 }
 

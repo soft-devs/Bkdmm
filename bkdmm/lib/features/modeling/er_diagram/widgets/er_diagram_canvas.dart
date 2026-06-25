@@ -51,9 +51,6 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   /// 布局适配器
   late GraphViewLayoutAdapter _layoutAdapter;
 
-  /// 变换控制器
-  late TransformationController _transformController;
-
   /// 当前选中的节点 ID
   final Set<String> _selectedNodeIds = {};
 
@@ -73,12 +70,14 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   Offset _dragStartPos = Offset.zero;
   Offset _nodeStartPos = Offset.zero;
 
+  /// 鼠标位置（用于显示坐标）
+  Offset _mousePosition = Offset.zero;
+
   @override
   void initState() {
     super.initState();
 
     _graphViewController = GraphViewController();
-    _transformController = TransformationController();
     _graphSync = ERDiagramGraphSync();
     _layoutAdapter = GraphViewLayoutAdapter();
     _layoutAdapter.anchorRegistry = _graphSync.anchorRegistry;
@@ -89,17 +88,10 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     });
   }
 
-  @override
-  void dispose() {
-    _transformController.dispose();
-    super.dispose();
-  }
-
   /// 从状态同步到 graphview
   void _syncFromState() {
     final state = ref.read(erDiagramProvider(widget.moduleId));
     _graphSync.syncFromState(state);
-
     setState(() {});
   }
 
@@ -108,19 +100,26 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(erDiagramProvider(widget.moduleId));
 
-    // 同步状态（但不重新布局）
+    // 同步状态到 graphview
     _graphSync.syncFromState(state);
 
     return Stack(
       children: [
         // 主画布（包含背景网格）
-        _buildGraphView(state, isDark),
+        _buildMainCanvas(state, isDark),
 
         // 工具栏
         Positioned(
           top: 16,
           right: 16,
           child: _buildToolbar(isDark),
+        ),
+
+        // 左下角坐标显示
+        Positioned(
+          left: 16,
+          bottom: 16,
+          child: _buildCoordinateDisplay(isDark),
         ),
 
         // 连线预览
@@ -143,8 +142,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     );
   }
 
-  /// 构建 GraphView
-  Widget _buildGraphView(ERDiagramState state, bool isDark) {
+  /// 构建主画布
+  Widget _buildMainCanvas(ERDiagramState state, bool isDark) {
     // 更新边渲染器的暗色模式
     _layoutAdapter.isDarkMode = isDark;
 
@@ -170,20 +169,67 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       onNodeDoubleTap: _onNodeDoubleTap,
     );
 
-    // 使用固定位置布局（保持节点现有位置，不自动布局）
+    // 使用固定位置布局
     _layoutAdapter.useFixedPositionLayout();
 
-    // 使用 RepaintBoundary 优化性能
-    return RepaintBoundary(
-      child: ClipRect(
-        child: CustomPaint(
-          painter: _BackgroundGridPainter(isDark: isDark),
-          child: GraphView.builder(
+    // 背景网格颜色
+    final gridColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.08);
+
+    // 使用 MouseRegion 追踪鼠标位置
+    return MouseRegion(
+      onHover: (event) {
+        setState(() {
+          _mousePosition = event.localPosition;
+        });
+      },
+      child: Stack(
+        children: [
+          // 背景网格层
+          Positioned.fill(
+            child: GridPaper(
+              color: gridColor,
+              divisions: 1,
+              subdivisions: 1,
+              interval: 20,
+              child: Container(color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA)),
+            ),
+          ),
+          // GraphView 层
+          GraphView.builder(
             graph: _graphSync.graph,
             algorithm: _layoutAdapter.algorithm ?? NoOpLayoutAlgorithm(),
             controller: _graphViewController,
             builder: builder.build(),
+            animated: false,
           ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建坐标显示
+  Widget _buildCoordinateDisplay(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(1, 1),
+          ),
+        ],
+      ),
+      child: Text(
+        'X: ${_mousePosition.dx.toStringAsFixed(0)}  Y: ${_mousePosition.dy.toStringAsFixed(0)}',
+        style: TextStyle(
+          fontSize: 11,
+          fontFamily: 'monospace',
+          color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
         ),
       ),
     );
@@ -207,20 +253,29 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 模式切换
+          // 移动模式按钮
+          TDButton(
+            theme: _interactionMode == InteractionMode.move
+                ? TDButtonTheme.primary
+                : TDButtonTheme.defaultTheme,
+            icon: TDIcons.unfold_more,
+            onTap: () => setState(() {
+              _interactionMode = InteractionMode.move;
+            }),
+          ),
+          const SizedBox(width: 4),
+          // 编辑模式按钮
           TDButton(
             theme: _interactionMode == InteractionMode.edit
                 ? TDButtonTheme.primary
                 : TDButtonTheme.defaultTheme,
-            icon: _interactionMode == InteractionMode.edit
-                ? TDIcons.edit
-                : TDIcons.unfold_more,
+            icon: TDIcons.edit,
             onTap: () => setState(() {
-              _interactionMode = _interactionMode == InteractionMode.edit
-                  ? InteractionMode.move
-                  : InteractionMode.edit;
+              _interactionMode = InteractionMode.edit;
             }),
           ),
+          const SizedBox(width: 8),
+          Container(width: 1, height: 24, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
           const SizedBox(width: 8),
           // 缩放按钮
           TDButton(
@@ -237,6 +292,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
             icon: TDIcons.fullscreen,
             onTap: _fitToScreen,
           ),
+          const SizedBox(width: 8),
+          Container(width: 1, height: 24, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
           const SizedBox(width: 8),
           // 布局按钮
           TDButton(
@@ -366,14 +423,12 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
   /// 放大
   void _zoomIn() {
-    final scale = _transformController.value.getMaxScaleOnAxis() * 1.2;
-    _transformController.value = Matrix4.identity()..scale(scale.clamp(0.1, 5.0));
+    _graphViewController.zoomToFit();
   }
 
   /// 缩小
   void _zoomOut() {
-    final scale = _transformController.value.getMaxScaleOnAxis() / 1.2;
-    _transformController.value = Matrix4.identity()..scale(scale.clamp(0.1, 5.0));
+    _graphViewController.zoomToFit();
   }
 
   /// 适应屏幕
@@ -385,9 +440,9 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   void _autoLayout() {
     // 临时使用 Sugiyama 算法进行布局
     final config = SugiyamaConfiguration()
-      ..nodeSeparation = 60
-      ..levelSeparation = 120
-      ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM
+      ..nodeSeparation = 200
+      ..levelSeparation = 150
+      ..orientation = SugiyamaConfiguration.ORIENTATION_LEFT_RIGHT
       ..iterations = 24;
 
     final algorithm = SugiyamaAlgorithm(config);
@@ -398,10 +453,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       isDarkMode: Theme.of(context).brightness == Brightness.dark,
     );
 
-    // 运行布局
-    const centerX = 100000.0;
-    const centerY = 100000.0;
-    algorithm.run(_graphSync.graph, centerX, centerY);
+    // 运行布局 - 使用较小的中心点
+    algorithm.run(_graphSync.graph, 500, 400);
 
     // 获取布局后的位置并更新状态
     final positions = <String, Offset>{};
@@ -480,40 +533,6 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   }
 }
 
-/// 背景网格绘制器（绘制在 graphview 下层）
-class _BackgroundGridPainter extends CustomPainter {
-  final bool isDark;
-
-  _BackgroundGridPainter({required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-
-    const gridSize = 20.0;
-    final gridPaint = Paint()
-      ..color = isDark
-          ? Colors.white.withValues(alpha: 0.05)
-          : Colors.black.withValues(alpha: 0.05)
-      ..strokeWidth = 0.5;
-
-    // 绘制垂直线
-    for (var x = 0.0; x <= size.width; x += gridSize) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-
-    // 绘制水平线
-    for (var y = 0.0; y <= size.height; y += gridSize) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BackgroundGridPainter old) {
-    return isDark != old.isDark;
-  }
-}
-
 /// 连线预览绘制器
 class _ConnectionPreviewPainter extends CustomPainter {
   final Offset sourcePos;
@@ -559,8 +578,8 @@ class _ConnectionPreviewPainter extends CustomPainter {
     while (currentDistance < length) {
       final dashStartX = start.dx + unitX * currentDistance;
       final dashStartY = start.dy + unitY * currentDistance;
-      final dashEndX = start.dx + unitX * (currentDistance + dashLength).clamp(0, length);
-      final dashEndY = start.dy + unitY * (currentDistance + dashLength).clamp(0, length);
+      final dashEndX = start.dx + unitX * (currentDistance + dashLength).clamp(0.0, length);
+      final dashEndY = start.dy + unitY * (currentDistance + dashLength).clamp(0.0, length);
 
       canvas.drawLine(
         Offset(dashStartX, dashStartY),

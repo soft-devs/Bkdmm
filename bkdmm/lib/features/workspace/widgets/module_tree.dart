@@ -2,22 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../shared/models/models.dart';
+import '../../../shared/providers/providers.dart';
 import '../../../shared/widgets/td_popup_menu.dart';
+import '../../../utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 
 /// Module tree widget - displays project modules and entities in a tree structure
 class ModuleTree extends ConsumerStatefulWidget {
   final Project project;
-  final VoidCallback? onAddModule;
-  final Function(Module)? onAddEntity;
-  final Function(Module)? onSelectModule;
 
   const ModuleTree({
     super.key,
     required this.project,
-    this.onAddModule,
-    this.onAddEntity,
-    this.onSelectModule,
   });
 
   @override
@@ -76,7 +72,7 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
       _selectedModuleId = module.id;
       _selectedEntityId = null;
     });
-    widget.onSelectModule?.call(module);
+    ref.read(tabProvider.notifier).openModule(module);
   }
 
   void _selectEntity(Entity entity, Module module) {
@@ -96,12 +92,6 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
     return Container(
       decoration: BoxDecoration(
         color: tdTheme.bgColorContainer,
-        border: Border(
-          right: BorderSide(
-            color: tdTheme.componentBorderColor,
-            width: 1,
-          ),
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +115,7 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
 
   Widget _buildHeader(TDThemeData tdTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: tdTheme.bgColorSecondaryContainer,
         border: Border(
@@ -161,16 +151,31 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
             },
           ),
           const Spacer(),
-          // Add module button
-          if (widget.onAddModule != null)
-            TDButton(
-              icon: TDIcons.add,
-              text: 'Module',
-              theme: TDButtonTheme.primary,
-              type: TDButtonType.outline,
-              size: TDButtonSize.extraSmall,
-              onTap: widget.onAddModule,
-            ),
+          // Add button with dropdown menu
+          TDPopupMenuButton(
+            icon: TDIcons.add,
+            iconSize: 18,
+            iconColor: tdTheme.brandNormalColor,
+            items: [
+              const TDPopupMenuItem(
+                value: 'add_module',
+                icon: TDIcons.view_module,
+                label: '新建模块',
+              ),
+              const TDPopupMenuItem(
+                value: 'add_entity',
+                icon: TDIcons.table,
+                label: '新建表',
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'add_module') {
+                _showAddModuleDialog();
+              } else if (value == 'add_entity') {
+                _showAddEntityDialog();
+              }
+            },
+          ),
         ],
       ),
     );
@@ -190,20 +195,19 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
             ),
             const SizedBox(height: 16),
             TDText(
-              'No modules',
+              '暂无模块',
               font: tdTheme.fontBodyMedium,
               textColor: tdTheme.textColorSecondary,
             ),
             const SizedBox(height: 8),
-            if (widget.onAddModule != null)
-              TDButton(
-                icon: TDIcons.add,
-                text: 'Add Module',
-                theme: TDButtonTheme.primary,
-                type: TDButtonType.fill,
-                size: TDButtonSize.small,
-                onTap: widget.onAddModule,
-              ),
+            TDButton(
+              icon: TDIcons.add,
+              text: '新建模块',
+              theme: TDButtonTheme.primary,
+              type: TDButtonType.fill,
+              size: TDButtonSize.small,
+              onTap: _showAddModuleDialog,
+            ),
           ],
         ),
       ),
@@ -226,15 +230,10 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
           onToggleExpand: () => _toggleExpand(module.id),
           onSelectModule: () => _selectModule(module),
           onSelectEntity: (entity) => _selectEntity(entity, module),
-          onAddEntity: widget.onAddEntity != null
-              ? () => widget.onAddEntity!(module)
-              : null,
-          onDeleteModule: () => _showDeleteModuleDialog(module, context),
-          onDeleteEntity: (entity) =>
-              _showDeleteEntityDialog(entity, module, context),
-          onRenameModule: () => _showRenameModuleDialog(module, context),
-          onRenameEntity: (entity) =>
-              _showRenameEntityDialog(entity, module, context),
+          onDeleteModule: () => _showDeleteModuleDialog(module),
+          onDeleteEntity: (entity) => _showDeleteEntityDialog(entity, module),
+          onRenameModule: () => _showRenameModuleDialog(module),
+          onRenameEntity: (entity) => _showRenameEntityDialog(entity, module),
           onOpenRelation: () =>
               ref.read(tabProvider.notifier).openRelation(module.id, module.name),
           tdTheme: tdTheme,
@@ -287,122 +286,402 @@ class _ModuleTreeState extends ConsumerState<ModuleTree> {
     );
   }
 
-  void _showDeleteModuleDialog(Module module, BuildContext context) {
+  void _showAddModuleDialog() {
+    final nameController = TextEditingController();
+    final chnnameController = TextEditingController();
+    final descController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: 'Delete Module',
-        content:
-            'Are you sure you want to delete "${module.name}"?\n'
-            'This will also delete ${module.entities.length} entities.',
+        title: '创建模块',
+        contentWidget: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TDInput(
+                controller: nameController,
+                leftLabel: '模块名称 (英文)',
+                hintText: '例如: user',
+                leftIcon: const Icon(TDIcons.code),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: chnnameController,
+                leftLabel: '中文名称',
+                hintText: '例如: 用户模块',
+                leftIcon: const Icon(TDIcons.translate),
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: descController,
+                leftLabel: '描述',
+                hintText: '模块描述 (可选)',
+                leftIcon: const Icon(TDIcons.edit),
+                backgroundColor: Colors.transparent,
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
         leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
+          title: '取消',
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
           action: () => Navigator.pop(context),
         ),
         rightBtn: TDDialogButtonOptions(
-          title: 'Delete',
-          theme: TDButtonTheme.danger,
+          title: '创建',
+          theme: TDButtonTheme.primary,
           type: TDButtonType.fill,
           action: () {
+            if (nameController.text.trim().isEmpty) {
+              TDToast.showText('请输入模块名称', context: context);
+              return;
+            }
             Navigator.pop(context);
-            // TODO: Call project notifier to delete module
+
+            final now = DateTime.now();
+            final module = Module(
+              id: IdGenerator.generate(),
+              name: nameController.text.trim(),
+              chnname: chnnameController.text.trim().isNotEmpty
+                  ? chnnameController.text.trim()
+                  : nameController.text.trim(),
+              description: descController.text.trim().isNotEmpty
+                  ? descController.text.trim()
+                  : null,
+              entities: [],
+              graphCanvas: GraphCanvas(),
+              createdAt: now,
+              updatedAt: now,
+            );
+            ref.read(projectNotifierProvider.notifier).addModule(module);
+            TDToast.showSuccess('模块已创建', context: context);
           },
         ),
       ),
     );
   }
 
-  void _showDeleteEntityDialog(Entity entity, Module module, BuildContext context) {
+  void _showAddEntityDialog({Module? selectedModule}) {
+    final titleController = TextEditingController();
+    final chnnameController = TextEditingController();
+    final remarkController = TextEditingController();
+    String selectedModuleId = selectedModule?.id ??
+        (widget.project.modules.isNotEmpty ? widget.project.modules.first.id : '');
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return TDAlertDialog(
+            title: '创建表',
+            contentWidget: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 模块选择下拉框
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: TDTheme.of(context).componentBorderColor),
+                      borderRadius: BorderRadius.circular(TDTheme.of(context).radiusDefault),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedModuleId.isEmpty ? null : selectedModuleId,
+                        hint: const Text('选择归属模块'),
+                        isExpanded: true,
+                        items: widget.project.modules.map((m) {
+                          return DropdownMenuItem(
+                            value: m.id,
+                            child: Text('${m.chnname} (${m.name})'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            selectedModuleId = value ?? '';
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TDInput(
+                    controller: titleController,
+                    leftLabel: '表名称 (英文)',
+                    hintText: '例如: user_info',
+                    leftIcon: const Icon(TDIcons.code),
+                    backgroundColor: Colors.transparent,
+                  ),
+                  const SizedBox(height: 12),
+                  TDInput(
+                    controller: chnnameController,
+                    leftLabel: '中文名称',
+                    hintText: '例如: 用户信息表',
+                    leftIcon: const Icon(TDIcons.translate),
+                    backgroundColor: Colors.transparent,
+                  ),
+                  const SizedBox(height: 12),
+                  TDInput(
+                    controller: remarkController,
+                    leftLabel: '备注',
+                    hintText: '表描述 (可选)',
+                    leftIcon: const Icon(TDIcons.edit),
+                    backgroundColor: Colors.transparent,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+            leftBtn: TDDialogButtonOptions(
+              title: '取消',
+              theme: TDButtonTheme.defaultTheme,
+              type: TDButtonType.text,
+              action: () => Navigator.pop(context),
+            ),
+            rightBtn: TDDialogButtonOptions(
+              title: '创建',
+              theme: TDButtonTheme.primary,
+              type: TDButtonType.fill,
+              action: () {
+                if (selectedModuleId.isEmpty) {
+                  TDToast.showText('请选择归属模块', context: context);
+                  return;
+                }
+                if (titleController.text.trim().isEmpty) {
+                  TDToast.showText('请输入表名称', context: context);
+                  return;
+                }
+                Navigator.pop(context);
+
+                final now = DateTime.now();
+                final entity = Entity(
+                  id: IdGenerator.generate(),
+                  title: titleController.text.trim(),
+                  chnname: chnnameController.text.trim().isNotEmpty
+                      ? chnnameController.text.trim()
+                      : titleController.text.trim(),
+                  remark: remarkController.text.trim().isNotEmpty
+                      ? remarkController.text.trim()
+                      : null,
+                  fields: [],
+                  indexes: [],
+                  createdAt: now,
+                  updatedAt: now,
+                );
+
+                // Find the module and update it
+                final module = widget.project.modules.firstWhere(
+                  (m) => m.id == selectedModuleId,
+                );
+                final updatedModule = module.copyWith(
+                  entities: [...module.entities, entity],
+                  updatedAt: now,
+                );
+                ref.read(projectNotifierProvider.notifier).updateModule(
+                  module.id,
+                  updatedModule,
+                );
+                TDToast.showSuccess('表已创建', context: context);
+
+                // Open the new entity in tab
+                ref.read(tabProvider.notifier).openEntity(entity, selectedModuleId);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showDeleteModuleDialog(Module module) {
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: 'Delete Entity',
-        content:
-            'Are you sure you want to delete "${entity.title}"?\n'
-            'This will remove ${entity.fields.length} fields.',
+        title: '删除模块',
+        content: '确定要删除模块 "${module.chnname}" 吗？\n'
+            '这将同时删除 ${module.entities.length} 个表。',
         leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
+          title: '取消',
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
           action: () => Navigator.pop(context),
         ),
         rightBtn: TDDialogButtonOptions(
-          title: 'Delete',
+          title: '删除',
           theme: TDButtonTheme.danger,
           type: TDButtonType.fill,
           action: () {
             Navigator.pop(context);
-            // TODO: Call project notifier to delete entity
+            ref.read(projectNotifierProvider.notifier).removeModule(module.id);
+            TDToast.showSuccess('模块已删除', context: context);
           },
         ),
       ),
     );
   }
 
-  void _showRenameModuleDialog(Module module, BuildContext context) {
+  void _showDeleteEntityDialog(Entity entity, Module module) {
+    showDialog(
+      context: context,
+      builder: (context) => TDAlertDialog(
+        title: '删除表',
+        content: '确定要删除表 "${entity.chnname}" 吗？\n'
+            '这将移除 ${entity.fields.length} 个字段。',
+        leftBtn: TDDialogButtonOptions(
+          title: '取消',
+          theme: TDButtonTheme.defaultTheme,
+          type: TDButtonType.text,
+          action: () => Navigator.pop(context),
+        ),
+        rightBtn: TDDialogButtonOptions(
+          title: '删除',
+          theme: TDButtonTheme.danger,
+          type: TDButtonType.fill,
+          action: () {
+            Navigator.pop(context);
+            final now = DateTime.now();
+            final updatedModule = module.copyWith(
+              entities: module.entities.where((e) => e.id != entity.id).toList(),
+              updatedAt: now,
+            );
+            ref.read(projectNotifierProvider.notifier).updateModule(
+              module.id,
+              updatedModule,
+            );
+            TDToast.showSuccess('表已删除', context: context);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showRenameModuleDialog(Module module) {
     final controller = TextEditingController(text: module.name);
+    final chnController = TextEditingController(text: module.chnname);
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: 'Rename Module',
-        contentWidget: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: TDInput(
-            controller: controller,
-            hintText: 'Enter new module name',
-            leftLabel: 'Module Name',
-            autofocus: true,
+        title: '重命名模块',
+        contentWidget: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TDInput(
+                controller: controller,
+                hintText: '模块名称 (英文)',
+                leftLabel: '模块名称',
+                autofocus: true,
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: chnController,
+                hintText: '中文名称',
+                leftLabel: '中文名称',
+                backgroundColor: Colors.transparent,
+              ),
+            ],
           ),
         ),
         leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
+          title: '取消',
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
           action: () => Navigator.pop(context),
         ),
         rightBtn: TDDialogButtonOptions(
-          title: 'Rename',
+          title: '确定',
           theme: TDButtonTheme.primary,
           type: TDButtonType.fill,
           action: () {
             Navigator.pop(context);
-            // TODO: Call project notifier to rename module
+            if (controller.text.trim().isNotEmpty) {
+              final updated = module.copyWith(
+                name: controller.text.trim(),
+                chnname: chnController.text.trim().isNotEmpty
+                    ? chnController.text.trim()
+                    : controller.text.trim(),
+                updatedAt: DateTime.now(),
+              );
+              ref.read(projectNotifierProvider.notifier).updateModule(
+                module.id,
+                updated,
+              );
+            }
           },
         ),
       ),
     );
   }
 
-  void _showRenameEntityDialog(Entity entity, Module module, BuildContext context) {
+  void _showRenameEntityDialog(Entity entity, Module module) {
     final controller = TextEditingController(text: entity.title);
+    final chnController = TextEditingController(text: entity.chnname);
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: 'Rename Entity',
-        contentWidget: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: TDInput(
-            controller: controller,
-            hintText: 'Enter new entity name',
-            leftLabel: 'Entity Name',
-            autofocus: true,
+        title: '重命名表',
+        contentWidget: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TDInput(
+                controller: controller,
+                hintText: '表名称 (英文)',
+                leftLabel: '表名称',
+                autofocus: true,
+                backgroundColor: Colors.transparent,
+              ),
+              const SizedBox(height: 12),
+              TDInput(
+                controller: chnController,
+                hintText: '中文名称',
+                leftLabel: '中文名称',
+                backgroundColor: Colors.transparent,
+              ),
+            ],
           ),
         ),
         leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
+          title: '取消',
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
           action: () => Navigator.pop(context),
         ),
         rightBtn: TDDialogButtonOptions(
-          title: 'Rename',
+          title: '确定',
           theme: TDButtonTheme.primary,
           type: TDButtonType.fill,
           action: () {
             Navigator.pop(context);
-            // TODO: Call project notifier to rename entity
+            if (controller.text.trim().isNotEmpty) {
+              final updatedEntity = entity.copyWith(
+                title: controller.text.trim(),
+                chnname: chnController.text.trim().isNotEmpty
+                    ? chnController.text.trim()
+                    : controller.text.trim(),
+                updatedAt: DateTime.now(),
+              );
+              final updatedModule = module.copyWith(
+                entities: module.entities
+                    .map((e) => e.id == entity.id ? updatedEntity : e)
+                    .toList(),
+                updatedAt: DateTime.now(),
+              );
+              ref.read(projectNotifierProvider.notifier).updateModule(
+                module.id,
+                updatedModule,
+              );
+            }
           },
         ),
       ),
@@ -419,7 +698,6 @@ class _ModuleTreeItem extends StatelessWidget {
   final VoidCallback onToggleExpand;
   final VoidCallback onSelectModule;
   final Function(Entity) onSelectEntity;
-  final VoidCallback? onAddEntity;
   final VoidCallback onDeleteModule;
   final Function(Entity) onDeleteEntity;
   final VoidCallback onRenameModule;
@@ -435,7 +713,6 @@ class _ModuleTreeItem extends StatelessWidget {
     required this.onToggleExpand,
     required this.onSelectModule,
     required this.onSelectEntity,
-    required this.onAddEntity,
     required this.onDeleteModule,
     required this.onDeleteEntity,
     required this.onRenameModule,
@@ -456,10 +733,6 @@ class _ModuleTreeItem extends StatelessWidget {
         // Module row
         InkWell(
           onTap: onSelectModule,
-          onDoubleTap: () {
-            // Open module in tab
-            // TODO: Need to pass ref to access tab provider
-          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
@@ -557,20 +830,6 @@ class _ModuleTreeItem extends StatelessWidget {
                 onRename: () => onRenameEntity(entity),
                 tdTheme: tdTheme,
               )),
-
-        // Add entity button (if expanded)
-        if (isExpanded && onAddEntity != null)
-          Padding(
-            padding: const EdgeInsets.only(left: 44),
-            child: TDButton(
-              icon: TDIcons.add,
-              text: 'Entity',
-              theme: TDButtonTheme.defaultTheme,
-              type: TDButtonType.text,
-              size: TDButtonSize.extraSmall,
-              onTap: onAddEntity,
-            ),
-          ),
       ],
     );
   }
@@ -584,24 +843,19 @@ class _ModuleTreeItem extends StatelessWidget {
         TDPopupMenuItem(
           value: 'open_relation',
           icon: TDIcons.link,
-          label: 'Open Relation',
+          label: '打开关系图',
         ),
         const TDPopupMenuItem.divider(),
         TDPopupMenuItem(
           value: 'rename',
           icon: TDIcons.edit,
-          label: 'Rename',
-        ),
-        TDPopupMenuItem(
-          value: 'add_entity',
-          icon: TDIcons.add,
-          label: 'Add Entity',
+          label: '重命名',
         ),
         const TDPopupMenuItem.divider(),
         TDPopupMenuItem(
           value: 'delete',
           icon: TDIcons.delete,
-          label: 'Delete',
+          label: '删除',
           iconColor: tdTheme.errorNormalColor,
           textColor: tdTheme.errorNormalColor,
         ),
@@ -613,9 +867,6 @@ class _ModuleTreeItem extends StatelessWidget {
             break;
           case 'rename':
             onRenameModule();
-            break;
-          case 'add_entity':
-            onAddEntity?.call();
             break;
           case 'delete':
             onDeleteModule();
@@ -735,13 +986,13 @@ class _EntityTreeItem extends StatelessWidget {
         TDPopupMenuItem(
           value: 'rename',
           icon: TDIcons.edit,
-          label: 'Rename',
+          label: '重命名',
         ),
         const TDPopupMenuItem.divider(),
         TDPopupMenuItem(
           value: 'delete',
           icon: TDIcons.delete,
-          label: 'Delete',
+          label: '删除',
           iconColor: tdTheme.errorNormalColor,
           textColor: tdTheme.errorNormalColor,
         ),

@@ -20,37 +20,41 @@ class BottomViewContainer extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: layoutState.bottomViewHeight,
-      decoration: BoxDecoration(
-        color: tdTheme.bgColorContainer,
-        border: Border(
-          top: BorderSide(color: tdTheme.componentBorderColor),
+    return GestureDetector(
+      onVerticalDragUpdate: (details) {
+        final newHeight = ref.read(layoutProvider).bottomViewHeight -
+            details.delta.dy;
+        ref.read(layoutProvider.notifier).setBottomViewHeight(newHeight);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: layoutState.bottomViewHeight,
+        decoration: BoxDecoration(
+          color: tdTheme.bgColorContainer,
+          border: Border(
+            top: BorderSide(color: tdTheme.componentBorderColor),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          // 视图标签栏
-          _buildViewTabs(context, layoutState, ref, tdTheme),
+        child: Column(
+          children: [
+            // 视图标签栏
+            _buildViewTabs(context, layoutState, ref, tdTheme),
 
-          // 分隔线
-          Container(
-            height: 1,
-            color: tdTheme.componentBorderColor,
-          ),
-
-          // 视图内容
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _getViewPanel(activeView, tdTheme),
+            // 分隔线
+            Container(
+              height: 1,
+              color: tdTheme.componentBorderColor,
             ),
-          ),
 
-          // 可拖拽调整高度的分隔条
-          _buildResizeHandle(context, ref, tdTheme),
-        ],
+            // 视图内容
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _getViewPanel(activeView, tdTheme),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -159,35 +163,6 @@ class BottomViewContainer extends ConsumerWidget {
           ),
         );
     }
-  }
-
-  /// 构建高度调整手柄
-  Widget _buildResizeHandle(
-    BuildContext context,
-    WidgetRef ref,
-    TDThemeData tdTheme,
-  ) {
-    return GestureDetector(
-      onVerticalDragUpdate: (details) {
-        final newHeight = ref.read(layoutProvider).bottomViewHeight -
-            details.delta.dy;
-        ref.read(layoutProvider.notifier).setBottomViewHeight(newHeight);
-      },
-      child: Container(
-        height: 4,
-        color: tdTheme.bgColorSecondaryContainer,
-        child: Center(
-          child: Container(
-            width: 40,
-            height: 2,
-            decoration: BoxDecoration(
-              color: tdTheme.componentBorderColor,
-              borderRadius: BorderRadius.circular(1),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 
