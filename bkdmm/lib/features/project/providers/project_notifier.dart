@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -612,6 +613,209 @@ class ProjectNotifier extends StateNotifier<ProjectState> {
       createdAt: now,
       updatedAt: now,
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ER 图操作
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// 更新图节点位置
+  ///
+  /// 如果节点不存在，则创建新节点
+  void updateGraphNode(String moduleId, String entityId, double x, double y) {
+    if (!state.hasProject) return;
+
+    final project = state.project!;
+    final modules = project.modules.map((m) {
+      if (m.id == moduleId) {
+        final nodes = List<GraphNode>.from(m.graphCanvas.nodes);
+        final existingIndex = nodes.indexWhere((n) => n.moduleName == entityId);
+
+        if (existingIndex >= 0) {
+          // 更新现有节点
+          nodes[existingIndex] = nodes[existingIndex].copyWith(x: x, y: y);
+        } else {
+          // 创建新节点
+          final entity = m.entities.firstWhere((e) => e.id == entityId, orElse: () => throw StateError('Entity not found'));
+          nodes.add(GraphNode(
+            title: '${entity.title}:0',
+            x: x,
+            y: y,
+            moduleName: entityId,
+          ));
+        }
+
+        return m.copyWith(
+          graphCanvas: m.graphCanvas.copyWith(nodes: nodes),
+          updatedAt: DateTime.now(),
+        );
+      }
+      return m;
+    }).toList();
+
+    updateProject(project.copyWith(modules: modules));
+  }
+
+  /// 批量更新图节点位置（用于自动布局）
+  void applyGraphLayout(String moduleId, Map<String, Offset> positions) {
+    if (!state.hasProject) return;
+
+    final project = state.project!;
+    final modules = project.modules.map((m) {
+      if (m.id == moduleId) {
+        final nodes = m.graphCanvas.nodes.map((n) {
+          final pos = positions[n.moduleName];
+          if (pos != null) {
+            return n.copyWith(x: pos.dx, y: pos.dy);
+          }
+          return n;
+        }).toList();
+
+        return m.copyWith(
+          graphCanvas: m.graphCanvas.copyWith(nodes: nodes),
+          updatedAt: DateTime.now(),
+        );
+      }
+      return m;
+    }).toList();
+
+    updateProject(project.copyWith(modules: modules));
+  }
+
+  /// 添加关系连线
+  void addGraphEdge(String moduleId, GraphEdge edge) {
+    if (!state.hasProject) return;
+
+    final project = state.project!;
+    final modules = project.modules.map((m) {
+      if (m.id == moduleId) {
+        final edges = [...m.graphCanvas.edges, edge];
+        return m.copyWith(
+          graphCanvas: m.graphCanvas.copyWith(edges: edges),
+          updatedAt: DateTime.now(),
+        );
+      }
+      return m;
+    }).toList();
+
+    updateProject(project.copyWith(modules: modules));
+  }
+
+  /// 删除关系连线
+  void removeGraphEdge(String moduleId, String sourceId, String targetId) {
+    if (!state.hasProject) return;
+
+    final project = state.project!;
+    final modules = project.modules.map((m) {
+      if (m.id == moduleId) {
+        final edges = m.graphCanvas.edges
+            .where((e) => !(e.source == sourceId && e.target == targetId))
+            .toList();
+        return m.copyWith(
+          graphCanvas: m.graphCanvas.copyWith(edges: edges),
+          updatedAt: DateTime.now(),
+        );
+      }
+      return m;
+    }).toList();
+
+    updateProject(project.copyWith(modules: modules));
+  }
+
+  /// 更新关系连线
+  void updateGraphEdge(String moduleId, String sourceId, String targetId, GraphEdge newEdge) {
+    if (!state.hasProject) return;
+
+    final project = state.project!;
+    final modules = project.modules.map((m) {
+      if (m.id == moduleId) {
+        final edges = m.graphCanvas.edges.map((e) {
+          if (e.source == sourceId && e.target == targetId) {
+            return newEdge;
+          }
+          return e;
+        }).toList();
+        return m.copyWith(
+          graphCanvas: m.graphCanvas.copyWith(edges: edges),
+          updatedAt: DateTime.now(),
+        );
+      }
+      return m;
+    }).toList();
+
+    updateProject(project.copyWith(modules: modules));
+  }
+
+  /// 清理孤立的图节点（实体被删除后残留）
+  void cleanupOrphanedGraphNodes(String moduleId) {
+    if (!state.hasProject) return;
+
+    final project = state.project!;
+    final modules = project.modules.map((m) {
+      if (m.id == moduleId) {
+        final entityIds = m.entities.map((e) => e.id).toSet();
+        final nodes = m.graphCanvas.nodes
+            .where((n) => n.moduleName != null && entityIds.contains(n.moduleName))
+            .toList();
+        return m.copyWith(
+          graphCanvas: m.graphCanvas.copyWith(nodes: nodes),
+          updatedAt: DateTime.now(),
+        );
+      }
+      return m;
+    }).toList();
+
+    updateProject(project.copyWith(modules: modules));
+  }
+
+  /// 确保所有实体都有对应的图节点
+  void ensureGraphNodesForEntities(String moduleId) {
+    if (!state.hasProject) return;
+
+    final project = state.project!;
+    final modules = project.modules.map((m) {
+      if (m.id == moduleId) {
+        final nodes = List<GraphNode>.from(m.graphCanvas.nodes);
+        final existingEntityIds = nodes
+            .where((n) => n.moduleName != null)
+            .map((n) => n.moduleName!)
+            .toSet();
+
+        double lastX = 100;
+        double lastY = 100;
+        int col = 0;
+        int row = 0;
+        const offsetX = 250.0;
+        const offsetY = 300.0;
+        const maxCols = 4;
+
+        for (final entity in m.entities) {
+          if (!existingEntityIds.contains(entity.id)) {
+            // 创建新节点
+            nodes.add(GraphNode(
+              title: '${entity.title}:0',
+              x: lastX + (col * offsetX),
+              y: lastY + (row * offsetY),
+              moduleName: entity.id,
+            ));
+
+            col++;
+            if (col >= maxCols) {
+              col = 0;
+              row++;
+            }
+          }
+        }
+
+        return m.copyWith(
+          graphCanvas: m.graphCanvas.copyWith(nodes: nodes),
+          updatedAt: DateTime.now(),
+        );
+      }
+      return m;
+    }).toList();
+
+    updateProject(project.copyWith(modules: modules));
   }
 
   // Private helpers

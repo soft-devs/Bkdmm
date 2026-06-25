@@ -8,22 +8,25 @@
 
 library er_diagram;
 
-// 核心模型
+// 新版模型和 Provider（重构后）
+export 'models/er_diagram_ui_state.dart';
+export 'providers/er_diagram_ui_provider.dart';
+
+// 新版画布和 Widget（重构后）
+export 'widgets/er_diagram_canvas_new.dart';
+export 'widgets/er_node_widget_new.dart';
+
+// Graph 构建器
+export 'core/er_graph_builder.dart';
+
+// 旧版（保留兼容）
 export 'models/er_diagram_models.dart';
 export 'providers/er_diagram_provider.dart';
-
-// 画布和 Widget
 export 'widgets/er_diagram_canvas.dart';
 export 'widgets/er_table_node_widget.dart';
 export 'widgets/er_node_builder.dart';
-
-// 渲染器
 export 'renderers/er_edge_renderer.dart';
-
-// 核心扩展
 export 'core/field_anchor_registry.dart';
 export 'core/er_graph_edge.dart';
 export 'core/graph_sync.dart';
-
-// 布局
 export 'layout/layout_adapter.dart';

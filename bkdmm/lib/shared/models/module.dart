@@ -43,6 +43,16 @@ class Module {
     required this.updatedAt,
   });
 
+  /// 空模块实例
+  static Module get empty => Module(
+    id: '',
+    name: '',
+    chnname: '',
+    graphCanvas: GraphCanvas(),
+    createdAt: DateTime(1970),
+    updatedAt: DateTime(1970),
+  );
+
   factory Module.fromJson(Map<String, dynamic> json) => _$ModuleFromJson(json);
   Map<String, dynamic> toJson() => _$ModuleToJson(this);
 

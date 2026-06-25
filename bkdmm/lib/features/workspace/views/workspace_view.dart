@@ -17,7 +17,7 @@ import '../widgets/property_section.dart';
 import '../widgets/property_field.dart';
 import '../widgets/stat_tile.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
-import '../../modeling/er_diagram/widgets/er_diagram_canvas.dart';
+import '../../modeling/er_diagram/widgets/er_diagram_canvas_new.dart';
 
 /// Workspace view - Main project editing interface with tab management
 ///
@@ -317,7 +317,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    return ERDiagramCanvas(
+    return ERDiagramCanvasNew(
       moduleId: module.id,
       onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
       onContextMenu: (position, entity) =>
@@ -656,12 +656,16 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     final chnnameController = TextEditingController();
     final descController = TextEditingController();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    const double baseWidth = 562.0; // 450 * 1.25
+    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => TDAlertDialog(
         title: '创建模块',
         contentWidget: SizedBox(
-          width: 450,
+          width: dialogWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -672,7 +676,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.code),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TDInput(
                 controller: chnnameController,
                 leftLabel: '中文名称',
@@ -680,7 +684,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.translate),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TDInput(
                 controller: descController,
                 leftLabel: '描述',
@@ -739,12 +743,16 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     final chnnameController = TextEditingController();
     final remarkController = TextEditingController();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    const double baseWidth = 562.0; // 450 * 1.25
+    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => TDAlertDialog(
         title: '在 "${module.chnname}" 中创建表',
         contentWidget: SizedBox(
-          width: 450,
+          width: dialogWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -755,7 +763,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.code),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TDInput(
                 controller: chnnameController,
                 leftLabel: '中文名称',
@@ -763,7 +771,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.translate),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TDInput(
                 controller: remarkController,
                 leftLabel: '备注',
