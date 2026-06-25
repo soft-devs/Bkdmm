@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/providers/providers.dart';
+import '../../../shared/utils/responsive_utils.dart';
 import '../panels/panels.dart';
 
 /// Settings dialog with left tree navigation and right content panel
@@ -34,20 +35,13 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    // Responsive dialog size
-    const double baseWidth = 750.0; // 600 * 1.25
-    const double baseHeight = 500.0; // 400 * 1.25
-    final dialogWidth = screenWidth.clamp(baseWidth, baseWidth * 1.3);
-    final dialogHeight = screenHeight.clamp(baseHeight, baseHeight * 1.3);
+    final dialogSize = ResponsiveUtils.getDialogSize(context, DialogSizePreset.settings);
 
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: dialogWidth,
-        height: dialogHeight,
+        width: dialogSize.width,
+        height: dialogSize.height,
         decoration: BoxDecoration(
           color: tdTheme.bgColorContainer,
           borderRadius: BorderRadius.circular(tdTheme.radiusLarge),
@@ -62,7 +56,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
               child: Row(
                 children: [
                   // Left tree navigation
-                  _buildTreeNavigation(tdTheme, dialogWidth),
+                  _buildTreeNavigation(tdTheme, dialogSize.width),
                   // Divider
                   VerticalDivider(
                     width: 1,

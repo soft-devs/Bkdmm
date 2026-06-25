@@ -16,7 +16,12 @@ class IconBar extends ConsumerWidget {
 
     return Container(
       width: layoutState.iconBarWidth,
-      color: tdTheme.bgColorContainer,
+      decoration: BoxDecoration(
+        color: tdTheme.bgColorContainer,
+        border: Border(
+          right: BorderSide(color: tdTheme.grayColor13),
+        ),
+      ),
       child: Column(
         children: [
           // 上部图标区 - 控制左侧视图

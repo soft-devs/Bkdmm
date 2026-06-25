@@ -3,6 +3,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../core/i18n/i18n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/models/models.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 
 /// Index editor widget for managing table indexes
 ///
@@ -254,11 +255,9 @@ class _IndexEditorState extends State<IndexEditor> {
         builder: (context, setState) {
           final tdTheme = TDTheme.of(context);
           final dialogL10n = context.l10n;
-          // Responsive dialog width calculation
-          final screenWidth = MediaQuery.of(context).size.width;
-          const baseMinWidth = 500.0; // 400 * 1.25
-          final maxWidth = baseMinWidth * 1.4;
-          final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
+          final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
+          // Responsive dialog width calculation using utility
+          final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.form);
 
           return TDAlertDialog(
             title: existingIndex == null ? l10n.addIndex : l10n.editIndex,
@@ -276,14 +275,14 @@ class _IndexEditorState extends State<IndexEditor> {
                       leftIcon: const Icon(TDIcons.edit),
                       backgroundColor: Colors.transparent,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: formSpacing * 0.75),
                     // Type selector using TDesign style
                     _buildTypeSelector(
                       context: context,
                       selectedType: selectedType,
                       onTypeChanged: (type) => setState(() => selectedType = type),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: formSpacing * 0.75),
                     TDText(
                       l10n.selectFieldsLabel,
                       font: tdTheme.fontTitleSmall,
@@ -337,7 +336,7 @@ class _IndexEditorState extends State<IndexEditor> {
                               ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: formSpacing * 0.75),
                     TDInput(
                       controller: remarkController,
                       leftLabel: l10n.fieldRemark,

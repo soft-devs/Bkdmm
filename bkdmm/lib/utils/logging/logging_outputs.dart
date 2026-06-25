@@ -9,6 +9,8 @@ import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../shared/log_viewer/models/log_entry.dart';
+
 /// 日志级别颜色映射 (ANSI 颜色码)
 class LogColors {
   static const String reset = '\x1B[0m';
@@ -329,4 +331,50 @@ class BkdmmMultiOutput extends LogOutput {
 Future<String> getLogDirectory() async {
   final appDir = await getApplicationDocumentsDirectory();
   return p.join(appDir.path, 'bkdmm', 'logs');
+}
+
+/// UI 控制台输出器
+///
+/// 将日志输出到 Flutter UI 控制台组件
+class UiConsoleOutput extends LogOutput {
+  /// 日志回调函数
+  final void Function(LogEntry entry) onLog;
+
+  UiConsoleOutput({required this.onLog});
+
+  @override
+  void output(OutputEvent event) {
+    // 使用当前时间作为时间戳
+    final now = DateTime.now();
+
+    for (final line in event.lines) {
+      final entry = LogEntry(
+        id: '${now.millisecondsSinceEpoch}_${line.hashCode}',
+        timestamp: now,
+        level: _mapLevel(event.level),
+        rawMessage: line,
+      );
+      onLog(entry);
+    }
+  }
+
+  /// 将 logger 包的 Level 映射到 ConsoleLogLevel
+  ConsoleLogLevel _mapLevel(Level level) {
+    switch (level) {
+      case Level.trace:
+        return ConsoleLogLevel.trace;
+      case Level.debug:
+        return ConsoleLogLevel.debug;
+      case Level.info:
+        return ConsoleLogLevel.info;
+      case Level.warning:
+        return ConsoleLogLevel.warning;
+      case Level.error:
+        return ConsoleLogLevel.error;
+      case Level.fatal:
+        return ConsoleLogLevel.fatal;
+      default:
+        return ConsoleLogLevel.info;
+    }
+  }
 }

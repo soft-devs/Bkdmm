@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
+import '../../../shared/utils/responsive_utils.dart';
 import '../../../utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 
@@ -12,10 +13,8 @@ void showAddModuleDialog(BuildContext context, WidgetRef ref, List<Module> modul
   final nameController = TextEditingController();
   final chnnameController = TextEditingController();
   final descController = TextEditingController();
-
-  final screenWidth = MediaQuery.of(context).size.width;
-  const double baseWidth = 500.0; // 400 * 1.25
-  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+  final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.form);
+  final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
   showDialog(
     context: context,
@@ -33,7 +32,7 @@ void showAddModuleDialog(BuildContext context, WidgetRef ref, List<Module> modul
               leftIcon: const Icon(TDIcons.code),
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: formSpacing),
             TDInput(
               controller: chnnameController,
               leftLabel: '中文名称',
@@ -41,7 +40,7 @@ void showAddModuleDialog(BuildContext context, WidgetRef ref, List<Module> modul
               leftIcon: const Icon(TDIcons.translate),
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: formSpacing),
             TDInput(
               controller: descController,
               leftLabel: '描述',
@@ -106,9 +105,8 @@ void showAddEntityDialog(
   String selectedModuleId = selectedModule?.id ??
       (modules.isNotEmpty ? modules.first.id : '');
 
-  final screenWidth = MediaQuery.of(context).size.width;
-  const double baseWidth = 500.0; // 400 * 1.25
-  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+  final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.form);
+  final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
   showDialog(
     context: context,
@@ -147,7 +145,7 @@ void showAddEntityDialog(
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: formSpacing),
                 TDInput(
                   controller: titleController,
                   leftLabel: '表名称 (英文)',
@@ -155,7 +153,7 @@ void showAddEntityDialog(
                   leftIcon: const Icon(TDIcons.code),
                   backgroundColor: Colors.transparent,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: formSpacing),
                 TDInput(
                   controller: chnnameController,
                   leftLabel: '中文名称',
@@ -163,7 +161,7 @@ void showAddEntityDialog(
                   leftIcon: const Icon(TDIcons.translate),
                   backgroundColor: Colors.transparent,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: formSpacing),
                 TDInput(
                   controller: remarkController,
                   leftLabel: '备注',
@@ -305,9 +303,8 @@ void showRenameModuleDialog(BuildContext context, WidgetRef ref, Module module) 
   final controller = TextEditingController(text: module.name);
   final chnController = TextEditingController(text: module.chnname);
 
-  final screenWidth = MediaQuery.of(context).size.width;
-  const double baseWidth = 500.0; // 400 * 1.25
-  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+  final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.form);
+  final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
   showDialog(
     context: context,
@@ -325,7 +322,7 @@ void showRenameModuleDialog(BuildContext context, WidgetRef ref, Module module) 
               autofocus: true,
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: formSpacing),
             TDInput(
               controller: chnController,
               hintText: '中文名称',
@@ -371,9 +368,8 @@ void showRenameEntityDialog(BuildContext context, WidgetRef ref, Entity entity, 
   final controller = TextEditingController(text: entity.title);
   final chnController = TextEditingController(text: entity.chnname);
 
-  final screenWidth = MediaQuery.of(context).size.width;
-  const double baseWidth = 500.0; // 400 * 1.25
-  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+  final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.form);
+  final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
   showDialog(
     context: context,
@@ -391,7 +387,7 @@ void showRenameEntityDialog(BuildContext context, WidgetRef ref, Entity entity, 
               autofocus: true,
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: formSpacing),
             TDInput(
               controller: chnController,
               hintText: '中文名称',

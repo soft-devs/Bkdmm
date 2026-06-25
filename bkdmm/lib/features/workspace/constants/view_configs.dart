@@ -32,10 +32,10 @@ class ViewConfigs {
   // ========== 底部视图配置 ==========
   static const List<ViewConfig> bottomViews = [
     ViewConfig(
-      id: 'console',
-      title: '控制台',
+      id: 'terminal',
+      title: '终端',
       icon: TDIcons.terminal,
-      shortcut: 'Alt+C',
+      shortcut: 'Alt+T',
       position: ViewPosition.bottom,
       isDefaultVisible: false,
       defaultHeight: 200,
@@ -75,7 +75,7 @@ class ViewConfigs {
     'Alt+1': 'module_tree',
     'Alt+D': 'datatype',
     'Alt+P': 'properties',
-    'Alt+C': 'console',
+    'Alt+T': 'terminal',
     'Alt+L': 'log',
     'Alt+O': 'output',
   };

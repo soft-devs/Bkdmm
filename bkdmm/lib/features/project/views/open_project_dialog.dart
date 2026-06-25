@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'dart:io';
 
 import '../../../shared/models/models.dart';
+import '../../../shared/utils/responsive_utils.dart';
 import '../widgets/recent_project_tile.dart';
 
 /// Open project dialog - Dialog for opening existing projects
@@ -54,19 +55,14 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     final colorScheme = theme.colorScheme;
     final recentProjects = widget.recentProjects ?? <ProjectHistory>[];
 
-    // Responsive dialog dimensions
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    const double baseWidth = 750.0; // 600 * 1.25
-    const double baseHeight = 500.0; // 400 * 1.25
-    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
-    final dialogHeight = (screenHeight * 0.7).clamp(baseHeight, baseHeight * 1.3);
+    // Responsive dialog dimensions using utility
+    final dialogSize = ResponsiveUtils.getDialogSize(context, DialogSizePreset.project);
 
     return TDAlertDialog(
       title: 'Open Project',
       contentWidget: SizedBox(
-        width: dialogWidth,
-        height: dialogHeight,
+        width: dialogSize.width,
+        height: dialogSize.height,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

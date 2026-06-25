@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../shared/models/data_type.dart';
 import '../../../shared/constants/default_data_types.dart';
+import '../../../shared/utils/responsive_utils.dart';
 import '../providers/datatype_provider.dart';
 
 /// Dialog for editing a data type
@@ -125,12 +126,10 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
     final l10n = context.l10n;
+    final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
-    // Responsive width calculation
-    const double baseMinWidth = 562.0; // 450 * 1.25
-    final double maxWidth = baseMinWidth * 1.3;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
+    // Responsive width calculation using utility
+    final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.large);
 
     return TDAlertDialog(
       title: widget.existingType != null ? l10n.editDataType : l10n.addDataType,
@@ -144,7 +143,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
             children: [
               // Basic info section
               _buildSectionHeader(l10n.basicInfo, TDIcons.info_circle, tdTheme),
-              const SizedBox(height: 10),
+              SizedBox(height: formSpacing * 0.6),
               TDInput(
                 controller: _nameController,
                 leftLabel: l10n.typeEnglishName,
@@ -155,7 +154,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                   _validate();
                 },
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: formSpacing * 0.6),
               TDInput(
                 controller: _chnnameController,
                 leftLabel: l10n.typeChineseName,
@@ -165,7 +164,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                   _validate();
                 },
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: formSpacing * 0.6),
               TDInput(
                 controller: _remarkController,
                 leftLabel: l10n.dataTypeRemark,
@@ -175,7 +174,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                   setState(() {});
                 },
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: formSpacing * 0.6),
               TDInput(
                 controller: _javaController,
                 leftLabel: l10n.javaType,
@@ -185,7 +184,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 },
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: formSpacing),
 
               // Database mapping section
               _buildSectionHeader(l10n.databaseTypeMapping, TDIcons.data_base, tdTheme),
@@ -195,7 +194,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 font: tdTheme.fontBodySmall,
                 textColor: tdTheme.textColorSecondary,
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: formSpacing * 0.6),
 
               // Database mappings - show in a scrollable container
               ConstrainedBox(
@@ -206,7 +205,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                   itemBuilder: (context, index) {
                     final dbCode = DatabaseCodes.all[index];
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: EdgeInsets.only(bottom: formSpacing * 0.5),
                       child: TDInput(
                         controller: _dbTypeControllers[dbCode],
                         leftLabel: DatabaseCodes.getDisplayName(dbCode),

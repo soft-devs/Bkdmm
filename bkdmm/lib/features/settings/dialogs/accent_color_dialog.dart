@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
+import '../../../shared/utils/responsive_utils.dart';
+
 /// Accent color selection dialog with TDesign styling
 class AccentColorDialog extends StatelessWidget {
   final ValueChanged<Color> onChanged;
@@ -24,9 +26,7 @@ class AccentColorDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    const baseWidth = 350.0; // 280 * 1.25
-    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+    final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.small);
 
     return TDAlertDialog(
       title: 'Accent Color',

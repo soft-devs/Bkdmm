@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
+import '../../../shared/utils/responsive_utils.dart';
 import '../../../utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 import '../providers/layout_provider.dart';
@@ -656,9 +657,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     final chnnameController = TextEditingController();
     final descController = TextEditingController();
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    const double baseWidth = 562.0; // 450 * 1.25
-    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+    final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.form);
+    final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
     final result = await showDialog<bool>(
       context: context,
@@ -676,7 +676,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.code),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: formSpacing),
               TDInput(
                 controller: chnnameController,
                 leftLabel: '中文名称',
@@ -684,7 +684,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.translate),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: formSpacing),
               TDInput(
                 controller: descController,
                 leftLabel: '描述',
@@ -743,9 +743,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     final chnnameController = TextEditingController();
     final remarkController = TextEditingController();
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    const double baseWidth = 562.0; // 450 * 1.25
-    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+    final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.form);
+    final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
     final result = await showDialog<bool>(
       context: context,
@@ -763,7 +762,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.code),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: formSpacing),
               TDInput(
                 controller: chnnameController,
                 leftLabel: '中文名称',
@@ -771,7 +770,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                 leftIcon: const Icon(TDIcons.translate),
                 backgroundColor: Colors.transparent,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: formSpacing),
               TDInput(
                 controller: remarkController,
                 leftLabel: '备注',
