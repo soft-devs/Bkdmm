@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../core/i18n/i18n.dart';
+import '../l10n/app_localizations.dart';
 import '../features/home/views/home_view.dart';
 import '../shared/providers/providers.dart';
 import 'app_theme.dart';
@@ -14,6 +16,7 @@ class BkdmmApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final themeMode = settings.themeModeEnum;
     final accentColor = settings.accentColorValue;
+    final localeState = ref.watch(appLocaleProvider);
 
     // Get base themes
     ThemeData lightTheme = AppTheme.lightTheme;
@@ -28,15 +31,33 @@ class BkdmmApp extends ConsumerWidget {
     // Build TDesign theme data with custom accent color
     final tdThemeData = _buildTDThemeData(accentColor);
 
+    // Create TDesign resource delegate for internationalization
+    final tdDelegate = AppTDResourceDelegate(context);
+
     return TDTheme(
       data: tdThemeData,
       child: MaterialApp(
-        title: 'Bkdmm - Data Modeling Tool',
+        title: 'Bkdmm',
         debugShowCheckedModeBanner: false,
         theme: lightTheme,
         darkTheme: darkTheme,
         themeMode: themeMode,
-        home: const HomeView(),
+
+        // Internationalization configuration
+        locale: localeState.locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+
+        home: Builder(
+          builder: (context) {
+            // Set TDesign text delegate for internationalization
+            TDTheme.setResourceBuilder(
+              (context) => tdDelegate..updateContext(context),
+              needAlwaysBuild: true,
+            );
+            return const HomeView();
+          },
+        ),
       ),
     );
   }

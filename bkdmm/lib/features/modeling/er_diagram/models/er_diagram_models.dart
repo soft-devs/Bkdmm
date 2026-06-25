@@ -1,6 +1,7 @@
 import 'dart:ui';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/diagram_editor/diagram_editor.dart';
+import '../../../../utils/logging/logging_service.dart';
 
 /// ER 图节点实现
 ///
@@ -273,8 +274,12 @@ class ERDiagramState extends DiagramState {
     final nodes = <String, DiagramNode>{};
     final usedEntityIds = <String>{}; // 记录已创建节点的实体ID
 
+    logging.d('fromModule: entities=${module.entities.length}, graphNodes=${module.graphCanvas.nodes.length}', tag: 'ERDiagram');
+
     // 首先从 graphCanvas.nodes 创建已存在的节点
     for (final graphNode in module.graphCanvas.nodes) {
+      logging.d('fromModule: checking graphNode title=${graphNode.title}, moduleName=${graphNode.moduleName}, x=${graphNode.x}, y=${graphNode.y}', tag: 'ERDiagram');
+
       // 通过 moduleName 查找实体（moduleName 存储的是 entity.id）
       Entity? entity;
       if (graphNode.moduleName != null) {
@@ -294,6 +299,9 @@ class ERDiagramState extends DiagramState {
           graphNode: graphNode,
         );
         usedEntityIds.add(entity.id);
+        logging.d('fromModule: matched entity ${entity.title} to graphNode', tag: 'ERDiagram');
+      } else if (entity == null) {
+        logging.d('fromModule: graphNode not matched (entity deleted), skipping', tag: 'ERDiagram');
       }
     }
 
@@ -308,6 +316,8 @@ class ERDiagramState extends DiagramState {
 
     for (final entity in module.entities) {
       if (!usedEntityIds.contains(entity.id)) {
+        logging.d('fromModule: creating new node for entity ${entity.title} at col=$col, row=$row', tag: 'ERDiagram');
+
         // 为新实体创建 GraphNode
         final graphNode = GraphNode(
           title: '${entity.title}:0', // 显示标题

@@ -151,8 +151,10 @@ class ERTableNodeWidget extends StatelessWidget {
     );
 
     // 如果可拖动，用 GestureDetector 包裹处理拖动
+    // 使用 HitTestBehavior.deferToChild 让锚点的手势优先处理
     if (isDraggable) {
       return GestureDetector(
+        behavior: HitTestBehavior.deferToChild,
         onPanStart: onDragStart,
         onPanUpdate: onDragUpdate,
         onPanEnd: (_) => onDragEnd?.call(),
@@ -277,12 +279,14 @@ class ERTableNodeWidget extends StatelessWidget {
   List<Widget> _buildAnchorsForField(int index, Field field, bool isDark) {
     final nodeId = node.key?.value.toString() ?? '';
     final rowY = headerHeight + (index * fieldRowHeight) + fieldRowHeight / 2;
+    // 点击区域大小
+    const hitSize = 20.0;
 
     return [
       // 左锚点（出边连接点）
       Positioned(
-        left: -anchorOffset - fieldAnchorSize / 2,
-        top: rowY - fieldAnchorSize / 2,
+        left: -anchorOffset - hitSize / 2,
+        top: rowY - hitSize / 2,
         child: _buildAnchorWidget(
           FieldAnchor(
             nodeId: nodeId,
@@ -296,8 +300,8 @@ class ERTableNodeWidget extends StatelessWidget {
       ),
       // 右锚点（入边连接点）
       Positioned(
-        right: -anchorOffset - fieldAnchorSize / 2,
-        top: rowY - fieldAnchorSize / 2,
+        right: -anchorOffset - hitSize / 2,
+        top: rowY - hitSize / 2,
         child: _buildAnchorWidget(
           FieldAnchor(
             nodeId: nodeId,
@@ -316,27 +320,39 @@ class ERTableNodeWidget extends StatelessWidget {
   Widget _buildAnchorWidget(FieldAnchor anchor, bool isDark) {
     final color = TDAppTheme.getAnchorColor(anchor.field.pk);
 
+    // 锚点视觉大小
+    const visualSize = 6.0;
+    // 点击区域大小（比视觉大，更容易点击）
+    const hitSize = 20.0;
+
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => onAnchorTap?.call(anchor),
       child: MouseRegion(
         cursor: SystemMouseCursors.cell,
-        child: Container(
-          width: fieldAnchorSize,
-          height: fieldAnchorSize,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.3),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: color,
-              width: 1.5,
-            ),
-          ),
+        child: SizedBox(
+          width: hitSize,
+          height: hitSize,
           child: Center(
-            child: CustomPaint(
-              size: const Size(4, 4),
-              painter: _AnchorDirectionPainter(
-                direction: anchor.direction,
-                color: color,
+            child: Container(
+              width: visualSize,
+              height: visualSize,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: color,
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: CustomPaint(
+                  size: const Size(4, 4),
+                  painter: _AnchorDirectionPainter(
+                    direction: anchor.direction,
+                    color: color,
+                  ),
+                ),
               ),
             ),
           ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
+import '../../../core/i18n/i18n.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/providers/providers.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -28,8 +30,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
     final historyList = ref.watch(historyNotifierProvider);
     final projectState = ref.watch(projectProvider);
 
+    final l10n = context.l10n;
+
     return AppScaffold(
-      title: 'Bkdmm',
+      title: l10n.appName,
       isLoading: _isCreating || projectState.isLoading,
       actions: [
         TDButton(
@@ -105,6 +109,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
     BuildContext context,
     TDThemeData tdTheme,
   ) {
+    final l10n = context.l10n;
+
     return Column(
       children: [
         // Logo
@@ -130,14 +136,14 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ),
         const SizedBox(height: 24),
         TDText(
-          'Welcome to Bkdmm',
+          l10n.welcomeTo,
           font: tdTheme.fontHeadlineMedium,
           fontWeight: FontWeight.w600,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         TDText(
-          'Database model modeling tool',
+          l10n.appDescription,
           font: tdTheme.fontBodyLarge,
           textColor: tdTheme.textColorSecondary,
           textAlign: TextAlign.center,
@@ -150,11 +156,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
     BuildContext context,
     TDThemeData tdTheme,
   ) {
+    final l10n = context.l10n;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TDText(
-          'Quick Actions',
+          l10n.quickActions,
           font: tdTheme.fontTitleMedium,
           fontWeight: FontWeight.w600,
         ),
@@ -170,8 +178,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   Expanded(
                     child: QuickActionCard(
                       icon: TDIcons.add,
-                      label: 'New Project',
-                      description: 'Create a new project',
+                      label: l10n.newProject,
+                      description: l10n.createNewProjectHint,
                       tdTheme: tdTheme,
                       onTap: _isCreating ? null : _showCreateProjectDialog,
                     ),
@@ -180,8 +188,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   Expanded(
                     child: QuickActionCard(
                       icon: TDIcons.folder_open,
-                      label: 'Open Project',
-                      description: 'Open an existing project',
+                      label: l10n.openProject,
+                      description: l10n.openExistingProject,
                       tdTheme: tdTheme,
                       onTap: _showOpenProjectDialog,
                     ),
@@ -190,11 +198,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   Expanded(
                     child: QuickActionCard(
                       icon: TDIcons.download,
-                      label: 'Import',
-                      description: 'Import from file',
+                      label: l10n.import,
+                      description: l10n.importFromFile,
                       tdTheme: tdTheme,
                       onTap: () {
-                        TDToast.showText('Import feature coming soon', context: context);
+                        TDToast.showText(l10n.featureComingSoon, context: context);
                       },
                     ),
                   ),
@@ -209,25 +217,25 @@ class _HomeViewState extends ConsumerState<HomeView> {
               children: [
                 QuickActionCard(
                   icon: TDIcons.add,
-                  label: 'New Project',
-                  description: 'Create a new project',
+                  label: l10n.newProject,
+                  description: l10n.createNewProjectHint,
                   tdTheme: tdTheme,
                   onTap: _isCreating ? null : _showCreateProjectDialog,
                 ),
                 QuickActionCard(
                   icon: TDIcons.folder_open,
-                  label: 'Open Project',
-                  description: 'Open an existing project',
+                  label: l10n.openProject,
+                  description: l10n.openExistingProject,
                   tdTheme: tdTheme,
                   onTap: _showOpenProjectDialog,
                 ),
                 QuickActionCard(
                   icon: TDIcons.download,
-                  label: 'Import',
-                  description: 'Import from file',
+                  label: l10n.import,
+                  description: l10n.importFromFile,
                   tdTheme: tdTheme,
                   onTap: () {
-                    TDToast.showText('Import feature coming soon', context: context);
+                    TDToast.showText(l10n.featureComingSoon, context: context);
                   },
                 ),
               ],
@@ -243,6 +251,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
     List<ProjectHistory> historyList,
     TDThemeData tdTheme,
   ) {
+    final l10n = context.l10n;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -250,13 +260,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             TDText(
-              'Recent Projects',
+              l10n.recentProjects,
               font: tdTheme.fontTitleMedium,
               fontWeight: FontWeight.w600,
             ),
             if (historyList.isNotEmpty)
               TDButton(
-                text: 'View All',
+                text: l10n.viewAll,
                 icon: TDIcons.history,
                 theme: TDButtonTheme.defaultTheme,
                 type: TDButtonType.text,
@@ -277,6 +287,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
     BuildContext context,
     TDThemeData tdTheme,
   ) {
+    final l10n = context.l10n;
+
     return Container(
       padding: const EdgeInsets.all(48),
       decoration: BoxDecoration(
@@ -296,20 +308,20 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ),
           const SizedBox(height: 16),
           TDText(
-            'No recent projects',
+            l10n.noRecentProjects,
             font: tdTheme.fontTitleMedium,
             textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 8),
           TDText(
-            'Create a new project or open an existing one to get started',
+            l10n.noRecentProjectsHint,
             font: tdTheme.fontBodyMedium,
             textColor: tdTheme.textColorSecondary.withValues(alpha: 0.7),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           TDButton(
-            text: 'Create New Project',
+            text: l10n.createNewProject,
             icon: TDIcons.add,
             theme: TDButtonTheme.primary,
             type: TDButtonType.fill,
@@ -325,6 +337,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     BuildContext context,
     List<ProjectHistory> historyList,
   ) {
+    final l10n = context.l10n;
     // Show only first 5 items
     final displayList = historyList.take(5).toList();
 
@@ -337,7 +350,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
             onTap: () => _openFromHistory(history),
             onDelete: () => _deleteHistory(history.path),
             onFavorite: () {
-              TDToast.showText('Favorite feature coming soon', context: context);
+              TDToast.showText(l10n.featureComingSoon, context: context);
             },
           ),
         );
@@ -371,7 +384,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
         }
       } catch (e) {
         if (mounted) {
-          TDToast.showText('Failed to create project: $e', context: context);
+          TDToast.showText(context.l10n.failedToCreateProject, context: context);
         }
       } finally {
         if (mounted) {
@@ -411,7 +424,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
       }
     } catch (e) {
       if (mounted) {
-        TDToast.showText('Failed to open project: $e', context: context);
+        TDToast.showText(context.l10n.failedToOpenProject, context: context);
       }
     } finally {
       if (mounted) {
@@ -429,20 +442,22 @@ class _HomeViewState extends ConsumerState<HomeView> {
       await ref.read(historyNotifierProvider.notifier).remove(path);
 
       if (mounted) {
-        TDToast.showSuccess('Removed from recent projects', context: context);
+        TDToast.showSuccess(context.l10n.removedFromRecent, context: context);
       }
     } catch (e) {
       if (mounted) {
-        TDToast.showText('Failed to remove: $e', context: context);
+        TDToast.showText(context.l10n.failedToRemove, context: context);
       }
     }
   }
 
   void _showAllHistory(List<ProjectHistory> historyList) {
+    final l10n = context.l10n;
+
     showDialog(
       context: context,
       builder: (dialogContext) => TDAlertDialog(
-        title: 'All Recent Projects',
+        title: l10n.allRecentProjects,
         contentWidget: SizedBox(
           width: 650, // 500 * 1.3
           height: 520, // 400 * 1.3
@@ -466,7 +481,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ),
         ),
         leftBtn: TDDialogButtonOptions(
-          title: 'Close',
+          title: l10n.close,
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
           action: () => Navigator.of(dialogContext).pop(),
