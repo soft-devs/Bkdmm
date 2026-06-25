@@ -175,6 +175,9 @@ if (nodeCount > 100) {
 
 ## References
 
+### Internal Documentation
+- [WORKFLOW.md](WORKFLOW.md) - Step-by-step implementation workflow with daily tasks
+
 ### Flutter Documentation
 - [Flutter Gestures](https://docs.flutter.dev/ui/advanced/gestures)
 - [Flutter Performance](https://docs.flutter.dev/perf)
