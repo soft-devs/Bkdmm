@@ -474,36 +474,44 @@ class _FieldTableState extends State<FieldTable> {
   }
 
   Widget _buildActionsCell(Field field, double width, TDThemeData tdTheme) {
+    // Responsive layout: adjust icon sizes based on available width
+    final iconSize = width < 48 ? 12.0 : (width < 56 ? 13.0 : 14.0);
+    final padding = width < 48 ? 2.0 : (width < 56 ? 3.0 : 4.0);
+
     return Container(
       width: width,
       height: 44,
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: EdgeInsets.symmetric(horizontal: padding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Edit button
-          InkWell(
-            onTap: () => _showEditFieldDialog(field),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(
-                TDIcons.edit,
-                size: 14,
-                color: tdTheme.textColorSecondary,
+          // Edit button - flexible
+          Flexible(
+            child: InkWell(
+              onTap: () => _showEditFieldDialog(field),
+              child: Padding(
+                padding: EdgeInsets.all(padding),
+                child: Icon(
+                  TDIcons.edit,
+                  size: iconSize,
+                  color: tdTheme.textColorSecondary,
+                ),
               ),
             ),
           ),
-          // Delete button
-          InkWell(
-            onTap: () => _confirmDeleteField(field),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(
-                TDIcons.delete,
-                size: 14,
-                color: tdTheme.errorNormalColor,
+          // Delete button - flexible
+          Flexible(
+            child: InkWell(
+              onTap: () => _confirmDeleteField(field),
+              child: Padding(
+                padding: EdgeInsets.all(padding),
+                child: Icon(
+                  TDIcons.delete,
+                  size: iconSize,
+                  color: tdTheme.errorNormalColor,
+                ),
               ),
             ),
           ),
