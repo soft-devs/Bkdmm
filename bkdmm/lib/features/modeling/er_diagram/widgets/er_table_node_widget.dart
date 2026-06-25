@@ -30,7 +30,7 @@ class ERTableNodeWidget extends StatelessWidget {
   final bool isDarkMode;
 
   /// 锚点点击回调
-  final void Function(ERFieldAnchor)? onAnchorTap;
+  final void Function(ERFieldAnchor anchor, GraphNode graphNode)? onAnchorTap;
 
   /// 节点点击回调（编辑模式）
   final VoidCallback? onTap;
@@ -258,11 +258,11 @@ class ERTableNodeWidget extends StatelessWidget {
       entityId: entity.id,
       fieldCount: entity.fields.length,
       primaryKeyFlags: primaryKeyFlags,
-      nodePosition: Offset(graphNode.x, graphNode.y),
-      nodeWidth: defaultWidth,
       headerHeight: headerHeight,
       fieldRowHeight: fieldRowHeight,
-      onAnchorTap: onAnchorTap,
+      onAnchorTap: onAnchorTap != null
+          ? (anchor) => onAnchorTap!(anchor, graphNode)
+          : null,
     );
   }
 

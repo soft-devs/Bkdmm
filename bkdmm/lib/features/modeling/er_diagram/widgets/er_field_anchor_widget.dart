@@ -7,8 +7,11 @@ import '../models/er_diagram_ui_state.dart';
 /// 显示在表节点字段的左右两侧，用于创建实体关系连线。
 /// 仅在编辑模式下显示。
 class ERFieldAnchorWidget extends StatelessWidget {
-  /// 锚点数据
-  final ERFieldAnchor anchor;
+  /// 锚点方向
+  final ERAnchorDirection direction;
+
+  /// 字段索引
+  final int fieldIndex;
 
   /// 是否是主键字段（影响颜色）
   final bool isPrimaryKey;
@@ -27,7 +30,8 @@ class ERFieldAnchorWidget extends StatelessWidget {
 
   const ERFieldAnchorWidget({
     super.key,
-    required this.anchor,
+    required this.direction,
+    required this.fieldIndex,
     this.isPrimaryKey = false,
     this.onTap,
   });
@@ -37,13 +41,12 @@ class ERFieldAnchorWidget extends StatelessWidget {
     final color = isPrimaryKey ? Colors.amber.shade600 : Colors.blue.shade500;
 
     return Positioned(
-      left: anchor.direction == ERAnchorDirection.left
+      left: direction == ERAnchorDirection.left
           ? -anchorOffset - hitSize / 2
           : null,
-      right: anchor.direction == ERAnchorDirection.right
+      right: direction == ERAnchorDirection.right
           ? -anchorOffset - hitSize / 2
           : null,
-      top: anchor.position.dy - hitSize / 2,
       child: Listener(
         onPointerDown: (_) {
           onTap?.call();
@@ -74,7 +77,8 @@ class ERFieldAnchorWidget extends StatelessWidget {
 
 /// 锚点层组件
 ///
-/// 管理单个表节点的所有字段锚点
+/// 管理单个表节点的所有字段锚点。
+/// 锚点使用相对定位，跟随节点移动。
 class ERFieldAnchorLayer extends StatelessWidget {
   /// 实体 ID
   final String entityId;
@@ -84,12 +88,6 @@ class ERFieldAnchorLayer extends StatelessWidget {
 
   /// 字段主键标记列表
   final List<bool> primaryKeyFlags;
-
-  /// 节点位置
-  final Offset nodePosition;
-
-  /// 节点宽度
-  final double nodeWidth;
 
   /// 表头高度
   final double headerHeight;
@@ -105,8 +103,6 @@ class ERFieldAnchorLayer extends StatelessWidget {
     required this.entityId,
     required this.fieldCount,
     required this.primaryKeyFlags,
-    required this.nodePosition,
-    required this.nodeWidth,
     this.headerHeight = 40.0,
     this.fieldRowHeight = 28.0,
     this.onAnchorTap,
@@ -115,37 +111,69 @@ class ERFieldAnchorLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          for (int i = 0; i < fieldCount; i++) ...[
-            _buildAnchor(i, ERAnchorDirection.left),
-            _buildAnchor(i, ERAnchorDirection.right),
+      child: IgnorePointer(
+        ignoring: false,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (int i = 0; i < fieldCount; i++) ...[
+              _buildAnchor(i, ERAnchorDirection.left),
+              _buildAnchor(i, ERAnchorDirection.right),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildAnchor(int fieldIndex, ERAnchorDirection direction) {
+    // 计算锚点相对于节点顶部的 Y 偏移
     final rowY = headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
 
-    final anchor = ERFieldAnchor(
-      nodeId: entityId,
-      fieldIndex: fieldIndex,
-      direction: direction,
-      position: Offset(
-        direction == ERAnchorDirection.left
-            ? nodePosition.dx - ERFieldAnchorWidget.anchorOffset
-            : nodePosition.dx + nodeWidth + ERFieldAnchorWidget.anchorOffset,
-        nodePosition.dy + rowY,
+    return Positioned(
+      left: direction == ERAnchorDirection.left
+          ? -ERFieldAnchorWidget.anchorOffset - ERFieldAnchorWidget.hitSize / 2
+          : null,
+      right: direction == ERAnchorDirection.right
+          ? -ERFieldAnchorWidget.anchorOffset - ERFieldAnchorWidget.hitSize / 2
+          : null,
+      top: rowY - ERFieldAnchorWidget.hitSize / 2,
+      child: Listener(
+        onPointerDown: (_) {
+          // 创建锚点数据（位置会在点击时计算）
+          final anchor = ERFieldAnchor(
+            nodeId: entityId,
+            fieldIndex: fieldIndex,
+            direction: direction,
+            position: Offset.zero, // 实际位置在点击时确定
+          );
+          onAnchorTap?.call(anchor);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.cell,
+          child: SizedBox(
+            width: ERFieldAnchorWidget.hitSize,
+            height: ERFieldAnchorWidget.hitSize,
+            child: Center(
+              child: Container(
+                width: ERFieldAnchorWidget.visualSize,
+                height: ERFieldAnchorWidget.visualSize,
+                decoration: BoxDecoration(
+                  color: _getAnchorColor(fieldIndex).withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _getAnchorColor(fieldIndex), width: 1.5),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
+  }
 
-    return ERFieldAnchorWidget(
-      anchor: anchor,
-      isPrimaryKey: fieldIndex < primaryKeyFlags.length && primaryKeyFlags[fieldIndex],
-      onTap: onAnchorTap != null ? () => onAnchorTap!(anchor) : null,
-    );
+  Color _getAnchorColor(int fieldIndex) {
+    final isPrimaryKey = fieldIndex < primaryKeyFlags.length && primaryKeyFlags[fieldIndex];
+    return isPrimaryKey ? Colors.amber.shade600 : Colors.blue.shade500;
   }
 }

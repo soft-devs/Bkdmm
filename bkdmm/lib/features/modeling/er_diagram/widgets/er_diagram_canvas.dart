@@ -11,6 +11,7 @@ import '../core/er_graph_builder.dart';
 import '../layout/layout_adapter.dart';
 import '../models/er_diagram_ui_state.dart';
 import '../providers/er_diagram_ui_provider.dart';
+import 'er_field_anchor_widget.dart';
 import 'er_table_node_widget.dart';
 
 /// ER 图画布
@@ -57,6 +58,9 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   String? _draggedNodeId;
   Offset _dragStartPos = Offset.zero;
   Offset _nodeStartPos = Offset.zero;
+
+  /// 多选拖动时，其他节点的起始位置
+  Map<String, Offset> _multiDragStartPositions = {};
 
   /// 鼠标位置（用于显示坐标）
   Offset _mousePosition = Offset.zero;
@@ -341,10 +345,10 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       isDarkMode: isDark,
       onTap: () => _onNodeTap(nodeId, uiState),
       onDoubleTap: () => _onNodeDoubleTap(entity, uiState.isEditMode),
-      onDragStart: uiState.isEditMode ? (details) => _onNodeDragStart(nodeId, details, graphNode!) : null,
+      onDragStart: uiState.isEditMode ? (details) => _onNodeDragStart(nodeId, details, graphNode ?? GraphNode(title: entity.title, x: 100, y: 100, moduleName: entity.id)) : null,
       onDragUpdate: uiState.isEditMode ? (details) => _onNodeDragUpdate(nodeId, details) : null,
       onDragEnd: uiState.isEditMode ? () => _onNodeDragEnd(nodeId) : null,
-      onAnchorTap: (anchor) => _onAnchorTap(anchor, entity, graphNode!),
+      onAnchorTap: (anchor, gn) => _onAnchorTap(anchor, gn),
     );
   }
 
@@ -406,6 +410,29 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
           const SizedBox(width: 8),
           Container(width: 1, height: 24, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
           const SizedBox(width: 8),
+          // 单选/多选模式按钮（仅编辑模式）
+          if (uiState.isEditMode) ...[
+            TDButton(
+              theme: uiState.isSingleSelection
+                  ? TDButtonTheme.primary
+                  : TDButtonTheme.defaultTheme,
+              icon: Icons.radio_button_checked,
+              size: TDButtonSize.small,
+              onTap: () => notifier.enterSingleSelectionMode(),
+            ),
+            const SizedBox(width: 4),
+            TDButton(
+              theme: uiState.isMultipleSelection
+                  ? TDButtonTheme.primary
+                  : TDButtonTheme.defaultTheme,
+              icon: Icons.checklist,
+              size: TDButtonSize.small,
+              onTap: () => notifier.enterMultipleSelectionMode(),
+            ),
+            const SizedBox(width: 8),
+            Container(width: 1, height: 24, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+            const SizedBox(width: 8),
+          ],
           // 缩放按钮
           TDButton(
             icon: TDIcons.zoom_in,
@@ -520,17 +547,37 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   void _onNodeDragStart(String nodeId, DragStartDetails details, GraphNode graphNode) {
     // 取消框选
     final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-    if (uiState.isSelecting) {
+    final currentUiState = ref.read(erDiagramUIProvider(widget.moduleId));
+    if (currentUiState.isSelecting) {
       notifier.cancelSelection();
     }
 
+    // 记录拖动起始位置
     setState(() {
       _draggedNodeId = nodeId;
       _dragStartPos = details.localPosition;
       _nodeStartPos = Offset(graphNode.x, graphNode.y);
     });
 
+    // 开始拖动（会处理多选情况）
     notifier.startDragging(nodeId);
+
+    // 如果有多个选中节点，记录它们的起始位置
+    final draggingNodes = ref.read(erDiagramUIProvider(widget.moduleId)).draggingNodeIds;
+    if (draggingNodes.length > 1) {
+      final project = ref.read(projectNotifierProvider).project;
+      final module = project?.modules.firstWhere((m) => m.id == widget.moduleId, orElse: () => Module.empty);
+      if (module != null) {
+        _multiDragStartPositions = {};
+        for (final gn in module.graphCanvas.nodes) {
+          if (gn.moduleName != null && draggingNodes.contains(gn.moduleName!)) {
+            _multiDragStartPositions[gn.moduleName!] = Offset(gn.x, gn.y);
+          }
+        }
+      }
+    } else {
+      _multiDragStartPositions = {};
+    }
   }
 
   ERDiagramUIState get uiState => ref.read(erDiagramUIProvider(widget.moduleId));
@@ -538,14 +585,27 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   void _onNodeDragUpdate(String nodeId, DragUpdateDetails details) {
     if (_draggedNodeId != nodeId) return;
 
-    // 计算新位置
+    // 计算偏移量
     final delta = details.localPosition - _dragStartPos;
-    final newX = _nodeStartPos.dx + delta.dx;
-    final newY = _nodeStartPos.dy + delta.dy;
 
-    // 直接更新到 Project
-    ref.read(projectNotifierProvider.notifier)
-        .updateGraphNode(widget.moduleId, nodeId, newX, newY);
+    // 获取当前拖动的节点集合
+    final draggingNodes = ref.read(erDiagramUIProvider(widget.moduleId)).draggingNodeIds;
+
+    if (draggingNodes.length > 1 && _multiDragStartPositions.isNotEmpty) {
+      // 多选拖动：移动所有选中的节点
+      for (final entry in _multiDragStartPositions.entries) {
+        final newX = entry.value.dx + delta.dx;
+        final newY = entry.value.dy + delta.dy;
+        ref.read(projectNotifierProvider.notifier)
+            .updateGraphNode(widget.moduleId, entry.key, newX, newY);
+      }
+    } else {
+      // 单节点拖动
+      final newX = _nodeStartPos.dx + delta.dx;
+      final newY = _nodeStartPos.dy + delta.dy;
+      ref.read(projectNotifierProvider.notifier)
+          .updateGraphNode(widget.moduleId, nodeId, newX, newY);
+    }
   }
 
   void _onNodeDragEnd(String nodeId) {
@@ -553,20 +613,38 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
     setState(() {
       _draggedNodeId = null;
+      _multiDragStartPositions = {};
     });
 
     ref.read(erDiagramUIProvider(widget.moduleId).notifier).endDragging();
   }
 
-  void _onAnchorTap(ERFieldAnchor anchor, Entity entity, GraphNode graphNode) {
+  void _onAnchorTap(ERFieldAnchor anchor, GraphNode graphNode) {
     final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+
+    // 计算锚点的实际位置（基于节点当前位置）
+    final rowY = ERTableNodeWidget.headerHeight + (anchor.fieldIndex * ERTableNodeWidget.fieldRowHeight) + ERTableNodeWidget.fieldRowHeight / 2;
+    final anchorPosition = Offset(
+      anchor.direction == ERAnchorDirection.left
+          ? graphNode.x - ERFieldAnchorWidget.anchorOffset
+          : graphNode.x + ERTableNodeWidget.defaultWidth + ERFieldAnchorWidget.anchorOffset,
+      graphNode.y + rowY,
+    );
+
+    // 更新锚点位置
+    final updatedAnchor = ERFieldAnchor(
+      nodeId: anchor.nodeId,
+      fieldIndex: anchor.fieldIndex,
+      direction: anchor.direction,
+      position: anchorPosition,
+    );
 
     if (!ref.read(erDiagramUIProvider(widget.moduleId)).isConnecting) {
       // 开始连线
-      notifier.startConnection(anchor);
+      notifier.startConnection(updatedAnchor);
     } else {
       // 完成连线
-      notifier.completeConnection(anchor);
+      notifier.completeConnection(updatedAnchor);
     }
   }
 
@@ -764,19 +842,32 @@ class _ERGraphView extends StatelessWidget {
     algorithm.run(graph, 0, 0);
 
     // 计算图的实际大小
-    double minX = 0, minY = 0, maxX = 0, maxY = 0;
+    double minX = double.infinity, minY = double.infinity;
+    double maxX = double.negativeInfinity, maxY = double.negativeInfinity;
+
     for (final node in graph.nodes) {
       if (node.x < minX) minX = node.x;
       if (node.y < minY) minY = node.y;
       if (node.x + node.width > maxX) maxX = node.x + node.width;
       if (node.y + node.height > maxY) maxY = node.y + node.height;
     }
-    final graphSize = Size(maxX - minX + 100, maxY - minY + 100);
+
+    // 如果没有节点，使用默认大小
+    if (graph.nodes.isEmpty) {
+      minX = 0;
+      minY = 0;
+      maxX = 800;
+      maxY = 600;
+    }
+
+    // 计算图的大小，添加边距
+    final graphWidth = (maxX - minX + 200).clamp(800.0, 10000.0);
+    final graphHeight = (maxY - minY + 200).clamp(600.0, 10000.0);
 
     // 直接渲染所有节点和边
     return SizedBox(
-      width: graphSize.width,
-      height: graphSize.height,
+      width: graphWidth,
+      height: graphHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -786,7 +877,7 @@ class _ERGraphView extends StatelessWidget {
               graph: graph,
               algorithm: algorithm,
             ),
-            size: graphSize,
+            size: Size(graphWidth, graphHeight),
           ),
           // 节点层
           for (final node in graph.nodes)

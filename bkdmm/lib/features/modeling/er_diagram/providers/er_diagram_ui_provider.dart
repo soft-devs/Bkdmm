@@ -51,22 +51,66 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // 选择类型切换
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// 设置选择类型
+  void setSelectionType(ERSelectionType type) {
+    if (state.selectionType != type) {
+      // 切换到单选模式时，如果当前有多个选中，只保留第一个
+      Set<String>? newSelection;
+      if (type == ERSelectionType.single && state.selectedNodeIds.length > 1) {
+        newSelection = {state.selectedNodeIds.first};
+      }
+      state = state.copyWith(selectionType: type, selectedNodeIds: newSelection);
+    }
+  }
+
+  /// 切换到单选模式
+  void enterSingleSelectionMode() {
+    setSelectionType(ERSelectionType.single);
+  }
+
+  /// 切换到多选模式
+  void enterMultipleSelectionMode() {
+    setSelectionType(ERSelectionType.multiple);
+  }
+
+  /// 切换选择类型
+  void toggleSelectionType() {
+    if (state.isSingleSelection) {
+      enterMultipleSelectionMode();
+    } else {
+      enterSingleSelectionMode();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // 节点选择
   // ═══════════════════════════════════════════════════════════════════
 
   /// 选择节点
+  /// [addToSelection] 用于 Ctrl+点击多选
   void selectNode(String nodeId, {bool addToSelection = false}) {
     Set<String> newSelection;
-    if (addToSelection) {
-      newSelection = Set<String>.from(state.selectedNodeIds);
-      if (newSelection.contains(nodeId)) {
-        newSelection.remove(nodeId);
-      } else {
-        newSelection.add(nodeId);
-      }
-    } else {
+
+    if (state.isSingleSelection) {
+      // 单选模式：只能选中一个
       newSelection = {nodeId};
+    } else {
+      // 多选模式
+      if (addToSelection) {
+        newSelection = Set<String>.from(state.selectedNodeIds);
+        if (newSelection.contains(nodeId)) {
+          newSelection.remove(nodeId);
+        } else {
+          newSelection.add(nodeId);
+        }
+      } else {
+        newSelection = {nodeId};
+      }
     }
+
     state = state.copyWith(selectedNodeIds: newSelection);
   }
 
@@ -77,6 +121,10 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
 
   /// 全选
   void selectAll(List<String> nodeIds) {
+    if (state.isSingleSelection) {
+      // 单选模式不支持全选
+      return;
+    }
     state = state.copyWith(selectedNodeIds: Set<String>.from(nodeIds));
   }
 
@@ -88,23 +136,43 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 节点拖动
+  // 节点拖动（支持多选拖动）
   // ═══════════════════════════════════════════════════════════════════
 
   /// 开始拖动节点
+  /// 如果节点已选中且有多选，则拖动所有选中的节点
   void startDragging(String nodeId) {
-    state = state.copyWith(draggingNodeId: nodeId);
+    Set<String> toDrag;
+
+    if (state.selectedNodeIds.contains(nodeId) && state.hasMultipleSelected) {
+      // 拖动已选中的节点，且有多选，则拖动所有选中的节点
+      toDrag = Set<String>.from(state.selectedNodeIds);
+    } else {
+      // 只拖动当前节点，并选中它
+      toDrag = {nodeId};
+      state = state.copyWith(selectedNodeIds: toDrag);
+    }
+
+    state = state.copyWith(draggingNodeIds: toDrag);
   }
 
   /// 结束拖动节点
   void endDragging() {
-    state = state.copyWith(draggingNodeId: null);
+    state = state.copyWith(draggingNodeIds: const {});
   }
 
-  /// 移动节点位置（直接更新到 Project）
+  /// 移动单个节点位置（直接更新到 Project）
   void moveNode(String entityId, double x, double y) {
     final projectNotifier = ref.read(projectNotifierProvider.notifier);
     projectNotifier.updateGraphNode(moduleId, entityId, x, y);
+  }
+
+  /// 批量移动节点位置（用于多选拖动）
+  void moveNodes(Map<String, Offset> positions) {
+    final projectNotifier = ref.read(projectNotifierProvider.notifier);
+    for (final entry in positions.entries) {
+      projectNotifier.updateGraphNode(moduleId, entry.key, entry.value.dx, entry.value.dy);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -163,9 +231,11 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
   // 框选操作
   // ═══════════════════════════════════════════════════════════════════
 
-  /// 开始框选
+  /// 开始框选（自动切换到多选模式）
   void startSelection(Offset startPoint) {
+    // 框选时自动切换到多选模式
     state = state.copyWith(
+      selectionType: ERSelectionType.multiple,
       selection: ERSelectionState(
         isSelecting: true,
         startPoint: startPoint,

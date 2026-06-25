@@ -9,6 +9,15 @@ enum ERInteractionMode {
   edit,
 }
 
+/// ER 图选择模式
+enum ERSelectionType {
+  /// 单选模式：只能选中一个节点
+  single,
+
+  /// 多选模式：可以选中多个节点
+  multiple,
+}
+
 /// ER 图视口状态
 class ERViewportState {
   final double zoom;
@@ -141,14 +150,17 @@ class ERDiagramUIState {
   /// 当前交互模式
   final ERInteractionMode interactionMode;
 
+  /// 当前选择类型（单选/多选）
+  final ERSelectionType selectionType;
+
   /// 选中的节点 ID 集合
   final Set<String> selectedNodeIds;
 
   /// 悬停的节点 ID
   final String? hoveredNodeId;
 
-  /// 正在拖动的节点 ID
-  final String? draggingNodeId;
+  /// 正在拖动的节点 ID 集合（多选拖动时可能有多个）
+  final Set<String> draggingNodeIds;
 
   /// 视口状态
   final ERViewportState viewport;
@@ -162,9 +174,10 @@ class ERDiagramUIState {
   const ERDiagramUIState({
     required this.moduleId,
     this.interactionMode = ERInteractionMode.preview,
+    this.selectionType = ERSelectionType.single,
     this.selectedNodeIds = const {},
     this.hoveredNodeId,
-    this.draggingNodeId,
+    this.draggingNodeIds = const {},
     this.viewport = const ERViewportState(),
     this.connection = const ERConnectionState(),
     this.selection = const ERSelectionState(),
@@ -176,14 +189,23 @@ class ERDiagramUIState {
   /// 是否是预览模式
   bool get isPreviewMode => interactionMode == ERInteractionMode.preview;
 
+  /// 是否是单选模式
+  bool get isSingleSelection => selectionType == ERSelectionType.single;
+
+  /// 是否是多选模式
+  bool get isMultipleSelection => selectionType == ERSelectionType.multiple;
+
   /// 是否正在连线
   bool get isConnecting => connection.isConnecting;
 
   /// 是否正在拖动节点
-  bool get isDragging => draggingNodeId != null;
+  bool get isDragging => draggingNodeIds.isNotEmpty;
 
   /// 是否正在框选
   bool get isSelecting => selection.isSelecting;
+
+  /// 是否选中了多个节点
+  bool get hasMultipleSelected => selectedNodeIds.length > 1;
 
   /// 创建空状态
   factory ERDiagramUIState.empty(String moduleId) {
@@ -193,9 +215,10 @@ class ERDiagramUIState {
   ERDiagramUIState copyWith({
     String? moduleId,
     ERInteractionMode? interactionMode,
+    ERSelectionType? selectionType,
     Set<String>? selectedNodeIds,
     String? hoveredNodeId,
-    String? draggingNodeId,
+    Set<String>? draggingNodeIds,
     ERViewportState? viewport,
     ERConnectionState? connection,
     ERSelectionState? selection,
@@ -203,9 +226,10 @@ class ERDiagramUIState {
     return ERDiagramUIState(
       moduleId: moduleId ?? this.moduleId,
       interactionMode: interactionMode ?? this.interactionMode,
+      selectionType: selectionType ?? this.selectionType,
       selectedNodeIds: selectedNodeIds ?? this.selectedNodeIds,
       hoveredNodeId: hoveredNodeId ?? this.hoveredNodeId,
-      draggingNodeId: draggingNodeId ?? this.draggingNodeId,
+      draggingNodeIds: draggingNodeIds ?? this.draggingNodeIds,
       viewport: viewport ?? this.viewport,
       connection: connection ?? this.connection,
       selection: selection ?? this.selection,
@@ -214,6 +238,6 @@ class ERDiagramUIState {
 
   @override
   String toString() {
-    return 'ERDiagramUIState(moduleId: $moduleId, mode: $interactionMode, selected: ${selectedNodeIds.length}, connecting: $isConnecting, selecting: $isSelecting)';
+    return 'ERDiagramUIState(moduleId: $moduleId, mode: $interactionMode, selectionType: $selectionType, selected: ${selectedNodeIds.length}, dragging: ${draggingNodeIds.length}, connecting: $isConnecting, selecting: $isSelecting)';
   }
 }
