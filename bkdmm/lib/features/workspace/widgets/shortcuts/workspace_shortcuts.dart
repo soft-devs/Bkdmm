@@ -19,17 +19,11 @@ class WorkspaceShortcuts extends ConsumerWidget {
       onKeyEvent: (node, event) {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-        // 检查修饰键状态
-        final rawKeys = RawKeyboard.instance.keysPressed;
-        final isAltPressed = rawKeys.any((key) =>
-            key == LogicalKeyboardKey.altLeft ||
-            key == LogicalKeyboardKey.altRight);
-        final isCtrlPressed = rawKeys.any((key) =>
-            key == LogicalKeyboardKey.controlLeft ||
-            key == LogicalKeyboardKey.controlRight);
-        final isShiftPressed = rawKeys.any((key) =>
-            key == LogicalKeyboardKey.shiftLeft ||
-            key == LogicalKeyboardKey.shiftRight);
+        // 使用 HardwareKeyboard 检查修饰键状态 (替代废弃的 RawKeyboard)
+        final hardwareKeyboard = HardwareKeyboard.instance;
+        final isAltPressed = hardwareKeyboard.isAltPressed;
+        final isCtrlPressed = hardwareKeyboard.isControlPressed;
+        final isShiftPressed = hardwareKeyboard.isShiftPressed;
 
         // 处理 Alt+数字 快捷键
         if (isAltPressed) {

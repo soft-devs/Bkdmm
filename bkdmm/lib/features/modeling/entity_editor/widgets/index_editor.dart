@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../../core/i18n/i18n.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/models/models.dart';
 
 /// Index editor widget for managing table indexes
@@ -32,6 +34,7 @@ class _IndexEditorState extends State<IndexEditor> {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     return Column(
       children: [
@@ -47,13 +50,13 @@ class _IndexEditorState extends State<IndexEditor> {
           child: Row(
             children: [
               TDText(
-                'Indexes (${widget.indexes.length})',
+                '${l10n.indexes} (${widget.indexes.length})',
                 font: tdTheme.fontTitleSmall,
                 fontWeight: FontWeight.w600,
               ),
               const Spacer(),
               TDButton(
-                text: 'Add Index',
+                text: l10n.addIndex,
                 icon: TDIcons.add,
                 theme: TDButtonTheme.primary,
                 type: TDButtonType.fill,
@@ -77,13 +80,13 @@ class _IndexEditorState extends State<IndexEditor> {
                       ),
                       const SizedBox(height: 16),
                       TDText(
-                        'No indexes defined',
+                        l10n.noIndexesDefined,
                         font: tdTheme.fontTitleMedium,
                         textColor: tdTheme.textColorSecondary,
                       ),
                       const SizedBox(height: 8),
                       TDText(
-                        'Click "Add Index" to create a new index',
+                        l10n.addIndexHint,
                         font: tdTheme.fontBodyMedium,
                         textColor: tdTheme.textColorSecondary.withValues(alpha: 0.7),
                       ),
@@ -95,7 +98,7 @@ class _IndexEditorState extends State<IndexEditor> {
                   itemCount: widget.indexes.length,
                   itemBuilder: (context, index) {
                     final idx = widget.indexes[index];
-                    return _buildIndexCard(idx, tdTheme);
+                    return _buildIndexCard(idx, tdTheme, l10n);
                   },
                 ),
         ),
@@ -103,7 +106,7 @@ class _IndexEditorState extends State<IndexEditor> {
     );
   }
 
-  Widget _buildIndexCard(Index index, TDThemeData tdTheme) {
+  Widget _buildIndexCard(Index index, TDThemeData tdTheme, AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -139,7 +142,7 @@ class _IndexEditorState extends State<IndexEditor> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TDText(
-                  _getIndexTypeLabel(index.type),
+                  _getIndexTypeLabel(index.type, l10n),
                   font: tdTheme.fontMarkExtraSmall,
                   textColor: tdTheme.textColorPrimary,
                   fontWeight: FontWeight.w500,
@@ -217,14 +220,14 @@ class _IndexEditorState extends State<IndexEditor> {
     }
   }
 
-  String _getIndexTypeLabel(IndexType type) {
+  String _getIndexTypeLabel(IndexType type, AppLocalizations l10n) {
     switch (type) {
       case IndexType.unique:
-        return 'UNIQUE';
+        return l10n.unique;
       case IndexType.fulltext:
-        return 'FULLTEXT';
+        return l10n.fulltext;
       case IndexType.normal:
-        return 'NORMAL';
+        return l10n.normal;
     }
   }
 
@@ -237,6 +240,7 @@ class _IndexEditorState extends State<IndexEditor> {
   }
 
   void _showIndexDialog(Index? existingIndex) {
+    final l10n = context.l10n;
     final nameController = TextEditingController(
       text: existingIndex?.name ?? 'idx_${widget.indexes.length + 1}',
     );
@@ -249,6 +253,7 @@ class _IndexEditorState extends State<IndexEditor> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) {
           final tdTheme = TDTheme.of(context);
+          final dialogL10n = context.l10n;
           // Responsive dialog width calculation
           final screenWidth = MediaQuery.of(context).size.width;
           const baseMinWidth = 400.0;
@@ -256,7 +261,7 @@ class _IndexEditorState extends State<IndexEditor> {
           final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
 
           return TDAlertDialog(
-            title: existingIndex == null ? 'Add Index' : 'Edit Index',
+            title: existingIndex == null ? l10n.addIndex : l10n.editIndex,
             contentWidget: SizedBox(
               width: dialogWidth,
               child: SingleChildScrollView(
@@ -266,7 +271,7 @@ class _IndexEditorState extends State<IndexEditor> {
                   children: [
                     TDInput(
                       controller: nameController,
-                      leftLabel: 'Index Name *',
+                      leftLabel: l10n.indexNameStar,
                       hintText: 'e.g., idx_user_id',
                       leftIcon: const Icon(TDIcons.edit),
                       backgroundColor: Colors.transparent,
@@ -280,7 +285,7 @@ class _IndexEditorState extends State<IndexEditor> {
                     ),
                     const SizedBox(height: 12),
                     TDText(
-                      'Select Fields:',
+                      l10n.selectFieldsLabel,
                       font: tdTheme.fontTitleSmall,
                     ),
                     const SizedBox(height: 8),
@@ -301,7 +306,7 @@ class _IndexEditorState extends State<IndexEditor> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: TDText(
-                                    'No fields available',
+                                    l10n.noFieldsAvailable,
                                     font: tdTheme.fontBodyMedium,
                                     textColor: tdTheme.textColorSecondary,
                                   ),
@@ -335,8 +340,8 @@ class _IndexEditorState extends State<IndexEditor> {
                     const SizedBox(height: 12),
                     TDInput(
                       controller: remarkController,
-                      leftLabel: 'Remark',
-                      hintText: 'Optional description',
+                      leftLabel: l10n.fieldRemark,
+                      hintText: l10n.optionalDescription,
                       backgroundColor: Colors.transparent,
                       maxLines: 2,
                     ),
@@ -345,22 +350,22 @@ class _IndexEditorState extends State<IndexEditor> {
               ),
             ),
             leftBtn: TDDialogButtonOptions(
-              title: 'Cancel',
+              title: dialogL10n.cancel,
               theme: TDButtonTheme.defaultTheme,
               type: TDButtonType.text,
               action: () => Navigator.pop(context),
             ),
             rightBtn: TDDialogButtonOptions(
-              title: existingIndex == null ? 'Add' : 'Save',
+              title: existingIndex == null ? l10n.add : l10n.save,
               theme: TDButtonTheme.primary,
               type: TDButtonType.fill,
               action: () {
                 if (nameController.text.trim().isEmpty) {
-                  TDToast.showText('Index name is required', context: context);
+                  TDToast.showText(dialogL10n.indexNameRequired, context: context);
                   return;
                 }
                 if (selectedFieldIds.isEmpty) {
-                  TDToast.showText('Select at least one field', context: context);
+                  TDToast.showText(dialogL10n.selectAtLeastOneField, context: context);
                   return;
                 }
 
@@ -394,6 +399,7 @@ class _IndexEditorState extends State<IndexEditor> {
     required Function(IndexType) onTypeChanged,
   }) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     return GestureDetector(
       onTap: () {
@@ -401,8 +407,8 @@ class _IndexEditorState extends State<IndexEditor> {
           context: context,
           backgroundColor: Colors.transparent,
           builder: (ctx) => TDMultiPicker(
-            title: 'Select Index Type',
-            data: [IndexType.values.map((t) => _getIndexTypeLabel(t)).toList()],
+            title: l10n.selectIndexType,
+            data: [IndexType.values.map((t) => _getIndexTypeLabel(t, l10n)).toList()],
             initialIndexes: [IndexType.values.indexOf(selectedType)],
             onConfirm: (selected) {
               if (selected.isNotEmpty && selected[0] < IndexType.values.length) {
@@ -426,7 +432,7 @@ class _IndexEditorState extends State<IndexEditor> {
             Icon(TDIcons.setting, size: 20, color: tdTheme.textColorSecondary),
             const SizedBox(width: 12),
             TDText(
-              'Index Type',
+              l10n.indexType,
               font: tdTheme.fontBodyMedium,
               textColor: tdTheme.textColorSecondary,
             ),
@@ -438,7 +444,7 @@ class _IndexEditorState extends State<IndexEditor> {
                   Icon(_getIndexTypeIcon(selectedType), size: 18, color: tdTheme.brandNormalColor),
                   const SizedBox(width: 8),
                   TDText(
-                    _getIndexTypeLabel(selectedType),
+                    _getIndexTypeLabel(selectedType, l10n),
                     font: tdTheme.fontBodyMedium,
                     textColor: tdTheme.textColorPrimary,
                   ),
@@ -454,19 +460,20 @@ class _IndexEditorState extends State<IndexEditor> {
   }
 
   void _confirmDeleteIndex(Index index) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: 'Delete Index',
-        content: 'Are you sure you want to delete index "${index.name}"?',
+        title: l10n.deleteIndex,
+        content: l10n.deleteConfirmMessage(index.name),
         leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
+          title: l10n.cancel,
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
           action: () => Navigator.pop(context),
         ),
         rightBtn: TDDialogButtonOptions(
-          title: 'Delete',
+          title: l10n.delete,
           theme: TDButtonTheme.danger,
           type: TDButtonType.fill,
           action: () {

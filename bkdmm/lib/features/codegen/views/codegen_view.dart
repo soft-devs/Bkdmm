@@ -209,6 +209,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   /// Show database selector dialog
   void _showDatabaseSelectorDialog(List<DatabaseTemplate> databases, String currentSelection) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     showDialog(
       context: context,
@@ -219,7 +220,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         final dialogWidth = (screenWidth * 0.85).clamp(minWidth, maxWidth);
 
         return TDAlertDialog(
-          title: 'Select Database',
+          title: l10n.selectDatabase,
           content: '',
           contentWidget: SizedBox(
             width: dialogWidth,
@@ -253,7 +254,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             ),
           ),
           leftBtn: TDDialogButtonOptions(
-            title: 'Cancel',
+            title: l10n.cancel,
             theme: TDButtonTheme.defaultTheme,
             type: TDButtonType.text,
             action: () => Navigator.pop(dialogContext),
@@ -314,12 +315,13 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   /// Show DDL type selector dialog
   void _showDdlTypeSelectorDialog(DdlType currentSelection) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     final ddlTypes = [
-      (DdlType.createTable, 'CREATE TABLE', 'Create new table'),
-      (DdlType.dropTable, 'DROP TABLE', 'Drop existing table'),
-      (DdlType.createIndex, 'CREATE INDEX', 'Create index on table'),
-      (DdlType.dropIndex, 'DROP INDEX', 'Drop existing index'),
+      (DdlType.createTable, 'CREATE TABLE', l10n.createNewTable),
+      (DdlType.dropTable, 'DROP TABLE', l10n.dropExistingTable),
+      (DdlType.createIndex, 'CREATE INDEX', l10n.createIndexOnTable),
+      (DdlType.dropIndex, 'DROP INDEX', l10n.dropExistingIndex),
     ];
 
     showDialog(
@@ -331,7 +333,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
         final dialogWidth = (screenWidth * 0.85).clamp(minWidth, maxWidth);
 
         return TDAlertDialog(
-          title: 'Select DDL Type',
+          title: l10n.selectDdlType,
           content: '',
           contentWidget: SizedBox(
             width: dialogWidth,
@@ -365,7 +367,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             ),
           ),
           leftBtn: TDDialogButtonOptions(
-            title: 'Cancel',
+            title: l10n.cancel,
             theme: TDButtonTheme.defaultTheme,
             type: TDButtonType.text,
             action: () => Navigator.pop(dialogContext),
@@ -380,6 +382,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     TDThemeData tdTheme,
     Project project,
   ) {
+    final l10n = context.l10n;
     return Container(
       color: tdTheme.bgColorContainer,
       child: Column(
@@ -399,7 +402,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
                 Icon(TDIcons.tree_square_dot, size: 20, color: tdTheme.brandNormalColor),
                 const SizedBox(width: 8),
                 TDText(
-                  'Select Target',
+                  l10n.selectTarget,
                   font: tdTheme.fontTitleSmall,
                   fontWeight: FontWeight.w600,
                 ),
@@ -435,6 +438,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   ) {
     final codegenState = ref.watch(codegenProvider);
     final isSelected = codegenState.generateProject;
+    final l10n = context.l10n;
 
     return InkWell(
       onTap: () {
@@ -454,7 +458,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
             const SizedBox(width: 12),
             Expanded(
               child: TDText(
-                'All Project (${project.modules.length} modules)',
+                l10n.allProjectModules(project.modules.length),
                 font: tdTheme.fontBodyMedium,
                 textColor: isSelected ? tdTheme.brandNormalColor : tdTheme.textColorPrimary,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -473,6 +477,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   ) {
     final codegenState = ref.watch(codegenProvider);
     final isModuleSelected = codegenState.selectedModule?.id == module.id;
+    final l10n = context.l10n;
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -491,7 +496,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           fontWeight: isModuleSelected ? FontWeight.w600 : FontWeight.normal,
         ),
         subtitle: TDText(
-          '${module.entities.length} tables',
+          l10n.tablesCount(module.entities.length),
           font: tdTheme.fontBodySmall,
           textColor: tdTheme.textColorSecondary,
         ),
@@ -736,6 +741,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
   /// Build empty state when no project is loaded
   Widget _buildEmptyState(TDThemeData tdTheme) {
+    final l10n = context.l10n;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -749,13 +755,13 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           ),
           const SizedBox(height: 16),
           TDText(
-            'No Project Loaded',
+            l10n.noProjectLoaded,
             font: tdTheme.fontTitleMedium,
             textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 8),
           TDText(
-            'Open a project to generate DDL',
+            l10n.openProjectToGenerateDdl,
             font: tdTheme.fontBodyMedium,
             textColor: tdTheme.textColorPlaceholder,
           ),
@@ -766,6 +772,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
   /// Build no selection state
   Widget _buildNoSelectionState(TDThemeData tdTheme) {
+    final l10n = context.l10n;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -779,13 +786,13 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           ),
           const SizedBox(height: 16),
           TDText(
-            'Select a Target',
+            l10n.selectATarget,
             font: tdTheme.fontTitleMedium,
             textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 8),
           TDText(
-            'Choose a table, module, or entire project',
+            l10n.chooseTableModuleProject,
             font: tdTheme.fontBodyMedium,
             textColor: tdTheme.textColorPlaceholder,
           ),
@@ -796,6 +803,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
 
   /// Build error state
   Widget _buildErrorState(TDThemeData tdTheme, CodegenState state) {
+    final l10n = context.l10n;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -809,20 +817,20 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           ),
           const SizedBox(height: 16),
           TDText(
-            'Generation Error',
+            l10n.generationError,
             font: tdTheme.fontTitleMedium,
             textColor: tdTheme.errorNormalColor,
           ),
           const SizedBox(height: 8),
           TDText(
-            state.error ?? 'Unknown error',
+            state.error ?? l10n.unknownError,
             font: tdTheme.fontBodyMedium,
             textColor: tdTheme.errorNormalColor,
           ),
           const SizedBox(height: 16),
           TDButton(
             onTap: () => ref.read(codegenProvider.notifier).refresh(),
-            text: 'Retry',
+            text: l10n.retry,
             theme: TDButtonTheme.primary,
             type: TDButtonType.fill,
           ),
@@ -834,16 +842,18 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
   /// Copy DDL to clipboard
   void _copyToClipboard() {
     final state = ref.read(codegenProvider);
+    final l10n = context.l10n;
     Clipboard.setData(ClipboardData(text: state.generatedDdl));
-    TDToast.showSuccess('DDL copied to clipboard', context: context);
+    TDToast.showSuccess(l10n.ddlCopiedToClipboard, context: context);
   }
 
   /// Download SQL file (placeholder - would use file_picker in real implementation)
   void _downloadSql() {
     final state = ref.read(codegenProvider);
+    final l10n = context.l10n;
     final fileName = _getFileName(state);
 
-    TDToast.showText('Ready to download: $fileName', context: context);
+    TDToast.showText(l10n.readyToDownload(fileName), context: context);
   }
 
   /// Export all DDL for the project
@@ -852,7 +862,8 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     if (project == null) return;
 
     ref.read(codegenProvider.notifier).selectProject();
+    final l10n = context.l10n;
 
-    TDToast.showText('Generating DDL for ${project.modules.length} modules...', context: context);
+    TDToast.showText(l10n.generatingDdlForModules(project.modules.length), context: context);
   }
 }

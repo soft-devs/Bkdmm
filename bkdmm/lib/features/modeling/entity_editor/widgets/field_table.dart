@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../../../core/i18n/i18n.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/models/models.dart';
 
 /// Field table widget with custom table implementation

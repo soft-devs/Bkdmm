@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../../core/i18n/i18n.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/models/models.dart';
 
 /// Code preview widget for displaying generated DDL
@@ -328,6 +330,7 @@ class _CodePreviewState extends State<CodePreview> {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     return Column(
       children: [
@@ -343,7 +346,7 @@ class _CodePreviewState extends State<CodePreview> {
           child: Row(
             children: [
               // Database selector with TDesign style
-              _buildDatabaseSelector(tdTheme),
+              _buildDatabaseSelector(tdTheme, l10n),
               const Spacer(),
               // Copy button
               TDButton(
@@ -356,7 +359,7 @@ class _CodePreviewState extends State<CodePreview> {
               const SizedBox(width: 8),
               // Download button
               TDButton(
-                text: 'Download .sql',
+                text: l10n.downloadSql,
                 icon: TDIcons.download,
                 theme: TDButtonTheme.primary,
                 type: TDButtonType.fill,
@@ -428,7 +431,7 @@ class _CodePreviewState extends State<CodePreview> {
     );
   }
 
-  Widget _buildDatabaseSelector(TDThemeData tdTheme) {
+  Widget _buildDatabaseSelector(TDThemeData tdTheme, AppLocalizations l10n) {
     final currentDb = widget.databases.firstWhere(
       (d) => d.code == widget.selectedDatabase,
       orElse: () => widget.databases.first,
@@ -440,7 +443,7 @@ class _CodePreviewState extends State<CodePreview> {
           context: context,
           backgroundColor: Colors.transparent,
           builder: (ctx) => TDMultiPicker(
-            title: 'Select Database',
+            title: l10n.selectDatabase,
             data: [widget.databases.map((db) => db.name).toList()],
             initialIndexes: [widget.databases.indexOf(currentDb)],
             onConfirm: (selected) {
@@ -479,14 +482,16 @@ class _CodePreviewState extends State<CodePreview> {
   }
 
   void _copyToClipboard() {
+    final l10n = context.l10n;
     Clipboard.setData(ClipboardData(text: _sqlController.text));
-    TDToast.showSuccess('DDL copied to clipboard', context: context);
+    TDToast.showSuccess(l10n.ddlCopiedToClipboard, context: context);
   }
 
   void _downloadSql() {
+    final l10n = context.l10n;
     // In a web context, this would trigger a download
     // For desktop, we'd save to a file
-    TDToast.showSuccess('DDL ready for ${widget.entity.title}.sql', context: context);
+    TDToast.showSuccess(l10n.ddlReadyFor('${widget.entity.title}.sql'), context: context);
   }
 }
 
