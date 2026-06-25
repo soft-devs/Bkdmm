@@ -206,19 +206,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
         },
         child: Stack(
           children: [
-            // 背景网格层
-            Positioned.fill(
-              child: GridPaper(
-                color: gridColor,
-                divisions: 1,
-                subdivisions: 1,
-                interval: 20,
-                child: Container(
-                  color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA),
-                ),
-              ),
-            ),
-            // GraphView 层
+            // GraphView 层（包含网格和节点）
             InteractiveViewer(
               transformationController: _transformationController,
               boundaryMargin: const EdgeInsets.all(double.infinity),
@@ -232,6 +220,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
                 algorithm: _cachedAlgorithm!,
                 controller: _graphViewController,
                 nodeBuilder: (node) => _buildNodeWidget(node, entityMap, graphNodeMap, uiState, isDark),
+                gridColor: gridColor,
+                isDark: isDark,
               ),
             ),
           ],
@@ -812,12 +802,20 @@ class _ERGraphView extends StatelessWidget {
   final Algorithm algorithm;
   final GraphViewController? controller;
   final Widget Function(Node node) nodeBuilder;
+  final Color gridColor;
+  final bool isDark;
+
+  /// 虚拟画布的固定大小（足够大以支持平移和缩放）
+  static const double virtualCanvasWidth = 2000.0;
+  static const double virtualCanvasHeight = 1500.0;
 
   const _ERGraphView({
     required this.graph,
     required this.algorithm,
     this.controller,
     required this.nodeBuilder,
+    required this.gridColor,
+    required this.isDark,
   });
 
   @override
@@ -825,43 +823,32 @@ class _ERGraphView extends StatelessWidget {
     // 运行布局算法
     algorithm.run(graph, 0, 0);
 
-    // 计算图的实际大小
-    double minX = double.infinity, minY = double.infinity;
-    double maxX = double.negativeInfinity, maxY = double.negativeInfinity;
-
-    for (final node in graph.nodes) {
-      if (node.x < minX) minX = node.x;
-      if (node.y < minY) minY = node.y;
-      if (node.x + node.width > maxX) maxX = node.x + node.width;
-      if (node.y + node.height > maxY) maxY = node.y + node.height;
-    }
-
-    // 如果没有节点，使用默认大小
-    if (graph.nodes.isEmpty) {
-      minX = 0;
-      minY = 0;
-      maxX = 800;
-      maxY = 600;
-    }
-
-    // 计算图的大小，添加边距
-    final graphWidth = (maxX - minX + 200).clamp(800.0, 10000.0);
-    final graphHeight = (maxY - minY + 200).clamp(600.0, 10000.0);
-
-    // 直接渲染所有节点和边
+    // 直接渲染所有节点和边，使用固定大小的虚拟画布
     return SizedBox(
-      width: graphWidth,
-      height: graphHeight,
+      width: virtualCanvasWidth,
+      height: virtualCanvasHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // 背景层（网格和底色）
+          Positioned.fill(
+            child: GridPaper(
+              color: gridColor,
+              divisions: 1,
+              subdivisions: 1,
+              interval: 20,
+              child: Container(
+                color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA),
+              ),
+            ),
+          ),
           // 边层
           CustomPaint(
             painter: _EdgePainter(
               graph: graph,
               algorithm: algorithm,
             ),
-            size: Size(graphWidth, graphHeight),
+            size: const Size(virtualCanvasWidth, virtualCanvasHeight),
           ),
           // 节点层
           for (final node in graph.nodes)

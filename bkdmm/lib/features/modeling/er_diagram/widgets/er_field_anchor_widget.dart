@@ -40,32 +40,24 @@ class ERFieldAnchorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isPrimaryKey ? Colors.amber.shade600 : Colors.blue.shade500;
 
-    return Positioned(
-      left: direction == ERAnchorDirection.left
-          ? -anchorOffset - hitSize / 2
-          : null,
-      right: direction == ERAnchorDirection.right
-          ? -anchorOffset - hitSize / 2
-          : null,
-      child: Listener(
-        onPointerDown: (_) {
-          onTap?.call();
-        },
-        behavior: HitTestBehavior.opaque,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.cell,
-          child: SizedBox(
-            width: hitSize,
-            height: hitSize,
-            child: Center(
-              child: Container(
-                width: visualSize,
-                height: visualSize,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 1.5),
-                ),
+    return Listener(
+      onPointerDown: (_) {
+        onTap?.call();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.cell,
+        child: SizedBox(
+          width: hitSize,
+          height: hitSize,
+          child: Center(
+            child: Container(
+              width: visualSize,
+              height: visualSize,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: 1.5),
               ),
             ),
           ),
@@ -110,25 +102,22 @@ class ERFieldAnchorLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: IgnorePointer(
-        ignoring: false,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            for (int i = 0; i < fieldCount; i++) ...[
-              _buildAnchor(i, ERAnchorDirection.left),
-              _buildAnchor(i, ERAnchorDirection.right),
-            ],
-          ],
-        ),
-      ),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        for (int i = 0; i < fieldCount; i++) ...[
+          _buildAnchor(i, ERAnchorDirection.left),
+          _buildAnchor(i, ERAnchorDirection.right),
+        ],
+      ],
     );
   }
 
   Widget _buildAnchor(int fieldIndex, ERAnchorDirection direction) {
     // 计算锚点相对于节点顶部的 Y 偏移
     final rowY = headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
+    final isPrimaryKey = fieldIndex < primaryKeyFlags.length && primaryKeyFlags[fieldIndex];
+    final color = isPrimaryKey ? Colors.amber.shade600 : Colors.blue.shade500;
 
     return Positioned(
       left: direction == ERAnchorDirection.left
@@ -140,12 +129,12 @@ class ERFieldAnchorLayer extends StatelessWidget {
       top: rowY - ERFieldAnchorWidget.hitSize / 2,
       child: Listener(
         onPointerDown: (_) {
-          // 创建锚点数据（位置会在点击时计算）
+          // 创建锚点数据
           final anchor = ERFieldAnchor(
             nodeId: entityId,
             fieldIndex: fieldIndex,
             direction: direction,
-            position: Offset.zero, // 实际位置在点击时确定
+            position: Offset.zero, // 实际位置在画布中计算
           );
           onAnchorTap?.call(anchor);
         },
@@ -160,9 +149,9 @@ class ERFieldAnchorLayer extends StatelessWidget {
                 width: ERFieldAnchorWidget.visualSize,
                 height: ERFieldAnchorWidget.visualSize,
                 decoration: BoxDecoration(
-                  color: _getAnchorColor(fieldIndex).withValues(alpha: 0.3),
+                  color: color.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
-                  border: Border.all(color: _getAnchorColor(fieldIndex), width: 1.5),
+                  border: Border.all(color: color, width: 1.5),
                 ),
               ),
             ),
@@ -170,10 +159,5 @@ class ERFieldAnchorLayer extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _getAnchorColor(int fieldIndex) {
-    final isPrimaryKey = fieldIndex < primaryKeyFlags.length && primaryKeyFlags[fieldIndex];
-    return isPrimaryKey ? Colors.amber.shade600 : Colors.blue.shade500;
   }
 }

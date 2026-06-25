@@ -11,7 +11,7 @@ import 'er_field_anchor_widget.dart';
 ///
 /// 使用 Flutter Widget 渲染 ER 图中的表节点。
 /// 根据交互模式响应不同的事件。
-class ERTableNodeWidget extends StatelessWidget {
+class ERTableNodeWidget extends StatefulWidget {
   /// graphview Node 实例
   final Node node;
 
@@ -76,36 +76,48 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 是否是预览模式
   bool get isPreviewMode => interactionMode == ERInteractionMode.preview;
 
+  /// 计算节点高度
+  static double calculateNodeHeight(int fieldCount) {
+    const minHeight = 80.0;
+    final height = headerHeight + (fieldCount * fieldRowHeight);
+    return height < minHeight ? minHeight : height;
+  }
+
+  /// 计算节点尺寸
+  static Size calculateNodeSize(int fieldCount) {
+    return Size(defaultWidth, calculateNodeHeight(fieldCount));
+  }
+
+  @override
+  State<ERTableNodeWidget> createState() => _ERTableNodeWidgetState();
+}
+
+class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
+  bool _isDragging = false;
+
   @override
   Widget build(BuildContext context) {
-    final isDark = isDarkMode || Theme.of(context).brightness == Brightness.dark;
+    final isDark = widget.isDarkMode || Theme.of(context).brightness == Brightness.dark;
 
     // 节点主体
     Widget content = _buildNodeBody(isDark);
 
     // 编辑模式：可拖动和点击
-    if (isEditMode && onDragStart != null) {
+    if (widget.isEditMode && widget.onDragStart != null) {
       content = GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onPanStart: onDragStart,
-        onPanUpdate: onDragUpdate,
-        onPanEnd: (_) => onDragEnd?.call(),
-        onTap: () {
-          // 检查是否按下 Ctrl 键
-          final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
-              .contains(LogicalKeyboardKey.controlLeft) ||
-              HardwareKeyboard.instance.logicalKeysPressed
-              .contains(LogicalKeyboardKey.controlRight);
-          onTap?.call(isCtrlPressed);
-        },
-        onDoubleTap: onDoubleTap,
+        onTap: _onTap,
+        onDoubleTap: widget.onDoubleTap,
+        onPanStart: _onPanStart,
+        onPanUpdate: _onPanUpdate,
+        onPanEnd: _onPanEnd,
         child: content,
       );
     } else {
       // 预览模式：仅响应双击
       content = GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onDoubleTap: onDoubleTap,
+        onDoubleTap: widget.onDoubleTap,
         child: content,
       );
     }
@@ -113,16 +125,40 @@ class ERTableNodeWidget extends StatelessWidget {
     return content;
   }
 
+  void _onTap() {
+    // 检查是否按下 Ctrl 键
+    final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
+        .contains(LogicalKeyboardKey.controlLeft) ||
+        HardwareKeyboard.instance.logicalKeysPressed
+        .contains(LogicalKeyboardKey.controlRight);
+    widget.onTap?.call(isCtrlPressed);
+  }
+
+  void _onPanStart(DragStartDetails details) {
+    _isDragging = true;
+    widget.onDragStart?.call(details);
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (!_isDragging) return;
+    widget.onDragUpdate?.call(details);
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    _isDragging = false;
+    widget.onDragEnd?.call();
+  }
+
   /// 构建节点主体
   Widget _buildNodeBody(bool isDark) {
     return MouseRegion(
-      cursor: isEditMode ? SystemMouseCursors.grab : MouseCursor.defer,
+      cursor: widget.isEditMode ? SystemMouseCursors.grab : MouseCursor.defer,
       child: Container(
-        width: defaultWidth,
+        width: ERTableNodeWidget.defaultWidth,
         decoration: BoxDecoration(
-          color: TDAppTheme.getNodeBgColor(isDark, isSelected),
-          borderRadius: BorderRadius.circular(cornerRadius),
-          border: isSelected
+          color: TDAppTheme.getNodeBgColor(isDark, widget.isSelected),
+          borderRadius: BorderRadius.circular(ERTableNodeWidget.cornerRadius),
+          border: widget.isSelected
               ? Border.all(
                   color: TDAppTheme.getSelectionBorderColor(isDark),
                   width: 2,
@@ -141,19 +177,19 @@ class ERTableNodeWidget extends StatelessWidget {
           children: [
             // 节点主体
             ClipRRect(
-              borderRadius: BorderRadius.circular(cornerRadius),
+              borderRadius: BorderRadius.circular(ERTableNodeWidget.cornerRadius),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeader(isDark),
-                  ...entity.fields.asMap().entries.map((entry) =>
+                  ...widget.entity.fields.asMap().entries.map((entry) =>
                       _buildFieldRow(entry.key, entry.value, isDark)),
                 ],
               ),
             ),
             // 锚点层（仅编辑模式）
-            if (isEditMode) _buildAnchorLayer(isDark),
+            if (widget.isEditMode) _buildAnchorLayer(isDark),
           ],
         ),
       ),
@@ -163,12 +199,12 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 构建表头
   Widget _buildHeader(bool isDark) {
     return Container(
-      height: headerHeight,
+      height: ERTableNodeWidget.headerHeight,
       decoration: BoxDecoration(
         color: TDAppTheme.getNodeHeaderColor(isDark),
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(cornerRadius),
-          topRight: Radius.circular(cornerRadius),
+          topLeft: Radius.circular(ERTableNodeWidget.cornerRadius),
+          topRight: Radius.circular(ERTableNodeWidget.cornerRadius),
         ),
       ),
       child: Padding(
@@ -183,7 +219,7 @@ class ERTableNodeWidget extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                entity.title,
+                widget.entity.title,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -193,11 +229,11 @@ class ERTableNodeWidget extends StatelessWidget {
                 maxLines: 1,
               ),
             ),
-            if (entity.chnname.isNotEmpty)
+            if (widget.entity.chnname.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: Text(
-                  entity.chnname,
+                  widget.entity.chnname,
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.white.withValues(alpha: 0.7),
@@ -215,7 +251,7 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 构建字段行
   Widget _buildFieldRow(int index, Field field, bool isDark) {
     return Container(
-      height: fieldRowHeight,
+      height: ERTableNodeWidget.fieldRowHeight,
       color: index % 2 == 1 && !isDark ? Colors.grey.shade50 : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -260,16 +296,16 @@ class ERTableNodeWidget extends StatelessWidget {
 
   /// 构建锚点层
   Widget _buildAnchorLayer(bool isDark) {
-    final primaryKeyFlags = entity.fields.map((f) => f.pk).toList();
+    final primaryKeyFlags = widget.entity.fields.map((f) => f.pk).toList();
 
     return ERFieldAnchorLayer(
-      entityId: entity.id,
-      fieldCount: entity.fields.length,
+      entityId: widget.entity.id,
+      fieldCount: widget.entity.fields.length,
       primaryKeyFlags: primaryKeyFlags,
-      headerHeight: headerHeight,
-      fieldRowHeight: fieldRowHeight,
-      onAnchorTap: onAnchorTap != null
-          ? (anchor) => onAnchorTap!(anchor, graphNode)
+      headerHeight: ERTableNodeWidget.headerHeight,
+      fieldRowHeight: ERTableNodeWidget.fieldRowHeight,
+      onAnchorTap: widget.onAnchorTap != null
+          ? (anchor) => widget.onAnchorTap!(anchor, widget.graphNode)
           : null,
     );
   }
@@ -285,17 +321,5 @@ class ERTableNodeWidget extends StatelessWidget {
       type += ')';
     }
     return type;
-  }
-
-  /// 计算节点高度
-  static double calculateNodeHeight(int fieldCount) {
-    const minHeight = 80.0;
-    final height = headerHeight + (fieldCount * fieldRowHeight);
-    return height < minHeight ? minHeight : height;
-  }
-
-  /// 计算节点尺寸
-  static Size calculateNodeSize(int fieldCount) {
-    return Size(defaultWidth, calculateNodeHeight(fieldCount));
   }
 }
