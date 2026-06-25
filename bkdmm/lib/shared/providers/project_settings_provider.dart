@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/project/providers/project_notifier.dart';
 import '../models/project.dart';
+import 'settings_provider.dart';
 
 /// Project-specific settings state
 ///
@@ -225,3 +226,136 @@ final projectSettingsProvider =
 final hasProjectSettingsProvider = Provider<bool>((ref) {
   return ref.watch(projectSettingsProvider) != null;
 });
+
+/// Effective default fields provider - resolves project/global inheritance
+///
+/// Returns the effective default fields settings that should be used
+/// when creating new tables. Resolves inheritance hierarchy:
+/// 1. If project settings exist and not inheriting -> use project settings
+/// 2. If project settings exist and inheriting -> use global settings
+/// 3. If no project settings -> use global settings
+final effectiveDefaultFieldsProvider = Provider<EffectiveDefaultFields>((ref) {
+  final projectSettings = ref.watch(projectSettingsProvider);
+  final globalSettings = ref.watch(settingsProvider);
+
+  // If no project or project inherits from global
+  if (projectSettings == null || projectSettings.inheritDefaultFields) {
+    return EffectiveDefaultFields(
+      revision: globalSettings.defaultFieldsRevision,
+      createdBy: globalSettings.defaultFieldsCreatedBy,
+      createdTime: globalSettings.defaultFieldsCreatedTime,
+      updatedBy: globalSettings.defaultFieldsUpdatedBy,
+      updatedTime: globalSettings.defaultFieldsUpdatedTime,
+      source: 'global',
+    );
+  }
+
+  // Project has custom settings - use project values (fallback to global for nulls)
+  return EffectiveDefaultFields(
+    revision: projectSettings.defaultFieldsRevision ?? globalSettings.defaultFieldsRevision,
+    createdBy: projectSettings.defaultFieldsCreatedBy ?? globalSettings.defaultFieldsCreatedBy,
+    createdTime: projectSettings.defaultFieldsCreatedTime ?? globalSettings.defaultFieldsCreatedTime,
+    updatedBy: projectSettings.defaultFieldsUpdatedBy ?? globalSettings.defaultFieldsUpdatedBy,
+    updatedTime: projectSettings.defaultFieldsUpdatedTime ?? globalSettings.defaultFieldsUpdatedTime,
+    source: 'project',
+  );
+});
+
+/// Effective default database provider - resolves project/global inheritance
+final effectiveDefaultDatabaseProvider = Provider<String?>((ref) {
+  final projectSettings = ref.watch(projectSettingsProvider);
+  final globalSettings = ref.watch(settingsProvider);
+
+  if (projectSettings == null || projectSettings.inheritDefaultDatabase) {
+    return globalSettings.defaultDatabase;
+  }
+
+  return projectSettings.defaultDatabase ?? globalSettings.defaultDatabase;
+});
+
+/// Effective default fields data class
+class EffectiveDefaultFields {
+  final bool revision;
+  final bool createdBy;
+  final bool createdTime;
+  final bool updatedBy;
+  final bool updatedTime;
+  final String source; // 'global' or 'project'
+
+  const EffectiveDefaultFields({
+    required this.revision,
+    required this.createdBy,
+    required this.createdTime,
+    required this.updatedBy,
+    required this.updatedTime,
+    required this.source,
+  });
+
+  /// Generate default field templates for a new entity
+  /// Returns a list of Field objects based on enabled default fields
+  List<Map<String, dynamic>> generateDefaultFieldTemplates() {
+    final fields = <Map<String, dynamic>>[];
+
+    if (revision) {
+      fields.add({
+        'name': 'REVISION',
+        'chnname': '乐观锁',
+        'type': 'Integer',
+        'pk': false,
+        'notNull': true,
+        'autoIncrement': false,
+        'remark': 'Optimistic lock version',
+      });
+    }
+
+    if (createdBy) {
+      fields.add({
+        'name': 'CREATED_BY',
+        'chnname': '创建人',
+        'type': 'IdOrKey',
+        'pk': false,
+        'notNull': true,
+        'autoIncrement': false,
+        'remark': 'Creator ID',
+      });
+    }
+
+    if (createdTime) {
+      fields.add({
+        'name': 'CREATED_TIME',
+        'chnname': '创建时间',
+        'type': 'DateTime',
+        'pk': false,
+        'notNull': true,
+        'autoIncrement': false,
+        'remark': 'Creation timestamp',
+      });
+    }
+
+    if (updatedBy) {
+      fields.add({
+        'name': 'UPDATED_BY',
+        'chnname': '更新人',
+        'type': 'IdOrKey',
+        'pk': false,
+        'notNull': true,
+        'autoIncrement': false,
+        'remark': 'Updater ID',
+      });
+    }
+
+    if (updatedTime) {
+      fields.add({
+        'name': 'UPDATED_TIME',
+        'chnname': '更新时间',
+        'type': 'DateTime',
+        'pk': false,
+        'notNull': true,
+        'autoIncrement': false,
+        'remark': 'Update timestamp',
+      });
+    }
+
+    return fields;
+  }
+}

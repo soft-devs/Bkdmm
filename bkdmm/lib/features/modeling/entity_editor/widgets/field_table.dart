@@ -576,118 +576,139 @@ class _FieldTableState extends State<FieldTable> {
     showDialog(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => TDAlertDialog(
-          title: existingField == null ? 'Add Field' : 'Edit Field',
-          content: '',
-          contentWidget: SizedBox(
-            width: 650,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TDInput(
-                    controller: nameController,
-                    leftLabel: 'Field Name *',
-                    hintText: 'e.g., user_id',
-                    leftIcon: const Icon(TDIcons.code),
-                    backgroundColor: Colors.transparent,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTypeSelectorFormField(
-                    context: context,
-                    selectedType: selectedType,
-                    onTypeChanged: (type) => setState(() => selectedType = type),
-                  ),
-                  const SizedBox(height: 16),
-                  TDInput(
-                    controller: chnnameController,
-                    leftLabel: 'Chinese Name',
-                    hintText: 'e.g., 用户ID',
-                    leftIcon: const Icon(TDIcons.translate),
-                    backgroundColor: Colors.transparent,
-                  ),
-                  const SizedBox(height: 16),
-                  TDCheckbox(
-                    title: 'Primary Key',
-                    checked: isPk,
-                    onCheckBoxChanged: (checked) {
-                      setState(() {
-                        isPk = checked;
-                        if (isPk) {
-                          isNotNull = true;
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TDCheckbox(
-                    title: 'Not Null',
-                    checked: isNotNull,
-                    enable: !isPk,
-                    onCheckBoxChanged: isPk ? null : (checked) {
-                      setState(() => isNotNull = checked);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TDCheckbox(
-                    title: 'Auto Increment',
-                    checked: isAutoIncrement,
-                    onCheckBoxChanged: (checked) {
-                      setState(() => isAutoIncrement = checked);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TDInput(
-                    controller: remarkController,
-                    leftLabel: 'Remark',
-                    hintText: 'Field description',
-                    backgroundColor: Colors.transparent,
-                    maxLines: 2,
-                  ),
-                ],
+        builder: (context, setState) {
+          final tdTheme = TDTheme.of(context);
+          // Responsive dialog width
+          final screenWidth = MediaQuery.of(context).size.width;
+          const baseMinWidth = 400.0;
+          final maxWidth = baseMinWidth * 1.4; // 560
+          final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
+
+          return TDAlertDialog(
+            title: existingField == null ? 'Add Field' : 'Edit Field',
+            content: '',
+            contentWidget: SizedBox(
+              width: dialogWidth,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TDInput(
+                      controller: nameController,
+                      leftLabel: 'Field Name *',
+                      hintText: 'e.g., user_id',
+                      leftIcon: const Icon(TDIcons.code),
+                      backgroundColor: Colors.transparent,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTypeSelectorFormField(
+                      context: context,
+                      selectedType: selectedType,
+                      onTypeChanged: (type) => setState(() => selectedType = type),
+                    ),
+                    const SizedBox(height: 12),
+                    TDInput(
+                      controller: chnnameController,
+                      leftLabel: 'Chinese Name',
+                      hintText: 'e.g., 用户ID',
+                      leftIcon: const Icon(TDIcons.translate),
+                      backgroundColor: Colors.transparent,
+                    ),
+                    const SizedBox(height: 12),
+                    // Checkbox section in a container
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: tdTheme.bgColorSecondaryContainer,
+                        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+                      ),
+                      child: Column(
+                        children: [
+                          TDCheckbox(
+                            title: 'Primary Key',
+                            checked: isPk,
+                            onCheckBoxChanged: (checked) {
+                              setState(() {
+                                isPk = checked;
+                                if (isPk) {
+                                  isNotNull = true;
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TDCheckbox(
+                            title: 'Not Null',
+                            checked: isNotNull,
+                            enable: !isPk,
+                            onCheckBoxChanged: isPk ? null : (checked) {
+                              setState(() => isNotNull = checked);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TDCheckbox(
+                            title: 'Auto Increment',
+                            checked: isAutoIncrement,
+                            onCheckBoxChanged: (checked) {
+                              setState(() => isAutoIncrement = checked);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TDInput(
+                      controller: remarkController,
+                      leftLabel: 'Remark',
+                      hintText: 'Field description',
+                      backgroundColor: Colors.transparent,
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          leftBtn: TDDialogButtonOptions(
-            title: 'Cancel',
-            theme: TDButtonTheme.defaultTheme,
-            type: TDButtonType.text,
-            action: () => Navigator.pop(context),
-          ),
-          rightBtn: TDDialogButtonOptions(
-            title: existingField == null ? 'Add' : 'Save',
-            theme: TDButtonTheme.primary,
-            type: TDButtonType.fill,
-            action: () {
-              if (nameController.text.trim().isEmpty) {
-                TDToast.showText('Field name is required', context: context);
-                return;
-              }
+            leftBtn: TDDialogButtonOptions(
+              title: 'Cancel',
+              theme: TDButtonTheme.defaultTheme,
+              type: TDButtonType.text,
+              action: () => Navigator.pop(context),
+            ),
+            rightBtn: TDDialogButtonOptions(
+              title: existingField == null ? 'Add' : 'Save',
+              theme: TDButtonTheme.primary,
+              type: TDButtonType.fill,
+              action: () {
+                if (nameController.text.trim().isEmpty) {
+                  TDToast.showText('Field name is required', context: context);
+                  return;
+                }
 
-              final updatedField = Field(
-                id: existingField?.id ?? '',
-                name: nameController.text.trim(),
-                type: selectedType,
-                chnname: chnnameController.text.trim().isNotEmpty
-                    ? chnnameController.text.trim()
-                    : nameController.text.trim(),
-                pk: isPk,
-                notNull: isNotNull,
-                autoIncrement: isAutoIncrement,
-                remark: remarkController.text.trim().isNotEmpty
-                    ? remarkController.text.trim()
-                    : null,
-              );
+                final updatedField = Field(
+                  id: existingField?.id ?? '',
+                  name: nameController.text.trim(),
+                  type: selectedType,
+                  chnname: chnnameController.text.trim().isNotEmpty
+                      ? chnnameController.text.trim()
+                      : nameController.text.trim(),
+                  pk: isPk,
+                  notNull: isNotNull,
+                  autoIncrement: isAutoIncrement,
+                  remark: remarkController.text.trim().isNotEmpty
+                      ? remarkController.text.trim()
+                      : null,
+                );
 
-              if (existingField == null) {
-                widget.onAddField(updatedField);
-              } else {
-                widget.onUpdateField(existingField.id, updatedField);
-              }
-              Navigator.pop(context);
-            },
-          ),
-        ),
+                if (existingField == null) {
+                  widget.onAddField(updatedField);
+                } else {
+                  widget.onUpdateField(existingField.id, updatedField);
+                }
+                Navigator.pop(context);
+              },
+            ),
+          );
+        },
       ),
     );
   }

@@ -251,8 +251,8 @@ class _IndexEditorState extends State<IndexEditor> {
           final tdTheme = TDTheme.of(context);
           // Responsive dialog width calculation
           final screenWidth = MediaQuery.of(context).size.width;
-          const baseMinWidth = 500.0;
-          final maxWidth = baseMinWidth * 1.3; // 650
+          const baseMinWidth = 400.0;
+          final maxWidth = baseMinWidth * 1.4; // 560
           final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
 
           return TDAlertDialog(
@@ -271,14 +271,14 @@ class _IndexEditorState extends State<IndexEditor> {
                       leftIcon: const Icon(TDIcons.edit),
                       backgroundColor: Colors.transparent,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     // Type selector using TDesign style
                     _buildTypeSelector(
                       context: context,
                       selectedType: selectedType,
                       onTypeChanged: (type) => setState(() => selectedType = type),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     TDText(
                       'Select Fields:',
                       font: tdTheme.fontTitleSmall,
@@ -287,7 +287,7 @@ class _IndexEditorState extends State<IndexEditor> {
                     // Fixed height container for field selection
                     ConstrainedBox(
                       constraints: const BoxConstraints(
-                        maxHeight: 200,
+                        maxHeight: 180,
                         minHeight: 50,
                       ),
                       child: Container(
@@ -332,7 +332,7 @@ class _IndexEditorState extends State<IndexEditor> {
                               ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     TDInput(
                       controller: remarkController,
                       leftLabel: 'Remark',

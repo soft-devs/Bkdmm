@@ -122,12 +122,11 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tdTheme = TDTheme.of(context);
 
     // Responsive width calculation
-    const double baseMinWidth = 600.0;
-    final double maxWidth = baseMinWidth * 1.3; // 780
+    const double baseMinWidth = 450.0;
+    final double maxWidth = baseMinWidth * 1.3; // 585
     final screenWidth = MediaQuery.of(context).size.width;
     final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
 
@@ -142,8 +141,8 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Basic info section
-              _buildSectionHeader('Basic Info', TDIcons.info_circle, colorScheme),
-              const SizedBox(height: 12),
+              _buildSectionHeader('Basic Info', TDIcons.info_circle, tdTheme),
+              const SizedBox(height: 10),
               TDInput(
                 controller: _nameController,
                 leftLabel: 'Type Name (English)',
@@ -154,7 +153,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                   _validate();
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               TDInput(
                 controller: _chnnameController,
                 leftLabel: 'Chinese Name',
@@ -164,7 +163,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                   _validate();
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               TDInput(
                 controller: _remarkController,
                 leftLabel: 'Remark',
@@ -174,7 +173,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                   setState(() {});
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               TDInput(
                 controller: _javaController,
                 leftLabel: 'Java Type',
@@ -184,33 +183,40 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
                 },
               ),
 
-              const SizedBox(height: 24),
-
-              // Database mapping section
-              _buildSectionHeader('Database Type Mapping', TDIcons.data_base, colorScheme),
-              const SizedBox(height: 12),
-              Text(
-                'Define how this type maps to each database',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
               const SizedBox(height: 16),
 
-              // Database mappings
-              ...DatabaseCodes.all.map((dbCode) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: TDInput(
-                    controller: _dbTypeControllers[dbCode],
-                    leftLabel: DatabaseCodes.getDisplayName(dbCode),
-                    hintText: 'e.g., VARCHAR(255)',
-                    onChanged: (text) {
-                      setState(() {});
-                    },
-                  ),
-                );
-              }),
+              // Database mapping section
+              _buildSectionHeader('Database Type Mapping', TDIcons.data_base, tdTheme),
+              const SizedBox(height: 8),
+              TDText(
+                'Define how this type maps to each database',
+                font: tdTheme.fontBodySmall,
+                textColor: tdTheme.textColorSecondary,
+              ),
+              const SizedBox(height: 10),
+
+              // Database mappings - show in a scrollable container
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: DatabaseCodes.all.length,
+                  itemBuilder: (context, index) {
+                    final dbCode = DatabaseCodes.all[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: TDInput(
+                        controller: _dbTypeControllers[dbCode],
+                        leftLabel: DatabaseCodes.getDisplayName(dbCode),
+                        hintText: 'e.g., VARCHAR(255)',
+                        onChanged: (text) {
+                          setState(() {});
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -235,16 +241,15 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, ColorScheme colorScheme) {
+  Widget _buildSectionHeader(String title, IconData icon, TDThemeData tdTheme) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: colorScheme.primary),
+        Icon(icon, size: 18, color: tdTheme.brandNormalColor),
         const SizedBox(width: 8),
-        Text(
+        TDText(
           title,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          font: tdTheme.fontTitleSmall,
+          fontWeight: FontWeight.w600,
         ),
       ],
     );

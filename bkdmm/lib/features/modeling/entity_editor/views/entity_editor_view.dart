@@ -439,95 +439,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     ),
                   )
                 else
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final availableWidth = constraints.maxWidth - 48; // Account for padding
-                      final pkWidth = 48.0;
-                      final typeWidth = (availableWidth * 0.20).clamp(80.0, 150.0);
-                      final chnnameWidth = (availableWidth * 0.25).clamp(80.0, 150.0);
-                      final nameWidth = availableWidth - pkWidth - typeWidth - chnnameWidth;
-
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(minWidth: availableWidth),
-                            child: DataTable(
-                              headingRowColor: WidgetStateProperty.all(tdTheme.bgColorSecondaryContainer),
-                              dataRowMinHeight: 36,
-                              dataRowMaxHeight: 44,
-                              columnSpacing: 12,
-                              horizontalMargin: 12,
-                              columns: [
-                                DataColumn(
-                                  label: SizedBox(
-                                    width: pkWidth,
-                                    child: TDText('PK', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: SizedBox(
-                                    width: nameWidth,
-                                    child: TDText('Name', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: SizedBox(
-                                    width: typeWidth,
-                                    child: TDText('Type', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: SizedBox(
-                                    width: chnnameWidth,
-                                    child: TDText('Chinese Name', font: tdTheme.fontBodySmall, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ],
-                              rows: entity.fields.take(10).map((field) {
-                                return DataRow(
-                                  cells: [
-                                    DataCell(SizedBox(
-                                      width: pkWidth,
-                                      child: field.pk
-                                          ? Icon(TDIcons.check, size: 16, color: tdTheme.brandNormalColor)
-                                          : const SizedBox(),
-                                    )),
-                                    DataCell(SizedBox(
-                                      width: nameWidth,
-                                      child: TDText(
-                                        field.name,
-                                        font: tdTheme.fontBodySmall,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    )),
-                                    DataCell(SizedBox(
-                                      width: typeWidth,
-                                      child: TDText(
-                                        field.type,
-                                        font: tdTheme.fontBodySmall,
-                                        textColor: tdTheme.textColorSecondary,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    )),
-                                    DataCell(SizedBox(
-                                      width: chnnameWidth,
-                                      child: TDText(
-                                        field.chnname,
-                                        font: tdTheme.fontBodySmall,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    )),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  _buildFieldsPreviewTable(entity, tdTheme),
                 if (entity.fields.length > 10)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -630,6 +542,132 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
       databases: databases,
       selectedDatabase: 'MYSQL',
       onDatabaseChanged: (db) {},
+    );
+  }
+
+  /// Build fields preview table with TDesign styling
+  Widget _buildFieldsPreviewTable(Entity entity, TDThemeData tdTheme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        const pkWidth = 50.0;
+        final typeWidth = (availableWidth * 0.15).clamp(80.0, 120.0);
+        final chnnameWidth = (availableWidth * 0.20).clamp(80.0, 120.0);
+        final nameWidth = availableWidth - pkWidth - typeWidth - chnnameWidth;
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: tdTheme.componentBorderColor),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: availableWidth),
+                child: Column(
+                  children: [
+                    // Header row
+                    Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: tdTheme.bgColorSecondaryContainer,
+                        border: Border(
+                          bottom: BorderSide(color: tdTheme.componentBorderColor),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildPreviewHeaderCell('PK', pkWidth, tdTheme, centered: true),
+                          _buildPreviewHeaderCell('Name', nameWidth, tdTheme),
+                          _buildPreviewHeaderCell('Type', typeWidth, tdTheme),
+                          _buildPreviewHeaderCell('Chinese Name', chnnameWidth, tdTheme, isLast: true),
+                        ],
+                      ),
+                    ),
+                    // Data rows
+                    ...entity.fields.take(10).map((field) {
+                      return Container(
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: tdTheme.bgColorContainer,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: tdTheme.componentBorderColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildPreviewDataCell(
+                              field.pk ? Icon(TDIcons.check, size: 14, color: tdTheme.brandNormalColor) : const SizedBox(),
+                              pkWidth,
+                              tdTheme,
+                              centered: true,
+                            ),
+                            _buildPreviewDataCell(
+                              TDText(field.name, font: tdTheme.fontBodySmall, overflow: TextOverflow.ellipsis),
+                              nameWidth,
+                              tdTheme,
+                            ),
+                            _buildPreviewDataCell(
+                              TDText(field.type, font: tdTheme.fontBodySmall, textColor: tdTheme.textColorSecondary, overflow: TextOverflow.ellipsis),
+                              typeWidth,
+                              tdTheme,
+                            ),
+                            _buildPreviewDataCell(
+                              TDText(field.chnname, font: tdTheme.fontBodySmall, overflow: TextOverflow.ellipsis),
+                              chnnameWidth,
+                              tdTheme,
+                              isLast: true,
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPreviewHeaderCell(String title, double width, TDThemeData tdTheme, {bool centered = false, bool isLast = false}) {
+    return Container(
+      width: width,
+      height: 40,
+      alignment: centered ? Alignment.center : Alignment.centerLeft,
+      padding: EdgeInsets.symmetric(horizontal: centered ? 8 : 12),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
+      ),
+      child: TDText(
+        title,
+        font: tdTheme.fontBodySmall,
+        fontWeight: FontWeight.w600,
+        textColor: tdTheme.textColorSecondary,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildPreviewDataCell(Widget child, double width, TDThemeData tdTheme, {bool centered = false, bool isLast = false}) {
+    return Container(
+      width: width,
+      height: 38,
+      alignment: centered ? Alignment.center : Alignment.centerLeft,
+      padding: EdgeInsets.symmetric(horizontal: centered ? 8 : 12),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.2))),
+      ),
+      child: child,
     );
   }
 
