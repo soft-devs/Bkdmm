@@ -115,7 +115,7 @@ class _FieldTableState extends State<FieldTable> {
         const double pkWidth = 48.0;
         const double notNullWidth = 64.0;
         const double autoIncWidth = 72.0;
-        const double actionsWidth = 72.0;
+        const double actionsWidth = 56.0; // Reduced to fit edit + delete icons
         const double fixedTotal = pkWidth + notNullWidth + autoIncWidth + actionsWidth;
 
         // Flexible columns - calculate remaining width and distribute
@@ -478,30 +478,31 @@ class _FieldTableState extends State<FieldTable> {
       width: width,
       height: 44,
       alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Edit button
           InkWell(
             onTap: () => _showEditFieldDialog(field),
             child: Padding(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(4),
               child: Icon(
                 TDIcons.edit,
-                size: 16,
+                size: 14,
                 color: tdTheme.textColorSecondary,
               ),
             ),
           ),
-          const SizedBox(width: 4),
           // Delete button
           InkWell(
             onTap: () => _confirmDeleteField(field),
             child: Padding(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(4),
               child: Icon(
                 TDIcons.delete,
-                size: 16,
+                size: 14,
                 color: tdTheme.errorNormalColor,
               ),
             ),
