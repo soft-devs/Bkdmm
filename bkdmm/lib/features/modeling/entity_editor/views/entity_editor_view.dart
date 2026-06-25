@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../../core/i18n/i18n.dart';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../utils/id_generator.dart';
@@ -97,10 +98,10 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           child: TabBar(
             controller: _tabController,
             tabs: [
-              Tab(icon: Icon(TDIcons.info_circle, color: tdTheme.textColorSecondary), text: 'Summary'),
-              Tab(icon: Icon(TDIcons.view_list, color: tdTheme.textColorSecondary), text: 'Fields'),
-              Tab(icon: Icon(TDIcons.filter, color: tdTheme.textColorSecondary), text: 'Indexes'),
-              Tab(icon: Icon(TDIcons.code, color: tdTheme.textColorSecondary), text: 'Preview'),
+              Tab(icon: Icon(TDIcons.info_circle, color: tdTheme.textColorSecondary), text: context.l10n.summary),
+              Tab(icon: Icon(TDIcons.view_list, color: tdTheme.textColorSecondary), text: context.l10n.fields),
+              Tab(icon: Icon(TDIcons.filter, color: tdTheme.textColorSecondary), text: context.l10n.indexes),
+              Tab(icon: Icon(TDIcons.code, color: tdTheme.textColorSecondary), text: context.l10n.preview),
             ],
             labelColor: tdTheme.brandNormalColor,
             unselectedLabelColor: tdTheme.textColorSecondary,
@@ -225,7 +226,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                   Icon(TDIcons.circle, size: 8, color: tdTheme.brandNormalColor),
                   const SizedBox(width: 4),
                   TDText(
-                    'Unsaved',
+                    context.l10n.unsaved,
                     font: tdTheme.fontMarkExtraSmall,
                     textColor: tdTheme.brandNormalColor,
                   ),
@@ -306,7 +307,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                   children: [
                     if (_hasLocalChanges)
                       TDButton(
-                        text: 'Reset',
+                        text: context.l10n.reset,
                         theme: TDButtonTheme.defaultTheme,
                         type: TDButtonType.outline,
                         onTap: _resetBasicInfo,
@@ -314,7 +315,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                     if (_hasLocalChanges)
                       const SizedBox(width: 8),
                     TDButton(
-                      text: 'Save Changes',
+                      text: context.l10n.saveChanges,
                       icon: TDIcons.save,
                       theme: TDButtonTheme.primary,
                       type: TDButtonType.fill,
@@ -401,12 +402,12 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     TDText(
-                      'Fields Preview',
+                      context.l10n.fieldsPreview,
                       font: tdTheme.fontTitleSmall,
                       fontWeight: FontWeight.w600,
                     ),
                     TDButton(
-                      text: 'Edit Fields',
+                      text: context.l10n.editFields,
                       icon: TDIcons.edit,
                       theme: TDButtonTheme.defaultTheme,
                       type: TDButtonType.text,
@@ -430,7 +431,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                           ),
                           const SizedBox(height: 12),
                           TDText(
-                            'No fields defined yet',
+                            context.l10n.noFieldsDefined,
                             font: tdTheme.fontBodyMedium,
                             textColor: tdTheme.textColorSecondary,
                           ),
@@ -444,7 +445,7 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: TDText(
-                      'And ${entity.fields.length - 10} more fields...',
+                      context.l10n.andMoreFields(entity.fields.length - 10),
                       font: tdTheme.fontBodySmall,
                       textColor: tdTheme.textColorSecondary,
                     ),

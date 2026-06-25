@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../shared/providers/providers.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import 'global_settings_view.dart';
@@ -39,9 +40,10 @@ class _SettingsViewState extends ConsumerState<SettingsView>
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
     final hasProject = ref.watch(hasProjectSettingsProvider);
+    final l10n = context.l10n;
 
     return AppScaffold(
-      title: 'Settings',
+      title: l10n.settings,
       leading: Icon(
         TDIcons.chevron_left,
         size: 24,
@@ -65,9 +67,9 @@ class _SettingsViewState extends ConsumerState<SettingsView>
               labelColor: tdTheme.brandNormalColor,
               unselectedLabelColor: tdTheme.textColorSecondary,
               indicatorColor: tdTheme.brandNormalColor,
-              tabs: const [
-                Tab(text: 'Global Settings'),
-                Tab(text: 'Project Settings'),
+              tabs: [
+                Tab(text: l10n.globalSettings),
+                Tab(text: l10n.projectSettings),
               ],
             ),
           ),

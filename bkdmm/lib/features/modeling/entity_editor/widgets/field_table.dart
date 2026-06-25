@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../../core/i18n/i18n.dart';
 import '../../../../shared/models/models.dart';
 
 /// Field table widget with custom table implementation
@@ -37,6 +38,7 @@ class _FieldTableState extends State<FieldTable> {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     return Column(
       children: [
@@ -52,14 +54,14 @@ class _FieldTableState extends State<FieldTable> {
           child: Row(
             children: [
               TDText(
-                'Fields (${widget.fields.length})',
+                '${l10n.fields} (${widget.fields.length})',
                 font: tdTheme.fontTitleSmall,
                 fontWeight: FontWeight.w600,
               ),
               const Spacer(),
               // Add field button
               TDButton(
-                text: 'Add Field',
+                text: l10n.addField,
                 icon: TDIcons.add,
                 theme: TDButtonTheme.primary,
                 type: TDButtonType.fill,
@@ -72,14 +74,14 @@ class _FieldTableState extends State<FieldTable> {
         // Table content
         Expanded(
           child: widget.fields.isEmpty
-              ? _buildEmptyState(tdTheme)
-              : _buildTable(tdTheme),
+              ? _buildEmptyState(tdTheme, l10n)
+              : _buildTable(tdTheme, l10n),
         ),
       ],
     );
   }
 
-  Widget _buildEmptyState(TDThemeData tdTheme) {
+  Widget _buildEmptyState(TDThemeData tdTheme, AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -91,13 +93,13 @@ class _FieldTableState extends State<FieldTable> {
           ),
           const SizedBox(height: 16),
           TDText(
-            'No fields defined',
+            l10n.noFieldsDefined,
             font: tdTheme.fontTitleMedium,
             textColor: tdTheme.textColorSecondary,
           ),
           const SizedBox(height: 8),
           TDText(
-            'Click "Add Field" to create a new field',
+            l10n.noFieldsDefinedHint,
             font: tdTheme.fontBodyMedium,
             textColor: tdTheme.textColorSecondary.withValues(alpha: 0.7),
           ),
@@ -106,7 +108,7 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  Widget _buildTable(TDThemeData tdTheme) {
+  Widget _buildTable(TDThemeData tdTheme, AppLocalizations l10n) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
@@ -142,6 +144,7 @@ class _FieldTableState extends State<FieldTable> {
               width: fixedTotal + totalMinFlexible,
               child: _buildTableContent(
                 tdTheme,
+                l10n,
                 pkWidth, nameWidth, typeWidth, chnnameWidth,
                 notNullWidth, autoIncWidth, remarkWidth, actionsWidth,
               ),
@@ -157,6 +160,7 @@ class _FieldTableState extends State<FieldTable> {
 
         return _buildTableContent(
           tdTheme,
+          l10n,
           pkWidth, nameWidth, typeWidth, chnnameWidth,
           notNullWidth, autoIncWidth, remarkWidth, actionsWidth,
         );
@@ -166,6 +170,7 @@ class _FieldTableState extends State<FieldTable> {
 
   Widget _buildTableContent(
     TDThemeData tdTheme,
+    AppLocalizations l10n,
     double pkWidth,
     double nameWidth,
     double typeWidth,
@@ -186,7 +191,7 @@ class _FieldTableState extends State<FieldTable> {
         child: Column(
           children: [
             // Header row
-            _buildHeaderRow(tdTheme, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
+            _buildHeaderRow(tdTheme, l10n, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
 
             // Data rows
             Expanded(
@@ -220,6 +225,7 @@ class _FieldTableState extends State<FieldTable> {
 
   Widget _buildHeaderRow(
     TDThemeData tdTheme,
+    AppLocalizations l10n,
     double pkWidth,
     double nameWidth,
     double typeWidth,
@@ -239,14 +245,14 @@ class _FieldTableState extends State<FieldTable> {
       ),
       child: Row(
         children: [
-          _buildHeaderCell('PK', pkWidth, tdTheme, centered: true),
-          _buildHeaderCell('Field Name', nameWidth, tdTheme),
-          _buildHeaderCell('Data Type', typeWidth, tdTheme),
-          _buildHeaderCell('Chinese Name', chnnameWidth, tdTheme),
-          _buildHeaderCell('Not Null', notNullWidth, tdTheme, centered: true),
-          _buildHeaderCell('Auto Inc', autoIncWidth, tdTheme, centered: true),
-          _buildHeaderCell('Remark', remarkWidth, tdTheme),
-          _buildHeaderCell('Actions', actionsWidth, tdTheme, centered: true, isLast: true),
+          _buildHeaderCell(l10n.pk, pkWidth, tdTheme, centered: true),
+          _buildHeaderCell(l10n.fieldName, nameWidth, tdTheme),
+          _buildHeaderCell(l10n.dataType, typeWidth, tdTheme),
+          _buildHeaderCell(l10n.chineseName, chnnameWidth, tdTheme),
+          _buildHeaderCell(l10n.notNull, notNullWidth, tdTheme, centered: true),
+          _buildHeaderCell(l10n.autoIncrement, autoIncWidth, tdTheme, centered: true),
+          _buildHeaderCell(l10n.fieldRemark, remarkWidth, tdTheme),
+          _buildHeaderCell(l10n.actions, actionsWidth, tdTheme, centered: true, isLast: true),
         ],
       ),
     );
@@ -521,11 +527,12 @@ class _FieldTableState extends State<FieldTable> {
   }
 
   void _showTypeSelector(Field field, TDThemeData tdTheme) {
+    final l10n = context.l10n;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => TDMultiPicker(
-        title: 'Select Data Type',
+        title: l10n.selectDataType,
         data: [widget.dataTypes.map((dt) => dt.name).toList()],
         initialIndexes: [
           widget.dataTypes.indexWhere((dt) => dt.name == field.type).clamp(0, widget.dataTypes.length - 1),
@@ -574,6 +581,7 @@ class _FieldTableState extends State<FieldTable> {
   }
 
   void _showFieldDialog(Field? existingField) {
+    final l10n = context.l10n;
     final nameController = TextEditingController(text: existingField?.name ?? '');
     final chnnameController = TextEditingController(text: existingField?.chnname ?? '');
     final remarkController = TextEditingController(text: existingField?.remark ?? '');
@@ -587,6 +595,7 @@ class _FieldTableState extends State<FieldTable> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) {
           final tdTheme = TDTheme.of(context);
+          final dialogL10n = context.l10n;
           // Responsive dialog width
           final screenWidth = MediaQuery.of(context).size.width;
           const baseMinWidth = 400.0;
@@ -594,7 +603,7 @@ class _FieldTableState extends State<FieldTable> {
           final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
 
           return TDAlertDialog(
-            title: existingField == null ? 'Add Field' : 'Edit Field',
+            title: existingField == null ? l10n.addField : l10n.editField,
             content: '',
             contentWidget: SizedBox(
               width: dialogWidth,
@@ -604,7 +613,7 @@ class _FieldTableState extends State<FieldTable> {
                   children: [
                     TDInput(
                       controller: nameController,
-                      leftLabel: 'Field Name *',
+                      leftLabel: l10n.fieldNameStar,
                       hintText: 'e.g., user_id',
                       leftIcon: const Icon(TDIcons.code),
                       backgroundColor: Colors.transparent,
@@ -618,7 +627,7 @@ class _FieldTableState extends State<FieldTable> {
                     const SizedBox(height: 12),
                     TDInput(
                       controller: chnnameController,
-                      leftLabel: 'Chinese Name',
+                      leftLabel: l10n.chineseName,
                       hintText: 'e.g., 用户ID',
                       leftIcon: const Icon(TDIcons.translate),
                       backgroundColor: Colors.transparent,
@@ -634,7 +643,7 @@ class _FieldTableState extends State<FieldTable> {
                       child: Column(
                         children: [
                           TDCheckbox(
-                            title: 'Primary Key',
+                            title: l10n.primaryKey,
                             checked: isPk,
                             onCheckBoxChanged: (checked) {
                               setState(() {
@@ -647,7 +656,7 @@ class _FieldTableState extends State<FieldTable> {
                           ),
                           const SizedBox(height: 8),
                           TDCheckbox(
-                            title: 'Not Null',
+                            title: l10n.notNull,
                             checked: isNotNull,
                             enable: !isPk,
                             onCheckBoxChanged: isPk ? null : (checked) {
@@ -656,7 +665,7 @@ class _FieldTableState extends State<FieldTable> {
                           ),
                           const SizedBox(height: 8),
                           TDCheckbox(
-                            title: 'Auto Increment',
+                            title: l10n.autoIncrement,
                             checked: isAutoIncrement,
                             onCheckBoxChanged: (checked) {
                               setState(() => isAutoIncrement = checked);
@@ -668,8 +677,8 @@ class _FieldTableState extends State<FieldTable> {
                     const SizedBox(height: 12),
                     TDInput(
                       controller: remarkController,
-                      leftLabel: 'Remark',
-                      hintText: 'Field description',
+                      leftLabel: l10n.fieldRemark,
+                      hintText: l10n.fieldDescription,
                       backgroundColor: Colors.transparent,
                       maxLines: 2,
                     ),
@@ -678,18 +687,18 @@ class _FieldTableState extends State<FieldTable> {
               ),
             ),
             leftBtn: TDDialogButtonOptions(
-              title: 'Cancel',
+              title: dialogL10n.cancel,
               theme: TDButtonTheme.defaultTheme,
               type: TDButtonType.text,
               action: () => Navigator.pop(context),
             ),
             rightBtn: TDDialogButtonOptions(
-              title: existingField == null ? 'Add' : 'Save',
+              title: existingField == null ? l10n.add : l10n.save,
               theme: TDButtonTheme.primary,
               type: TDButtonType.fill,
               action: () {
                 if (nameController.text.trim().isEmpty) {
-                  TDToast.showText('Field name is required', context: context);
+                  TDToast.showText(dialogL10n.fieldNameRequired, context: context);
                   return;
                 }
 
@@ -728,6 +737,7 @@ class _FieldTableState extends State<FieldTable> {
     required Function(String) onTypeChanged,
   }) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     return GestureDetector(
       onTap: () {
@@ -735,7 +745,7 @@ class _FieldTableState extends State<FieldTable> {
           context: context,
           backgroundColor: Colors.transparent,
           builder: (ctx) => TDMultiPicker(
-            title: 'Select Data Type',
+            title: l10n.selectDataType,
             data: [widget.dataTypes.map((dt) => '${dt.name} (${dt.chnname})').toList()],
             initialIndexes: [
               widget.dataTypes.indexWhere((dt) => dt.name == selectedType).clamp(0, widget.dataTypes.length - 1),
@@ -763,7 +773,7 @@ class _FieldTableState extends State<FieldTable> {
             Icon(TDIcons.data, size: 20, color: tdTheme.textColorSecondary),
             const SizedBox(width: 12),
             TDText(
-              'Data Type',
+              l10n.dataTypeLabel,
               font: tdTheme.fontBodyMedium,
               textColor: tdTheme.textColorSecondary,
             ),
@@ -785,19 +795,20 @@ class _FieldTableState extends State<FieldTable> {
   }
 
   void _confirmDeleteField(Field field) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (context) => TDAlertDialog(
-        title: 'Delete Field',
-        content: 'Are you sure you want to delete "${field.name}"?',
+        title: l10n.deleteField,
+        content: l10n.deleteFieldConfirm(field.name),
         leftBtn: TDDialogButtonOptions(
-          title: 'Cancel',
+          title: l10n.cancel,
           theme: TDButtonTheme.defaultTheme,
           type: TDButtonType.text,
           action: () => Navigator.pop(context),
         ),
         rightBtn: TDDialogButtonOptions(
-          title: 'Delete',
+          title: l10n.delete,
           theme: TDButtonTheme.danger,
           type: TDButtonType.fill,
           action: () {

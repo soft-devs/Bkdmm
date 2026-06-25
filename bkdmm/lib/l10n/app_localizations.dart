@@ -835,6 +835,618 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'English'**
   String get english;
+
+  /// 全局设置标签页
+  ///
+  /// In zh, this message translates to:
+  /// **'全局设置'**
+  String get globalSettings;
+
+  /// 项目设置标签页
+  ///
+  /// In zh, this message translates to:
+  /// **'项目设置'**
+  String get projectSettings;
+
+  /// 外观设置标题
+  ///
+  /// In zh, this message translates to:
+  /// **'外观'**
+  String get appearance;
+
+  /// 主题模式设置
+  ///
+  /// In zh, this message translates to:
+  /// **'主题模式'**
+  String get themeMode;
+
+  /// 强调色设置
+  ///
+  /// In zh, this message translates to:
+  /// **'强调色'**
+  String get accentColor;
+
+  /// 自定义强调色描述
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义应用强调色'**
+  String get customizeAccentColor;
+
+  /// 字体大小设置
+  ///
+  /// In zh, this message translates to:
+  /// **'字体大小'**
+  String get fontSize;
+
+  /// 编辑器字体大小
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑器字体大小: {size}'**
+  String editorFontSize(int size);
+
+  /// 编辑器设置标题
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑器'**
+  String get editor;
+
+  /// 默认数据库类型设置
+  ///
+  /// In zh, this message translates to:
+  /// **'默认数据库类型'**
+  String get defaultDatabaseType;
+
+  /// 未设置
+  ///
+  /// In zh, this message translates to:
+  /// **'未设置'**
+  String get notSet;
+
+  /// 自动保存间隔设置
+  ///
+  /// In zh, this message translates to:
+  /// **'自动保存间隔'**
+  String get autoSaveInterval;
+
+  /// 禁用
+  ///
+  /// In zh, this message translates to:
+  /// **'禁用'**
+  String get disabled;
+
+  /// 秒
+  ///
+  /// In zh, this message translates to:
+  /// **'秒'**
+  String get seconds;
+
+  /// 分钟
+  ///
+  /// In zh, this message translates to:
+  /// **'分钟'**
+  String get minutes;
+
+  /// 显示行号设置
+  ///
+  /// In zh, this message translates to:
+  /// **'显示行号'**
+  String get showLineNumbers;
+
+  /// 显示行号描述
+  ///
+  /// In zh, this message translates to:
+  /// **'在代码预览中显示行号'**
+  String get displayLineNumbers;
+
+  /// 默认字段设置标题
+  ///
+  /// In zh, this message translates to:
+  /// **'默认字段 (全局)'**
+  String get defaultFieldsGlobal;
+
+  /// 默认字段描述
+  ///
+  /// In zh, this message translates to:
+  /// **'配置新表的默认字段（作为项目默认值）'**
+  String get defaultFieldsDescription;
+
+  /// 添加版本号字段
+  ///
+  /// In zh, this message translates to:
+  /// **'添加版本号字段'**
+  String get addRevisionField;
+
+  /// 添加创建者字段
+  ///
+  /// In zh, this message translates to:
+  /// **'添加创建者字段'**
+  String get addCreatorField;
+
+  /// 添加创建时间字段
+  ///
+  /// In zh, this message translates to:
+  /// **'添加创建时间字段'**
+  String get addCreationTimestampField;
+
+  /// 添加更新者字段
+  ///
+  /// In zh, this message translates to:
+  /// **'添加更新者字段'**
+  String get addUpdaterField;
+
+  /// 添加更新时间字段
+  ///
+  /// In zh, this message translates to:
+  /// **'添加更新时间字段'**
+  String get addUpdateTimestampField;
+
+  /// 数据类型设置标题
+  ///
+  /// In zh, this message translates to:
+  /// **'数据类型'**
+  String get dataTypes;
+
+  /// 管理数据类型
+  ///
+  /// In zh, this message translates to:
+  /// **'管理数据类型'**
+  String get manageDataTypes;
+
+  /// 配置自定义数据类型描述
+  ///
+  /// In zh, this message translates to:
+  /// **'配置自定义数据类型'**
+  String get configureCustomDataTypes;
+
+  /// 恢复默认设置按钮
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认设置'**
+  String get resetToDefaults;
+
+  /// 恢复默认设置描述
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复所有设置为默认值'**
+  String get restoreAllSettingsToDefault;
+
+  /// 重置设置标题
+  ///
+  /// In zh, this message translates to:
+  /// **'重置设置'**
+  String get resetSettings;
+
+  /// 重置设置确认消息
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要恢复所有设置为默认值吗？此操作不可撤销。'**
+  String get resetSettingsConfirm;
+
+  /// 设置恢复成功提示
+  ///
+  /// In zh, this message translates to:
+  /// **'设置已恢复为默认值'**
+  String get settingsResetSuccess;
+
+  /// 数据类型管理提示
+  ///
+  /// In zh, this message translates to:
+  /// **'数据类型管理功能即将推出'**
+  String get dataTypeManagementComingSoon;
+
+  /// 类型使用中删除警告消息
+  ///
+  /// In zh, this message translates to:
+  /// **'类型 \"{name}\" 正被以下字段使用：{usage}。确定仍要删除吗？使用此类型的字段可能会出错。'**
+  String typeInUseDeleteWarning(String name, String usage);
+
+  /// 恢复默认警告消息
+  ///
+  /// In zh, this message translates to:
+  /// **'这将恢复所有默认数据类型到原始值。自定义类型不会受影响。'**
+  String get restoreDefaultsWarning;
+
+  /// 类型名称英文标签
+  ///
+  /// In zh, this message translates to:
+  /// **'类型名称（英文）'**
+  String get typeEnglishName;
+
+  /// 类型名称中文标签
+  ///
+  /// In zh, this message translates to:
+  /// **'中文名称'**
+  String get typeChineseName;
+
+  /// Java类型标签
+  ///
+  /// In zh, this message translates to:
+  /// **'Java 类型'**
+  String get javaType;
+
+  /// 数据库类型映射标题
+  ///
+  /// In zh, this message translates to:
+  /// **'数据库类型映射'**
+  String get databaseTypeMapping;
+
+  /// 数据库映射提示
+  ///
+  /// In zh, this message translates to:
+  /// **'定义此类型如何映射到各个数据库'**
+  String get databaseMappingHint;
+
+  /// 数据类型管理标题
+  ///
+  /// In zh, this message translates to:
+  /// **'数据类型管理'**
+  String get dataTypeManagement;
+
+  /// 类型数量
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个类型'**
+  String typesCount(int count);
+
+  /// 已修改状态
+  ///
+  /// In zh, this message translates to:
+  /// **'已修改'**
+  String get modified;
+
+  /// 搜索类型提示
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索类型...'**
+  String get searchTypes;
+
+  /// 默认类型标签
+  ///
+  /// In zh, this message translates to:
+  /// **'默认类型'**
+  String get defaultTypes;
+
+  /// 自定义类型标签
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义类型'**
+  String get customTypes;
+
+  /// 未找到数据类型提示
+  ///
+  /// In zh, this message translates to:
+  /// **'未找到数据类型'**
+  String get noDataTypesFound;
+
+  /// 恢复默认提示
+  ///
+  /// In zh, this message translates to:
+  /// **'点击\"恢复默认\"加载默认类型'**
+  String get restoreDefaultsHint;
+
+  /// 数据库映射标题
+  ///
+  /// In zh, this message translates to:
+  /// **'数据库映射'**
+  String get databaseMappings;
+
+  /// Java标签
+  ///
+  /// In zh, this message translates to:
+  /// **'Java'**
+  String get java;
+
+  /// 表名英文标签
+  ///
+  /// In zh, this message translates to:
+  /// **'表名（英文）'**
+  String get tableNameEnglish;
+
+  /// 表名中文标签
+  ///
+  /// In zh, this message translates to:
+  /// **'中文名称'**
+  String get tableChineseName;
+
+  /// 表备注标签
+  ///
+  /// In zh, this message translates to:
+  /// **'备注'**
+  String get tableRemark;
+
+  /// 基本信息标题
+  ///
+  /// In zh, this message translates to:
+  /// **'基本信息'**
+  String get basicInformation;
+
+  /// 统计标题
+  ///
+  /// In zh, this message translates to:
+  /// **'统计'**
+  String get statistics;
+
+  /// 字段数量
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个字段'**
+  String fieldsCount(int count);
+
+  /// 索引数量
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个索引'**
+  String indexesCount(int count);
+
+  /// 未保存状态
+  ///
+  /// In zh, this message translates to:
+  /// **'未保存'**
+  String get unsaved;
+
+  /// 字段预览标题
+  ///
+  /// In zh, this message translates to:
+  /// **'字段预览'**
+  String get fieldsPreview;
+
+  /// 无字段提示
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未定义字段'**
+  String get noFieldsDefined;
+
+  /// 更多字段提示
+  ///
+  /// In zh, this message translates to:
+  /// **'还有 {count} 个字段...'**
+  String andMoreFields(int count);
+
+  /// 主键缩写
+  ///
+  /// In zh, this message translates to:
+  /// **'PK'**
+  String get pk;
+
+  /// 名称列
+  ///
+  /// In zh, this message translates to:
+  /// **'名称'**
+  String get name;
+
+  /// 类型列
+  ///
+  /// In zh, this message translates to:
+  /// **'类型'**
+  String get type;
+
+  /// 中文名列
+  ///
+  /// In zh, this message translates to:
+  /// **'中文名'**
+  String get chineseName;
+
+  /// 未定义字段提示
+  ///
+  /// In zh, this message translates to:
+  /// **'点击\"添加字段\"创建新字段'**
+  String get noFieldsDefinedHint;
+
+  /// 未定义索引提示
+  ///
+  /// In zh, this message translates to:
+  /// **'未定义索引'**
+  String get noIndexesDefined;
+
+  /// 添加索引提示
+  ///
+  /// In zh, this message translates to:
+  /// **'点击\"添加索引\"创建新索引'**
+  String get addIndexHint;
+
+  /// 索引名称必填提示
+  ///
+  /// In zh, this message translates to:
+  /// **'索引名称不能为空'**
+  String get indexNameRequired2;
+
+  /// 索引名称标签（必填）
+  ///
+  /// In zh, this message translates to:
+  /// **'索引名称 *'**
+  String get indexNameStar;
+
+  /// 选择字段标签
+  ///
+  /// In zh, this message translates to:
+  /// **'选择字段：'**
+  String get selectFieldsLabel;
+
+  /// 没有可用字段提示
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可用字段'**
+  String get noFieldsAvailable;
+
+  /// 可选描述提示
+  ///
+  /// In zh, this message translates to:
+  /// **'可选描述'**
+  String get optionalDescription;
+
+  /// 删除字段确认消息
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除字段 \"{name}\" 吗？'**
+  String deleteFieldConfirm(String name);
+
+  /// 字段名称标签（必填）
+  ///
+  /// In zh, this message translates to:
+  /// **'字段名称 *'**
+  String get fieldNameStar;
+
+  /// 数据类型标签
+  ///
+  /// In zh, this message translates to:
+  /// **'数据类型'**
+  String get dataTypeLabel;
+
+  /// 字段描述提示
+  ///
+  /// In zh, this message translates to:
+  /// **'字段描述'**
+  String get fieldDescription;
+
+  /// 主键自动非空提示
+  ///
+  /// In zh, this message translates to:
+  /// **'主键自动设置为非空'**
+  String get pkAutoSetNotNull;
+
+  /// 未加载项目提示
+  ///
+  /// In zh, this message translates to:
+  /// **'未加载项目'**
+  String get noProjectLoaded;
+
+  /// 打开项目提示
+  ///
+  /// In zh, this message translates to:
+  /// **'打开项目以生成 DDL'**
+  String get openProjectToGenerateDdl;
+
+  /// 选择目标标题
+  ///
+  /// In zh, this message translates to:
+  /// **'选择目标'**
+  String get selectTarget;
+
+  /// 全部项目模块数
+  ///
+  /// In zh, this message translates to:
+  /// **'全部项目（{count} 个模块）'**
+  String allProjectModules(int count);
+
+  /// 表数量
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个表'**
+  String tablesCount(int count);
+
+  /// 选择目标提示
+  ///
+  /// In zh, this message translates to:
+  /// **'选择一个目标'**
+  String get selectATarget;
+
+  /// 选择目标提示详情
+  ///
+  /// In zh, this message translates to:
+  /// **'选择表、模块或整个项目'**
+  String get chooseTableModuleProject;
+
+  /// 生成错误标题
+  ///
+  /// In zh, this message translates to:
+  /// **'生成错误'**
+  String get generationError;
+
+  /// 未知错误
+  ///
+  /// In zh, this message translates to:
+  /// **'未知错误'**
+  String get unknownError;
+
+  /// DDL准备提示
+  ///
+  /// In zh, this message translates to:
+  /// **'DDL 已准备好: {fileName}'**
+  String ddlReady(String fileName);
+
+  /// DDL类型：创建新表
+  ///
+  /// In zh, this message translates to:
+  /// **'创建新表'**
+  String get createNewTable;
+
+  /// DDL类型：删除现有表
+  ///
+  /// In zh, this message translates to:
+  /// **'删除现有表'**
+  String get dropExistingTable;
+
+  /// DDL类型：创建索引
+  ///
+  /// In zh, this message translates to:
+  /// **'在表上创建索引'**
+  String get createIndexOnTable;
+
+  /// DDL类型：删除索引
+  ///
+  /// In zh, this message translates to:
+  /// **'删除现有索引'**
+  String get dropExistingIndex;
+
+  /// 今天
+  ///
+  /// In zh, this message translates to:
+  /// **'今天'**
+  String get today;
+
+  /// 昨天
+  ///
+  /// In zh, this message translates to:
+  /// **'昨天'**
+  String get yesterday;
+
+  /// 几天前
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 天前'**
+  String daysAgo(int count);
+
+  /// 几分钟前修改
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 分钟前修改'**
+  String modifiedMinutesAgo(int count);
+
+  /// 几小时前修改
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 小时前修改'**
+  String modifiedHoursAgo(int count);
+
+  /// 几天前修改
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 天前修改'**
+  String modifiedDaysAgo(int count);
+
+  /// 修改于日期
+  ///
+  /// In zh, this message translates to:
+  /// **'修改于 {date}'**
+  String modifiedOnDate(String date);
+
+  /// 唯一索引类型
+  ///
+  /// In zh, this message translates to:
+  /// **'UNIQUE'**
+  String get unique;
+
+  /// 全文索引类型
+  ///
+  /// In zh, this message translates to:
+  /// **'FULLTEXT'**
+  String get fulltext;
+
+  /// 普通索引类型
+  ///
+  /// In zh, this message translates to:
+  /// **'NORMAL'**
+  String get normal;
 }
 
 class _AppLocalizationsDelegate

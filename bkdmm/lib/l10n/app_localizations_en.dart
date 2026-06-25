@@ -387,4 +387,347 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get english => 'English';
+
+  @override
+  String get globalSettings => 'Global Settings';
+
+  @override
+  String get projectSettings => 'Project Settings';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get themeMode => 'Theme Mode';
+
+  @override
+  String get accentColor => 'Accent Color';
+
+  @override
+  String get customizeAccentColor => 'Customize the app accent color';
+
+  @override
+  String get fontSize => 'Font Size';
+
+  @override
+  String editorFontSize(int size) {
+    return 'Editor font size: $size';
+  }
+
+  @override
+  String get editor => 'Editor';
+
+  @override
+  String get defaultDatabaseType => 'Default Database Type';
+
+  @override
+  String get notSet => 'Not set';
+
+  @override
+  String get autoSaveInterval => 'Auto-save Interval';
+
+  @override
+  String get disabled => 'Disabled';
+
+  @override
+  String get seconds => 'seconds';
+
+  @override
+  String get minutes => 'minutes';
+
+  @override
+  String get showLineNumbers => 'Show Line Numbers';
+
+  @override
+  String get displayLineNumbers => 'Display line numbers in code preview';
+
+  @override
+  String get defaultFieldsGlobal => 'Default Fields (Global)';
+
+  @override
+  String get defaultFieldsDescription =>
+      'Configure default fields for new tables (used as project defaults)';
+
+  @override
+  String get addRevisionField => 'Add revision number field';
+
+  @override
+  String get addCreatorField => 'Add creator field';
+
+  @override
+  String get addCreationTimestampField => 'Add creation timestamp field';
+
+  @override
+  String get addUpdaterField => 'Add updater field';
+
+  @override
+  String get addUpdateTimestampField => 'Add update timestamp field';
+
+  @override
+  String get dataTypes => 'Data Types';
+
+  @override
+  String get manageDataTypes => 'Manage Data Types';
+
+  @override
+  String get configureCustomDataTypes => 'Configure custom data types';
+
+  @override
+  String get resetToDefaults => 'Reset to Defaults';
+
+  @override
+  String get restoreAllSettingsToDefault =>
+      'Restore all settings to default values';
+
+  @override
+  String get resetSettings => 'Reset Settings';
+
+  @override
+  String get resetSettingsConfirm =>
+      'Are you sure you want to reset all settings to their default values? This action cannot be undone.';
+
+  @override
+  String get settingsResetSuccess => 'Settings reset to defaults';
+
+  @override
+  String get dataTypeManagementComingSoon => 'Data type management coming soon';
+
+  @override
+  String typeInUseDeleteWarning(String name, String usage) {
+    return 'The type \"$name\" is used in the following fields: $usage. Do you want to delete it anyway? Fields using this type may break.';
+  }
+
+  @override
+  String get restoreDefaultsWarning =>
+      'This will restore all default data types to their original values. Custom types will not be affected.';
+
+  @override
+  String get typeEnglishName => 'Type Name (English)';
+
+  @override
+  String get typeChineseName => 'Chinese Name';
+
+  @override
+  String get javaType => 'Java Type';
+
+  @override
+  String get databaseTypeMapping => 'Database Type Mapping';
+
+  @override
+  String get databaseMappingHint =>
+      'Define how this type maps to each database';
+
+  @override
+  String get dataTypeManagement => 'Data Type Management';
+
+  @override
+  String typesCount(int count) {
+    return '$count types';
+  }
+
+  @override
+  String get modified => 'Modified';
+
+  @override
+  String get searchTypes => 'Search types...';
+
+  @override
+  String get defaultTypes => 'Default Types';
+
+  @override
+  String get customTypes => 'Custom Types';
+
+  @override
+  String get noDataTypesFound => 'No data types found';
+
+  @override
+  String get restoreDefaultsHint =>
+      'Click \"Restore Defaults\" to load default types';
+
+  @override
+  String get databaseMappings => 'Database Mappings';
+
+  @override
+  String get java => 'Java';
+
+  @override
+  String get tableNameEnglish => 'Table Name (English)';
+
+  @override
+  String get tableChineseName => 'Chinese Name';
+
+  @override
+  String get tableRemark => 'Remark';
+
+  @override
+  String get basicInformation => 'Basic Information';
+
+  @override
+  String get statistics => 'Statistics';
+
+  @override
+  String fieldsCount(int count) {
+    return '$count fields';
+  }
+
+  @override
+  String indexesCount(int count) {
+    return '$count indexes';
+  }
+
+  @override
+  String get unsaved => 'Unsaved';
+
+  @override
+  String get fieldsPreview => 'Fields Preview';
+
+  @override
+  String get noFieldsDefined => 'No fields defined yet';
+
+  @override
+  String andMoreFields(int count) {
+    return 'And $count more fields...';
+  }
+
+  @override
+  String get pk => 'PK';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get type => 'Type';
+
+  @override
+  String get chineseName => 'Chinese Name';
+
+  @override
+  String get noFieldsDefinedHint => 'Click \"Add Field\" to create a new field';
+
+  @override
+  String get noIndexesDefined => 'No indexes defined';
+
+  @override
+  String get addIndexHint => 'Click \"Add Index\" to create a new index';
+
+  @override
+  String get indexNameRequired2 => 'Index name is required';
+
+  @override
+  String get indexNameStar => 'Index Name *';
+
+  @override
+  String get selectFieldsLabel => 'Select Fields:';
+
+  @override
+  String get noFieldsAvailable => 'No fields available';
+
+  @override
+  String get optionalDescription => 'Optional description';
+
+  @override
+  String deleteFieldConfirm(String name) {
+    return 'Are you sure you want to delete field \"$name\"?';
+  }
+
+  @override
+  String get fieldNameStar => 'Field Name *';
+
+  @override
+  String get dataTypeLabel => 'Data Type';
+
+  @override
+  String get fieldDescription => 'Field description';
+
+  @override
+  String get pkAutoSetNotNull => 'Primary key automatically sets Not Null';
+
+  @override
+  String get noProjectLoaded => 'No Project Loaded';
+
+  @override
+  String get openProjectToGenerateDdl => 'Open a project to generate DDL';
+
+  @override
+  String get selectTarget => 'Select Target';
+
+  @override
+  String allProjectModules(int count) {
+    return 'All Project ($count modules)';
+  }
+
+  @override
+  String tablesCount(int count) {
+    return '$count tables';
+  }
+
+  @override
+  String get selectATarget => 'Select a Target';
+
+  @override
+  String get chooseTableModuleProject =>
+      'Choose a table, module, or entire project';
+
+  @override
+  String get generationError => 'Generation Error';
+
+  @override
+  String get unknownError => 'Unknown error';
+
+  @override
+  String ddlReady(String fileName) {
+    return 'DDL ready: $fileName';
+  }
+
+  @override
+  String get createNewTable => 'Create new table';
+
+  @override
+  String get dropExistingTable => 'Drop existing table';
+
+  @override
+  String get createIndexOnTable => 'Create index on table';
+
+  @override
+  String get dropExistingIndex => 'Drop existing index';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String daysAgo(int count) {
+    return '$count days ago';
+  }
+
+  @override
+  String modifiedMinutesAgo(int count) {
+    return 'Modified $count minutes ago';
+  }
+
+  @override
+  String modifiedHoursAgo(int count) {
+    return 'Modified $count hours ago';
+  }
+
+  @override
+  String modifiedDaysAgo(int count) {
+    return 'Modified $count days ago';
+  }
+
+  @override
+  String modifiedOnDate(String date) {
+    return 'Modified on $date';
+  }
+
+  @override
+  String get unique => 'UNIQUE';
+
+  @override
+  String get fulltext => 'FULLTEXT';
+
+  @override
+  String get normal => 'NORMAL';
 }

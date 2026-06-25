@@ -123,5 +123,381 @@
   "restoreDefaultsConfirm": "Are you sure you want to restore default settings?",
   "typeInUseMessage": "This data type is being used by the following fields:",
   "simplifiedChinese": "简体中文",
-  "english": "English"
+  "english": "English",
+  "globalSettings": "Global Settings",
+  "projectSettings": "Project Settings",
+  "appearance": "Appearance",
+  "themeMode": "Theme Mode",
+  "accentColor": "Accent Color",
+  "customizeAccentColor": "Customize the app accent color",
+  "fontSize": "Font Size",
+  "editorFontSize": "Editor font size: {size}",
+  "editor": "Editor",
+  "defaultDatabaseType": "Default Database Type",
+  "notSet": "Not set",
+  "autoSaveInterval": "Auto-save Interval",
+  "disabled": "Disabled",
+  "seconds": "seconds",
+  "minutes": "minutes",
+  "showLineNumbers": "Show Line Numbers",
+  "displayLineNumbers": "Display line numbers in code preview",
+  "defaultFieldsGlobal": "Default Fields (Global)",
+  "defaultFieldsDescription": "Configure default fields for new tables (used as project defaults)",
+  "addRevisionField": "Add revision number field",
+  "addCreatorField": "Add creator field",
+  "addCreationTimestampField": "Add creation timestamp field",
+  "addUpdaterField": "Add updater field",
+  "addUpdateTimestampField": "Add update timestamp field",
+  "dataTypes": "Data Types",
+  "manageDataTypes": "Manage Data Types",
+  "configureCustomDataTypes": "Configure custom data types",
+  "resetToDefaults": "Reset to Defaults",
+  "restoreAllSettingsToDefault": "Restore all settings to default values",
+  "resetSettings": "Reset Settings",
+  "resetSettingsConfirm": "Are you sure you want to reset all settings to their default values? This action cannot be undone.",
+  "settingsResetSuccess": "Settings reset to defaults",
+  "dataTypeManagementComingSoon": "Data type management coming soon",
+
+  "typeInUseDeleteWarning": "The type \"{name}\" is used in the following fields: {usage}. Do you want to delete it anyway? Fields using this type may break.",
+  "@typeInUseDeleteWarning": {
+    "description": "Type in use delete warning message",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "VARCHAR"
+      },
+      "usage": {
+        "type": "String",
+        "example": "User: name, email; Order: title"
+      }
+    }
+  },
+
+  "restoreDefaultsWarning": "This will restore all default data types to their original values. Custom types will not be affected.",
+  "@restoreDefaultsWarning": {"description": "Restore defaults warning message"},
+
+  "typeEnglishName": "Type Name (English)",
+  "@typeEnglishName": {"description": "Type name English label"},
+
+  "typeChineseName": "Chinese Name",
+  "@typeChineseName": {"description": "Type name Chinese label"},
+
+  "javaType": "Java Type",
+  "@javaType": {"description": "Java type label"},
+
+  "databaseTypeMapping": "Database Type Mapping",
+  "@databaseTypeMapping": {"description": "Database type mapping title"},
+
+  "databaseMappingHint": "Define how this type maps to each database",
+  "@databaseMappingHint": {"description": "Database mapping hint"},
+
+  "dataTypeManagement": "Data Type Management",
+  "@dataTypeManagement": {"description": "Data type management title"},
+
+  "typesCount": "{count} types",
+  "@typesCount": {
+    "description": "Types count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+
+  "modified": "Modified",
+  "@modified": {"description": "Modified status"},
+
+  "searchTypes": "Search types...",
+  "@searchTypes": {"description": "Search types hint"},
+
+  "defaultTypes": "Default Types",
+  "@defaultTypes": {"description": "Default types label"},
+
+  "customTypes": "Custom Types",
+  "@customTypes": {"description": "Custom types label"},
+
+  "noDataTypesFound": "No data types found",
+  "@noDataTypesFound": {"description": "No data types found hint"},
+
+  "restoreDefaultsHint": "Click \"Restore Defaults\" to load default types",
+  "@restoreDefaultsHint": {"description": "Restore defaults hint"},
+
+  "databaseMappings": "Database Mappings",
+  "@databaseMappings": {"description": "Database mappings title"},
+
+  "java": "Java",
+  "@java": {"description": "Java label"},
+
+  "tableNameEnglish": "Table Name (English)",
+  "@tableNameEnglish": {"description": "Table name English label"},
+
+  "tableChineseName": "Chinese Name",
+  "@tableChineseName": {"description": "Table name Chinese label"},
+
+  "tableRemark": "Remark",
+  "@tableRemark": {"description": "Table remark label"},
+
+  "basicInformation": "Basic Information",
+  "@basicInformation": {"description": "Basic information title"},
+
+  "statistics": "Statistics",
+  "@statistics": {"description": "Statistics title"},
+
+  "fieldsCount": "{count} fields",
+  "@fieldsCount": {
+    "description": "Fields count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+
+  "indexesCount": "{count} indexes",
+  "@indexesCount": {
+    "description": "Indexes count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "unsaved": "Unsaved",
+  "@unsaved": {"description": "Unsaved status"},
+
+  "fieldsPreview": "Fields Preview",
+  "@fieldsPreview": {"description": "Fields preview title"},
+
+  "noFieldsDefined": "No fields defined",
+  "@noFieldsDefined": {"description": "No fields defined hint"},
+
+  "andMoreFields": "And {count} more fields...",
+  "@andMoreFields": {
+    "description": "More fields hint",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "pk": "PK",
+  "@pk": {"description": "Primary key abbreviation"},
+
+  "name": "Name",
+  "@name": {"description": "Name column"},
+
+  "type": "Type",
+  "@type": {"description": "Type column"},
+
+  "chineseName": "Chinese Name",
+  "@chineseName": {"description": "Chinese name column"},
+
+  "noFieldsDefinedHint": "Click \"Add Field\" to create a new field",
+  "@noFieldsDefinedHint": {"description": "No fields defined hint"},
+
+  "noIndexesDefined": "No indexes defined",
+  "@noIndexesDefined": {"description": "No indexes defined hint"},
+
+  "addIndexHint": "Click \"Add Index\" to create a new index",
+  "@addIndexHint": {"description": "Add index hint"},
+
+  "indexNameRequired2": "Index name is required",
+  "@indexNameRequired2": {"description": "Index name required hint"},
+
+  "indexNameStar": "Index Name *",
+  "@indexNameStar": {"description": "Index name label (required)"},
+
+  "selectFieldsLabel": "Select Fields:",
+  "@selectFieldsLabel": {"description": "Select fields label"},
+
+  "noFieldsAvailable": "No fields available",
+  "@noFieldsAvailable": {"description": "No fields available hint"},
+
+  "optionalDescription": "Optional description",
+  "@optionalDescription": {"description": "Optional description hint"},
+
+  "deleteFieldConfirm": "Are you sure you want to delete field \"{name}\"?",
+  "@deleteFieldConfirm": {
+    "description": "Delete field confirmation message",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "user_id"
+      }
+    }
+  },
+
+  "fieldNameStar": "Field Name *",
+  "@fieldNameStar": {"description": "Field name label (required)"},
+
+  "dataTypeLabel": "Data Type",
+  "@dataTypeLabel": {"description": "Data type label"},
+
+  "fieldDescription": "Field description",
+  "@fieldDescription": {"description": "Field description hint"},
+
+  "pkAutoSetNotNull": "Primary key automatically sets Not Null",
+  "@pkAutoSetNotNull": {"description": "PK auto set not null hint"},
+
+  "noProjectLoaded": "No Project Loaded",
+  "@noProjectLoaded": {"description": "No project loaded hint"},
+
+  "openProjectToGenerateDdl": "Open a project to generate DDL",
+  "@openProjectToGenerateDdl": {"description": "Open project hint"},
+
+  "selectTarget": "Select Target",
+  "@selectTarget": {"description": "Select target title"},
+
+  "allProjectModules": "All Project ({count} modules)",
+  "@allProjectModules": {
+    "description": "All project modules count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "tablesCount": "{count} tables",
+  "@tablesCount": {
+    "description": "Tables count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+
+  "selectATarget": "Select a Target",
+  "@selectATarget": {"description": "Select target hint"},
+
+  "chooseTableModuleProject": "Choose a table, module, or entire project",
+  "@chooseTableModuleProject": {"description": "Choose target hint detail"},
+
+  "generationError": "Generation Error",
+  "@generationError": {"description": "Generation error title"},
+
+  "unknownError": "Unknown error",
+  "@unknownError": {"description": "Unknown error"},
+
+  "ddlReady": "DDL ready: {fileName}",
+  "@ddlReady": {
+    "description": "DDL ready hint",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "User.sql"
+      }
+    }
+  },
+
+  "createNewTable": "Create new table",
+  "@createNewTable": {"description": "DDL type: create new table"},
+
+  "dropExistingTable": "Drop existing table",
+  "@dropExistingTable": {"description": "DDL type: drop existing table"},
+
+  "createIndexOnTable": "Create index on table",
+  "@createIndexOnTable": {"description": "DDL type: create index"},
+
+  "dropExistingIndex": "Drop existing index",
+  "@dropExistingIndex": {"description": "DDL type: drop index"},
+
+  "today": "Today",
+  "@today": {"description": "Today"},
+
+  "yesterday": "Yesterday",
+  "@yesterday": {"description": "Yesterday"},
+
+  "daysAgo": "{count} days ago",
+  "@daysAgo": {
+    "description": "Days ago",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "modifiedMinutesAgo": "Modified {count} minutes ago",
+  "@modifiedMinutesAgo": {
+    "description": "Modified minutes ago",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "modifiedHoursAgo": "Modified {count} hours ago",
+  "@modifiedHoursAgo": {
+    "description": "Modified hours ago",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+
+  "modifiedDaysAgo": "Modified {count} days ago",
+  "@modifiedDaysAgo": {
+    "description": "Modified days ago",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "modifiedOnDate": "Modified on {date}",
+  "@modifiedOnDate": {
+    "description": "Modified on date",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "1/15/2024"
+      }
+    }
+  },
+
+  "unique": "UNIQUE",
+  "@unique": {"description": "Unique index type"},
+
+  "fulltext": "FULLTEXT",
+  "@fulltext": {"description": "Fulltext index type"},
+
+  "normal": "NORMAL",
+  "@normal": {"description": "Normal index type"},
+
+  "unsaved": "Unsaved",
+  "@unsaved": {"description": "Unsaved state"},
+
+  "fieldsPreview": "Fields Preview",
+  "@fieldsPreview": {"description": "Fields preview title"},
+
+  "noFieldsDefined": "No fields defined yet",
+  "@noFieldsDefined": {"description": "No fields hint"},
+
+  "andMoreFields": "And {count} more fields...",
+  "@andMoreFields": {
+    "description": "More fields hint",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../shared/models/data_type.dart';
 import '../../../shared/constants/default_data_types.dart';
 import '../providers/datatype_provider.dart';
@@ -123,6 +124,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     // Responsive width calculation
     const double baseMinWidth = 450.0;
@@ -131,7 +133,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
 
     return TDAlertDialog(
-      title: widget.existingType != null ? 'Edit Data Type' : 'Add Data Type',
+      title: widget.existingType != null ? l10n.editDataType : l10n.addDataType,
       content: '',
       contentWidget: SizedBox(
         width: dialogWidth,
@@ -141,11 +143,11 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Basic info section
-              _buildSectionHeader('Basic Info', TDIcons.info_circle, tdTheme),
+              _buildSectionHeader(l10n.basicInfo, TDIcons.info_circle, tdTheme),
               const SizedBox(height: 10),
               TDInput(
                 controller: _nameController,
-                leftLabel: 'Type Name (English)',
+                leftLabel: l10n.typeEnglishName,
                 hintText: 'e.g., MyCustomType',
                 readOnly: _isDefaultType,
                 onChanged: (text) {
@@ -156,7 +158,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               const SizedBox(height: 10),
               TDInput(
                 controller: _chnnameController,
-                leftLabel: 'Chinese Name',
+                leftLabel: l10n.typeChineseName,
                 hintText: 'e.g., 自定义类型',
                 onChanged: (text) {
                   setState(() {});
@@ -166,7 +168,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               const SizedBox(height: 10),
               TDInput(
                 controller: _remarkController,
-                leftLabel: 'Remark',
+                leftLabel: l10n.dataTypeRemark,
                 hintText: 'Description of this data type',
                 maxLines: 2,
                 onChanged: (text) {
@@ -176,7 +178,7 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               const SizedBox(height: 10),
               TDInput(
                 controller: _javaController,
-                leftLabel: 'Java Type',
+                leftLabel: l10n.javaType,
                 hintText: 'e.g., String, Integer, BigDecimal',
                 onChanged: (text) {
                   setState(() {});
@@ -186,10 +188,10 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
               const SizedBox(height: 16),
 
               // Database mapping section
-              _buildSectionHeader('Database Type Mapping', TDIcons.data_base, tdTheme),
+              _buildSectionHeader(l10n.databaseTypeMapping, TDIcons.data_base, tdTheme),
               const SizedBox(height: 8),
               TDText(
-                'Define how this type maps to each database',
+                l10n.databaseMappingHint,
                 font: tdTheme.fontBodySmall,
                 textColor: tdTheme.textColorSecondary,
               ),
@@ -222,13 +224,13 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
         ),
       ),
       leftBtn: TDDialogButtonOptions(
-        title: 'Cancel',
+        title: l10n.cancel,
         theme: TDButtonTheme.defaultTheme,
         type: TDButtonType.text,
         action: () => Navigator.of(context).pop(),
       ),
       rightBtn: TDDialogButtonOptions(
-        title: 'Save',
+        title: l10n.save,
         theme: TDButtonTheme.primary,
         type: TDButtonType.fill,
         action: _isValid

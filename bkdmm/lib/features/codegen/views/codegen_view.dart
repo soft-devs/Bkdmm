@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
 import '../providers/codegen_provider.dart';
@@ -112,6 +113,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
     CodegenState state,
     Project? project,
   ) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -148,7 +150,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           TDButton(
             onTap: state.hasOutput ? _downloadSql : null,
             icon: TDIcons.download,
-            text: 'Download .sql',
+            text: l10n.downloadSql,
             theme: TDButtonTheme.primary,
             type: TDButtonType.fill,
             size: TDButtonSize.small,
@@ -160,7 +162,7 @@ class _CodegenViewState extends ConsumerState<CodegenView> {
           TDButton(
             onTap: project != null ? _exportAll : null,
             icon: TDIcons.download,
-            text: 'Export All',
+            text: l10n.exportAll,
             theme: TDButtonTheme.defaultTheme,
             type: TDButtonType.outline,
             size: TDButtonSize.small,

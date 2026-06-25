@@ -3,6 +3,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../core/i18n/i18n.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/constants/default_data_types.dart';
 import '../../../shared/widgets/td_popup_menu.dart';
@@ -65,7 +67,7 @@ class DataTypeCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeaderRow(tdTheme, isDefault),
+              _buildHeaderRow(tdTheme, isDefault, context),
               if (isSelected) ...[
                 const SizedBox(height: 16),
                 DataTypeMappings(type: type),
@@ -77,7 +79,7 @@ class DataTypeCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderRow(TDThemeData tdTheme, bool isDefault) {
+  Widget _buildHeaderRow(TDThemeData tdTheme, bool isDefault, BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -126,12 +128,13 @@ class DataTypeCard extends StatelessWidget {
             ],
           ),
         ),
-        _buildActionsMenu(tdTheme, isDefault),
+        _buildActionsMenu(tdTheme, isDefault, context),
       ],
     );
   }
 
-  Widget _buildActionsMenu(TDThemeData tdTheme, bool isDefault) {
+  Widget _buildActionsMenu(TDThemeData tdTheme, bool isDefault, BuildContext context) {
+    final l10n = context.l10n;
     return TDPopupMenuButton(
       icon: TDIcons.more,
       iconColor: tdTheme.fontGyColor1,
@@ -139,18 +142,18 @@ class DataTypeCard extends StatelessWidget {
         TDPopupMenuItem(
           value: 'edit',
           icon: TDIcons.edit,
-          label: 'Edit',
+          label: l10n.edit,
         ),
         TDPopupMenuItem(
           value: 'duplicate',
           icon: TDIcons.copy,
-          label: 'Duplicate',
+          label: l10n.duplicate,
         ),
         if (!isDefault)
           TDPopupMenuItem(
             value: 'delete',
             icon: TDIcons.delete,
-            label: 'Delete',
+            label: l10n.delete,
             iconColor: tdTheme.errorColor6,
             textColor: tdTheme.errorColor6,
           ),
@@ -171,12 +174,13 @@ class DataTypeMappings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final l10n = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TDText(
-          'Database Mappings',
+          l10n.databaseMappings,
           font: tdTheme.fontBodySmall,
           textColor: tdTheme.fontGyColor2,
         ),
@@ -191,7 +195,7 @@ class DataTypeMappings extends StatelessWidget {
         ),
         if (type.java != null) ...[
           const SizedBox(height: 16),
-          _buildJavaMapping(tdTheme),
+          _buildJavaMapping(tdTheme, l10n),
         ],
       ],
     );
@@ -227,12 +231,12 @@ class DataTypeMappings extends StatelessWidget {
     );
   }
 
-  Widget _buildJavaMapping(TDThemeData tdTheme) {
+  Widget _buildJavaMapping(TDThemeData tdTheme, AppLocalizations l10n) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         TDText(
-          'Java: ',
+          '${l10n.java}: ',
           font: tdTheme.fontBodySmall,
           textColor: tdTheme.fontGyColor2,
         ),

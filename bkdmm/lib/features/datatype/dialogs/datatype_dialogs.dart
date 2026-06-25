@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../shared/models/models.dart';
 import '../providers/datatype_provider.dart';
 import '../views/datatype_edit_dialog.dart';
@@ -58,19 +59,20 @@ void showDeleteDataTypeDialog(
   List<Module> modules,
   VoidCallback onUpdate,
 ) {
+  final l10n = context.l10n;
   showDialog(
     context: context,
     builder: (context) => TDAlertDialog(
-      title: 'Delete Data Type',
-      content: 'Are you sure you want to delete "${type.name}"? This action cannot be undone.',
+      title: l10n.deleteDataType,
+      content: l10n.deleteConfirmMessage(type.name),
       leftBtn: TDDialogButtonOptions(
-        title: 'Cancel',
+        title: l10n.cancel,
         theme: TDButtonTheme.defaultTheme,
         type: TDButtonType.text,
         action: () => Navigator.pop(context),
       ),
       rightBtn: TDDialogButtonOptions(
-        title: 'Delete',
+        title: l10n.delete,
         theme: TDButtonTheme.danger,
         type: TDButtonType.fill,
         action: () {
@@ -101,20 +103,21 @@ void showUsageWarningDialog(
   Map<String, List<String>> usage,
   VoidCallback onUpdate,
 ) {
+  final l10n = context.l10n;
+  final usageStr = usage.entries.map((e) => "${e.key}: ${e.value.join(', ')}").join("; ");
   showDialog(
     context: context,
     builder: (context) => TDAlertDialog(
-      title: 'Type In Use',
-      content:
-          'The type "${type.name}" is used in the following fields: ${usage.entries.map((e) => "${e.key}: ${e.value.join(', ')}").join("; ")}. Do you want to delete it anyway? Fields using this type may break.',
+      title: l10n.dataTypeInUse,
+      content: l10n.typeInUseDeleteWarning(type.name, usageStr),
       leftBtn: TDDialogButtonOptions(
-        title: 'Cancel',
+        title: l10n.cancel,
         theme: TDButtonTheme.defaultTheme,
         type: TDButtonType.text,
         action: () => Navigator.pop(context),
       ),
       rightBtn: TDDialogButtonOptions(
-        title: 'Delete Anyway',
+        title: l10n.deleteAnyway,
         theme: TDButtonTheme.danger,
         type: TDButtonType.fill,
         action: () {
@@ -129,20 +132,20 @@ void showUsageWarningDialog(
 
 /// Shows the restore defaults dialog
 void showRestoreDefaultsDialog(BuildContext context, WidgetRef ref, VoidCallback onUpdate) {
+  final l10n = context.l10n;
   showDialog(
     context: context,
     builder: (context) => TDAlertDialog(
-      title: 'Restore Defaults',
-      content:
-          'This will restore all default data types to their original values. Custom types will not be affected.',
+      title: l10n.restoreDefaults,
+      content: l10n.restoreDefaultsWarning,
       leftBtn: TDDialogButtonOptions(
-        title: 'Cancel',
+        title: l10n.cancel,
         theme: TDButtonTheme.defaultTheme,
         type: TDButtonType.text,
         action: () => Navigator.pop(context),
       ),
       rightBtn: TDDialogButtonOptions(
-        title: 'Restore',
+        title: l10n.restore,
         theme: TDButtonTheme.primary,
         type: TDButtonType.fill,
         action: () {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/providers/providers.dart';
 import '../providers/datatype_provider.dart';
@@ -78,6 +79,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
   }
 
   Widget _buildHeader(TDThemeData tdTheme, DataTypeState state) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -97,7 +99,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           ),
           const SizedBox(width: 8),
           TDText(
-            'Data Type Management',
+            l10n.dataTypeManagement,
             font: tdTheme.fontTitleMedium,
             fontWeight: FontWeight.w600,
           ),
@@ -109,7 +111,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: TDText(
-              '${state.dataTypes.length} types',
+              l10n.typesCount(state.dataTypes.length),
               font: tdTheme.fontBodySmall,
               textColor: tdTheme.fontGyColor2,
             ),
@@ -123,7 +125,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TDText(
-                'Modified',
+                l10n.modified,
                 font: tdTheme.fontBodySmall,
                 textColor: tdTheme.brandNormalColor,
               ),
@@ -131,14 +133,14 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           const Spacer(),
           // Action buttons
           TDButton(
-            text: 'Restore Defaults',
+            text: l10n.restoreDefaults,
             theme: TDButtonTheme.defaultTheme,
             icon: TDIcons.history,
             onTap: () => showRestoreDefaultsDialog(context, ref, _updateProject),
           ),
           const SizedBox(width: 12),
           TDButton(
-            text: 'Add Type',
+            text: l10n.addType,
             theme: TDButtonTheme.primary,
             icon: TDIcons.add,
             onTap: () => showAddDataTypeDialog(context, ref, _updateProject),
@@ -149,6 +151,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
   }
 
   Widget _buildSearchBar(TDThemeData tdTheme) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -157,7 +160,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           // Search field
           Expanded(
             child: TDInput(
-              hintText: 'Search types...',
+              hintText: l10n.searchTypes,
               leftIcon: Icon(TDIcons.search, color: tdTheme.fontGyColor3),
               onChanged: (value) {
                 setState(() {
@@ -175,7 +178,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
               });
             },
             child: TDTag(
-              'Default Types',
+              l10n.defaultTypes,
               theme: _showDefaultTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
               size: TDTagSize.medium,
             ),
@@ -188,7 +191,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
               });
             },
             child: TDTag(
-              'Custom Types',
+              l10n.customTypes,
               theme: _showCustomTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
               size: TDTagSize.medium,
             ),
@@ -199,6 +202,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
   }
 
   Widget _buildEmptyState(TDThemeData tdTheme) {
+    final l10n = context.l10n;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -210,13 +214,13 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           ),
           const SizedBox(height: 16),
           TDText(
-            'No data types found',
+            l10n.noDataTypesFound,
             font: tdTheme.fontTitleMedium,
             textColor: tdTheme.fontGyColor2,
           ),
           const SizedBox(height: 8),
           TDText(
-            'Click "Restore Defaults" to load default types',
+            l10n.restoreDefaultsHint,
             font: tdTheme.fontBodyMedium,
             textColor: tdTheme.fontGyColor3,
           ),
@@ -230,13 +234,14 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     List<DataType> defaultTypes,
     List<DataType> customTypes,
   ) {
+    final l10n = context.l10n;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         // Default types section
         if (_showDefaultTypes && defaultTypes.isNotEmpty) ...[
           _buildSectionHeader(
-            'Default Types',
+            l10n.defaultTypes,
             '${defaultTypes.length}',
             TDIcons.bookmark,
             tdTheme,
@@ -249,7 +254,7 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
         // Custom types section
         if (_showCustomTypes && customTypes.isNotEmpty) ...[
           _buildSectionHeader(
-            'Custom Types',
+            l10n.customTypes,
             '${customTypes.length}',
             TDIcons.extension,
             tdTheme,
