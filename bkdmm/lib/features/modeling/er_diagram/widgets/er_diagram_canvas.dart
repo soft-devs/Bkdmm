@@ -916,13 +916,17 @@ class _ERGraphView extends StatelessWidget {
     algorithm.run(graph, 0, 0);
 
     // 使用超大虚拟画布，配合 InteractiveViewer 的 boundaryMargin 实现无限画布效果
-    // 注意：背景色由外部的 _InfiniteGridPainter 绘制，这里不绘制背景
+    // 注意：背景色和网格由外部的 _InfiniteGridPainter 绘制
     return SizedBox(
       width: virtualCanvasSize,
       height: virtualCanvasSize,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // 透明背景层（用于接收事件，确保整个虚拟画布区域都能响应事件）
+          Positioned.fill(
+            child: const ColoredBox(color: Colors.transparent),
+          ),
           // 边层
           CustomPaint(
             painter: _EdgePainter(
