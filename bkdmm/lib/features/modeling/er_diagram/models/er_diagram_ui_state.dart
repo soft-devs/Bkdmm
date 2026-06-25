@@ -2,10 +2,10 @@ import 'dart:ui';
 
 /// ER 图交互模式
 enum ERInteractionMode {
-  /// 移动模式（仅查看，可平移/缩放）
-  move,
+  /// 预览模式（只读，可平移/缩放，双击打开预览弹窗）
+  preview,
 
-  /// 编辑模式（可拖拽节点、创建连线）
+  /// 编辑模式（可拖拽节点、创建连线、框选，双击打开编辑弹窗）
   edit,
 }
 
@@ -56,6 +56,45 @@ class ERConnectionState {
       isConnecting: isConnecting ?? this.isConnecting,
       sourceAnchor: sourceAnchor ?? this.sourceAnchor,
       previewEnd: previewEnd ?? this.previewEnd,
+    );
+  }
+}
+
+/// ER 图框选状态
+class ERSelectionState {
+  /// 是否正在框选
+  final bool isSelecting;
+
+  /// 框选起始点
+  final Offset startPoint;
+
+  /// 框选当前点
+  final Offset currentPoint;
+
+  const ERSelectionState({
+    this.isSelecting = false,
+    this.startPoint = Offset.zero,
+    this.currentPoint = Offset.zero,
+  });
+
+  /// 框选矩形区域
+  Rect get selectionRect {
+    final left = startPoint.dx < currentPoint.dx ? startPoint.dx : currentPoint.dx;
+    final top = startPoint.dy < currentPoint.dy ? startPoint.dy : currentPoint.dy;
+    final right = startPoint.dx < currentPoint.dx ? currentPoint.dx : startPoint.dx;
+    final bottom = startPoint.dy < currentPoint.dy ? currentPoint.dy : startPoint.dy;
+    return Rect.fromLTRB(left, top, right, bottom);
+  }
+
+  ERSelectionState copyWith({
+    bool? isSelecting,
+    Offset? startPoint,
+    Offset? currentPoint,
+  }) {
+    return ERSelectionState(
+      isSelecting: isSelecting ?? this.isSelecting,
+      startPoint: startPoint ?? this.startPoint,
+      currentPoint: currentPoint ?? this.currentPoint,
     );
   }
 }
@@ -117,27 +156,34 @@ class ERDiagramUIState {
   /// 连线状态
   final ERConnectionState connection;
 
+  /// 框选状态
+  final ERSelectionState selection;
+
   const ERDiagramUIState({
     required this.moduleId,
-    this.interactionMode = ERInteractionMode.move,
+    this.interactionMode = ERInteractionMode.preview,
     this.selectedNodeIds = const {},
     this.hoveredNodeId,
     this.draggingNodeId,
     this.viewport = const ERViewportState(),
     this.connection = const ERConnectionState(),
+    this.selection = const ERSelectionState(),
   });
 
   /// 是否是编辑模式
   bool get isEditMode => interactionMode == ERInteractionMode.edit;
 
-  /// 是否是移动模式
-  bool get isMoveMode => interactionMode == ERInteractionMode.move;
+  /// 是否是预览模式
+  bool get isPreviewMode => interactionMode == ERInteractionMode.preview;
 
   /// 是否正在连线
   bool get isConnecting => connection.isConnecting;
 
   /// 是否正在拖动节点
   bool get isDragging => draggingNodeId != null;
+
+  /// 是否正在框选
+  bool get isSelecting => selection.isSelecting;
 
   /// 创建空状态
   factory ERDiagramUIState.empty(String moduleId) {
@@ -152,6 +198,7 @@ class ERDiagramUIState {
     String? draggingNodeId,
     ERViewportState? viewport,
     ERConnectionState? connection,
+    ERSelectionState? selection,
   }) {
     return ERDiagramUIState(
       moduleId: moduleId ?? this.moduleId,
@@ -161,11 +208,12 @@ class ERDiagramUIState {
       draggingNodeId: draggingNodeId ?? this.draggingNodeId,
       viewport: viewport ?? this.viewport,
       connection: connection ?? this.connection,
+      selection: selection ?? this.selection,
     );
   }
 
   @override
   String toString() {
-    return 'ERDiagramUIState(moduleId: $moduleId, mode: $interactionMode, selected: ${selectedNodeIds.length}, connecting: $isConnecting)';
+    return 'ERDiagramUIState(moduleId: $moduleId, mode: $interactionMode, selected: ${selectedNodeIds.length}, connecting: $isConnecting, selecting: $isSelecting)';
   }
 }

@@ -100,18 +100,18 @@ class ERGraphBuilder {
     }
 
     // 找到已有节点的最大 X 和 Y
-    double maxX = 0;
-    double maxY = 0;
-    int lastRowNodeCount = 0;
+    double maxX = startX;
+    double maxY = startY;
 
     for (final node in existingNodes) {
       if (node.x > maxX) maxX = node.x;
       if (node.y > maxY) maxY = node.y;
     }
 
-    // 计算最后一行的节点数量
+    // 计算最后一行（maxY 所在行）的节点数量
+    int lastRowNodeCount = 0;
     for (final node in existingNodes) {
-      if ((node.y - startY).abs() < offsetY / 2) {
+      if ((node.y - maxY).abs() < offsetY / 2) {
         lastRowNodeCount++;
       }
     }

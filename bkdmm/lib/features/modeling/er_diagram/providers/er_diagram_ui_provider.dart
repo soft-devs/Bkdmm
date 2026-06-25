@@ -31,9 +31,9 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
     }
   }
 
-  /// 切换到移动模式
-  void enterMoveMode() {
-    setInteractionMode(ERInteractionMode.move);
+  /// 切换到预览模式
+  void enterPreviewMode() {
+    setInteractionMode(ERInteractionMode.preview);
   }
 
   /// 切换到编辑模式
@@ -44,7 +44,7 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
   /// 切换模式
   void toggleMode() {
     if (state.isEditMode) {
-      enterMoveMode();
+      enterPreviewMode();
     } else {
       enterEditMode();
     }
@@ -157,6 +157,55 @@ class ERDiagramUINotifier extends StateNotifier<ERDiagramUIState> {
 
     final projectNotifier = ref.read(projectNotifierProvider.notifier);
     projectNotifier.addGraphEdge(moduleId, edge);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 框选操作
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// 开始框选
+  void startSelection(Offset startPoint) {
+    state = state.copyWith(
+      selection: ERSelectionState(
+        isSelecting: true,
+        startPoint: startPoint,
+        currentPoint: startPoint,
+      ),
+    );
+  }
+
+  /// 更新框选
+  void updateSelection(Offset currentPoint) {
+    if (state.isSelecting) {
+      state = state.copyWith(
+        selection: state.selection.copyWith(currentPoint: currentPoint),
+      );
+    }
+  }
+
+  /// 完成框选
+  void completeSelection(Map<String, Rect> nodeRects) {
+    if (!state.isSelecting) return;
+
+    final selectionRect = state.selection.selectionRect;
+    final selectedIds = <String>{};
+
+    // 检查哪些节点在选区内
+    for (final entry in nodeRects.entries) {
+      if (selectionRect.overlaps(entry.value)) {
+        selectedIds.add(entry.key);
+      }
+    }
+
+    state = state.copyWith(
+      selectedNodeIds: selectedIds,
+      selection: const ERSelectionState(),
+    );
+  }
+
+  /// 取消框选
+  void cancelSelection() {
+    state = state.copyWith(selection: const ERSelectionState());
   }
 
   // ═══════════════════════════════════════════════════════════════════

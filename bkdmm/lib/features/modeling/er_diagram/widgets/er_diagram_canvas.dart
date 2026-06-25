@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphview/graphview.dart';
@@ -15,16 +16,17 @@ import 'er_table_node_widget.dart';
 /// ER 图画布
 ///
 /// 使用 graphview 库渲染 ER 图，提供：
-/// - 节点拖拽（编辑模式）
-/// - 字段级连线（编辑模式）
-/// - 自动布局
-/// - 缩放/平移
+/// - 预览模式：左键拖动画布，双击打开预览弹窗
+/// - 编辑模式：左键框选/拖动节点，右键拖动画布，双击打开编辑弹窗
 class ERDiagramCanvas extends ConsumerStatefulWidget {
   /// 模块 ID
   final String moduleId;
 
-  /// 实体编辑回调
+  /// 实体编辑回调（编辑模式双击）
   final void Function(Entity entity)? onEntityEdit;
+
+  /// 实体预览回调（预览模式双击）
+  final void Function(Entity entity)? onEntityPreview;
 
   /// 右键菜单回调
   final void Function(Offset position, Entity? entity)? onContextMenu;
@@ -33,6 +35,7 @@ class ERDiagramCanvas extends ConsumerStatefulWidget {
     super.key,
     required this.moduleId,
     this.onEntityEdit,
+    this.onEntityPreview,
     this.onContextMenu,
   });
 
@@ -43,6 +46,9 @@ class ERDiagramCanvas extends ConsumerStatefulWidget {
 class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   /// graphview 控制器
   late GraphViewController _graphViewController;
+
+  /// 变换控制器（用于缩放和平移）
+  late TransformationController _transformationController;
 
   /// Graph 构建器
   final ERGraphBuilder _graphBuilder = ERGraphBuilder();
@@ -61,7 +67,21 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   @override
   void initState() {
     super.initState();
-    _graphViewController = GraphViewController();
+    _transformationController = TransformationController();
+    _graphViewController = GraphViewController(
+      transformationController: _transformationController,
+    );
+
+    // 确保所有实体都有对应的图节点
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(projectNotifierProvider.notifier).ensureGraphNodesForEntities(widget.moduleId);
+    });
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -121,6 +141,19 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
               ),
             ),
           ),
+
+        // 框选预览
+        if (uiState.isSelecting)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _SelectionRectPainter(
+                  rect: uiState.selection.selectionRect,
+                  color: isDark ? Colors.blue.shade300 : Colors.blue.shade500,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -150,43 +183,137 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.08);
 
-    return MouseRegion(
-      onHover: (event) {
-        setState(() {
-          _mousePosition = event.localPosition;
-        });
+    return Listener(
+      onPointerDown: (event) => _onPointerDown(event, uiState),
+      onPointerMove: (event) => _onPointerMove(event, uiState),
+      onPointerUp: (event) => _onPointerUp(event, uiState, entityMap, graphNodeMap),
+      onPointerSignal: (event) => _onPointerSignal(event, uiState),
+      child: MouseRegion(
+        onHover: (event) {
+          setState(() {
+            _mousePosition = event.localPosition;
+          });
 
-        // 更新连线预览
-        if (uiState.isConnecting) {
-          ref.read(erDiagramUIProvider(widget.moduleId).notifier)
-              .updateConnectionPreview(event.localPosition);
-        }
-      },
-      child: Stack(
-        children: [
-          // 背景网格层
-          Positioned.fill(
-            child: GridPaper(
-              color: gridColor,
-              divisions: 1,
-              subdivisions: 1,
-              interval: 20,
-              child: Container(
-                color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA),
+          // 更新连线预览
+          if (uiState.isConnecting) {
+            ref.read(erDiagramUIProvider(widget.moduleId).notifier)
+                .updateConnectionPreview(event.localPosition);
+          }
+        },
+        child: Stack(
+          children: [
+            // 背景网格层
+            Positioned.fill(
+              child: GridPaper(
+                color: gridColor,
+                divisions: 1,
+                subdivisions: 1,
+                interval: 20,
+                child: Container(
+                  color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA),
+                ),
               ),
             ),
-          ),
-          // GraphView 层
-          GraphView.builder(
-            graph: graph,
-            algorithm: _cachedAlgorithm!,
-            controller: _graphViewController,
-            builder: (node) => _buildNodeWidget(node, entityMap, graphNodeMap, uiState, isDark),
-            animated: false,
-          ),
-        ],
+            // GraphView 层
+            InteractiveViewer(
+              transformationController: _transformationController,
+              boundaryMargin: const EdgeInsets.all(double.infinity),
+              minScale: 0.1,
+              maxScale: 5.0,
+              // 编辑模式下禁用 InteractiveViewer 的内置手势，我们自己处理
+              panEnabled: uiState.isPreviewMode,
+              scaleEnabled: true,
+              child: _ERGraphView(
+                graph: graph,
+                algorithm: _cachedAlgorithm!,
+                controller: _graphViewController,
+                nodeBuilder: (node) => _buildNodeWidget(node, entityMap, graphNodeMap, uiState, isDark),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  /// 指针按下事件
+  void _onPointerDown(PointerDownEvent event, ERDiagramUIState uiState) {
+    // 右键：编辑模式下拖动画布
+    if (event.kind == PointerDeviceKind.mouse && event.buttons == kSecondaryMouseButton) {
+      if (uiState.isEditMode) {
+        // 编辑模式下右键拖动画布
+        // InteractiveViewer 会自动处理，这里不需要额外处理
+      }
+      return;
+    }
+
+    // 左键
+    if (event.kind == PointerDeviceKind.mouse && event.buttons == kPrimaryMouseButton) {
+      if (uiState.isEditMode) {
+        // 编辑模式：开始框选（如果不在节点上）
+        // 框选会在节点拖动之后自动取消
+        final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+        notifier.startSelection(event.localPosition);
+      }
+      // 预览模式：InteractiveViewer 自动处理平移
+    }
+  }
+
+  /// 指针移动事件
+  void _onPointerMove(PointerMoveEvent event, ERDiagramUIState uiState) {
+    // 左键框选（编辑模式）
+    if (event.buttons == kPrimaryMouseButton && uiState.isSelecting) {
+      ref.read(erDiagramUIProvider(widget.moduleId).notifier)
+          .updateSelection(event.localPosition);
+    }
+
+    // 更新连线预览
+    if (uiState.isConnecting) {
+      ref.read(erDiagramUIProvider(widget.moduleId).notifier)
+          .updateConnectionPreview(event.localPosition);
+    }
+  }
+
+  /// 指针释放事件
+  void _onPointerUp(
+    PointerUpEvent event,
+    ERDiagramUIState uiState,
+    Map<String, Entity> entityMap,
+    Map<String, GraphNode> graphNodeMap,
+  ) {
+    // 完成框选
+    if (uiState.isSelecting) {
+      final nodeRects = _calculateNodeRects(entityMap, graphNodeMap);
+      ref.read(erDiagramUIProvider(widget.moduleId).notifier)
+          .completeSelection(nodeRects);
+    }
+  }
+
+  /// 指针信号事件（滚轮缩放）
+  void _onPointerSignal(PointerSignalEvent event, ERDiagramUIState uiState) {
+    // 滚轮缩放由 InteractiveViewer 自动处理
+  }
+
+  /// 计算所有节点的边界矩形
+  Map<String, Rect> _calculateNodeRects(
+    Map<String, Entity> entityMap,
+    Map<String, GraphNode> graphNodeMap,
+  ) {
+    final rects = <String, Rect>{};
+    for (final entry in entityMap.entries) {
+      final entity = entry.value;
+      final graphNode = graphNodeMap[entity.id];
+      if (graphNode != null) {
+        final size = ERTableNodeWidget.calculateNodeSize(entity.fields.length);
+        rects[entity.id] = Rect.fromLTWH(
+          graphNode.x,
+          graphNode.y,
+          size.width,
+          size.height,
+        );
+      }
+    }
+    return rects;
   }
 
   /// 构建节点 Widget
@@ -210,11 +337,10 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       entity: entity,
       graphNode: graphNode ?? GraphNode(title: entity.title, x: 100, y: 100, moduleName: entity.id),
       isSelected: uiState.selectedNodeIds.contains(nodeId),
-      showAnchors: uiState.isEditMode,
-      isDraggable: uiState.isEditMode,
+      interactionMode: uiState.interactionMode,
       isDarkMode: isDark,
-      onTap: () => _onNodeTap(nodeId),
-      onDoubleTap: () => _onNodeDoubleTap(entity),
+      onTap: () => _onNodeTap(nodeId, uiState),
+      onDoubleTap: () => _onNodeDoubleTap(entity, uiState.isEditMode),
       onDragStart: uiState.isEditMode ? (details) => _onNodeDragStart(nodeId, details, graphNode!) : null,
       onDragUpdate: uiState.isEditMode ? (details) => _onNodeDragUpdate(nodeId, details) : null,
       onDragEnd: uiState.isEditMode ? () => _onNodeDragEnd(nodeId) : null,
@@ -260,13 +386,13 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 移动模式按钮
+          // 预览模式按钮
           TDButton(
-            theme: uiState.isMoveMode
+            theme: uiState.isPreviewMode
                 ? TDButtonTheme.primary
                 : TDButtonTheme.defaultTheme,
             icon: Icons.pan_tool,
-            onTap: () => notifier.enterMoveMode(),
+            onTap: () => notifier.enterPreviewMode(),
           ),
           const SizedBox(width: 4),
           // 编辑模式按钮
@@ -370,24 +496,44 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   // 事件处理
   // ═══════════════════════════════════════════════════════════════════
 
-  void _onNodeTap(String nodeId) {
+  void _onNodeTap(String nodeId, ERDiagramUIState uiState) {
+    // 编辑模式下才处理点击选择
+    if (!uiState.isEditMode) return;
+
     final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
     notifier.selectNode(nodeId, addToSelection: true);
+
+    // 取消框选（如果在框选）
+    if (uiState.isSelecting) {
+      notifier.cancelSelection();
+    }
   }
 
-  void _onNodeDoubleTap(Entity entity) {
-    widget.onEntityEdit?.call(entity);
+  void _onNodeDoubleTap(Entity entity, bool isEditMode) {
+    if (isEditMode) {
+      widget.onEntityEdit?.call(entity);
+    } else {
+      widget.onEntityPreview?.call(entity);
+    }
   }
 
   void _onNodeDragStart(String nodeId, DragStartDetails details, GraphNode graphNode) {
+    // 取消框选
+    final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+    if (uiState.isSelecting) {
+      notifier.cancelSelection();
+    }
+
     setState(() {
       _draggedNodeId = nodeId;
       _dragStartPos = details.localPosition;
       _nodeStartPos = Offset(graphNode.x, graphNode.y);
     });
 
-    ref.read(erDiagramUIProvider(widget.moduleId).notifier).startDragging(nodeId);
+    notifier.startDragging(nodeId);
   }
+
+  ERDiagramUIState get uiState => ref.read(erDiagramUIProvider(widget.moduleId));
 
   void _onNodeDragUpdate(String nodeId, DragUpdateDetails details) {
     if (_draggedNodeId != nodeId) return;
@@ -429,11 +575,15 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   // ═══════════════════════════════════════════════════════════════════
 
   void _zoomIn() {
-    _graphViewController.zoomToFit();
+    final matrix = _transformationController.value;
+    final newMatrix = matrix.clone()..scale(1.2);
+    _transformationController.value = newMatrix;
   }
 
   void _zoomOut() {
-    _graphViewController.zoomToFit();
+    final matrix = _transformationController.value;
+    final newMatrix = matrix.clone()..scale(1 / 1.2);
+    _transformationController.value = newMatrix;
   }
 
   void _fitToScreen() {
@@ -555,5 +705,127 @@ class _ConnectionPreviewPainter extends CustomPainter {
     return sourcePos != oldDelegate.sourcePos ||
         targetPos != oldDelegate.targetPos ||
         color != oldDelegate.color;
+  }
+}
+
+/// 框选矩形绘制器
+class _SelectionRectPainter extends CustomPainter {
+  final Rect rect;
+  final Color color;
+
+  _SelectionRectPainter({
+    required this.rect,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 填充
+    final fillPaint = Paint()
+      ..color = color.withValues(alpha: 0.1)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rect, fillPaint);
+
+    // 边框
+    final strokePaint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawRect(rect, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SelectionRectPainter oldDelegate) {
+    return rect != oldDelegate.rect || color != oldDelegate.color;
+  }
+}
+
+/// 自定义 ER 图 GraphView
+///
+/// 解决 graphview 库的 bug: GraphChildDelegate.getVisibleGraphOnly()
+/// 在没有边时只渲染第一个节点。
+/// 这个自定义组件确保所有节点都被渲染。
+class _ERGraphView extends StatelessWidget {
+  final Graph graph;
+  final Algorithm algorithm;
+  final GraphViewController? controller;
+  final Widget Function(Node node) nodeBuilder;
+
+  const _ERGraphView({
+    required this.graph,
+    required this.algorithm,
+    this.controller,
+    required this.nodeBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 运行布局算法
+    algorithm.run(graph, 0, 0);
+
+    // 计算图的实际大小
+    double minX = 0, minY = 0, maxX = 0, maxY = 0;
+    for (final node in graph.nodes) {
+      if (node.x < minX) minX = node.x;
+      if (node.y < minY) minY = node.y;
+      if (node.x + node.width > maxX) maxX = node.x + node.width;
+      if (node.y + node.height > maxY) maxY = node.y + node.height;
+    }
+    final graphSize = Size(maxX - minX + 100, maxY - minY + 100);
+
+    // 直接渲染所有节点和边
+    return SizedBox(
+      width: graphSize.width,
+      height: graphSize.height,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // 边层
+          CustomPaint(
+            painter: _EdgePainter(
+              graph: graph,
+              algorithm: algorithm,
+            ),
+            size: graphSize,
+          ),
+          // 节点层
+          for (final node in graph.nodes)
+            Positioned(
+              left: node.x,
+              top: node.y,
+              child: nodeBuilder(node),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 边绘制器
+class _EdgePainter extends CustomPainter {
+  final Graph graph;
+  final Algorithm algorithm;
+
+  _EdgePainter({
+    required this.graph,
+    required this.algorithm,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue.shade400
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    for (final edge in graph.edges) {
+      algorithm.renderer?.renderEdge(canvas, edge, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _EdgePainter oldDelegate) {
+    return graph != oldDelegate.graph;
   }
 }

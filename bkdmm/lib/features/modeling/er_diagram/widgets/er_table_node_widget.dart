@@ -4,10 +4,12 @@ import 'package:graphview/graphview.dart';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/theme/td_theme.dart';
 import '../models/er_diagram_ui_state.dart';
+import 'er_field_anchor_widget.dart';
 
 /// ER 表格节点 Widget
 ///
-/// 使用 Flutter Widget 渲染 ER 图中的表节点
+/// 使用 Flutter Widget 渲染 ER 图中的表节点。
+/// 根据交互模式响应不同的事件。
 class ERTableNodeWidget extends StatelessWidget {
   /// graphview Node 实例
   final Node node;
@@ -21,11 +23,8 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 是否选中
   final bool isSelected;
 
-  /// 是否显示锚点（编辑模式）
-  final bool showAnchors;
-
-  /// 是否可拖动（编辑模式）
-  final bool isDraggable;
+  /// 当前交互模式
+  final ERInteractionMode interactionMode;
 
   /// 是否暗色模式
   final bool isDarkMode;
@@ -33,7 +32,7 @@ class ERTableNodeWidget extends StatelessWidget {
   /// 锚点点击回调
   final void Function(ERFieldAnchor)? onAnchorTap;
 
-  /// 节点点击回调
+  /// 节点点击回调（编辑模式）
   final VoidCallback? onTap;
 
   /// 节点双击回调
@@ -53,9 +52,6 @@ class ERTableNodeWidget extends StatelessWidget {
   static const double headerHeight = 40.0;
   static const double fieldRowHeight = 28.0;
   static const double cornerRadius = 8.0;
-  static const double anchorOffset = 8.0;
-  static const double anchorVisualSize = 6.0;
-  static const double anchorHitSize = 20.0;
 
   const ERTableNodeWidget({
     super.key,
@@ -63,8 +59,7 @@ class ERTableNodeWidget extends StatelessWidget {
     required this.entity,
     required this.graphNode,
     this.isSelected = false,
-    this.showAnchors = false,
-    this.isDraggable = false,
+    this.interactionMode = ERInteractionMode.preview,
     this.isDarkMode = false,
     this.onAnchorTap,
     this.onTap,
@@ -74,71 +69,87 @@ class ERTableNodeWidget extends StatelessWidget {
     this.onDragEnd,
   });
 
+  /// 是否是编辑模式
+  bool get isEditMode => interactionMode == ERInteractionMode.edit;
+
+  /// 是否是预览模式
+  bool get isPreviewMode => interactionMode == ERInteractionMode.preview;
+
   @override
   Widget build(BuildContext context) {
     final isDark = isDarkMode || Theme.of(context).brightness == Brightness.dark;
 
     // 节点主体
-    Widget content = GestureDetector(
-      onTap: onTap,
-      onDoubleTap: onDoubleTap,
-      child: MouseRegion(
-        cursor: isDraggable ? SystemMouseCursors.grab : SystemMouseCursors.click,
-        child: Container(
-          width: defaultWidth,
-          decoration: BoxDecoration(
-            color: TDAppTheme.getNodeBgColor(isDark, isSelected),
-            borderRadius: BorderRadius.circular(cornerRadius),
-            border: isSelected
-                ? Border.all(
-                    color: TDAppTheme.getSelectionBorderColor(isDark),
-                    width: 2,
-                  )
-                : null,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 6,
-                offset: const Offset(2, 2),
-              ),
-            ],
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // 节点主体
-              ClipRRect(
-                borderRadius: BorderRadius.circular(cornerRadius),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(isDark),
-                    ...entity.fields.asMap().entries.map((entry) =>
-                        _buildFieldRow(entry.key, entry.value, isDark)),
-                  ],
-                ),
-              ),
-              // 锚点层（编辑模式）
-              if (showAnchors) _buildAnchorLayer(isDark),
-            ],
-          ),
-        ),
-      ),
-    );
+    Widget content = _buildNodeBody(isDark);
 
-    // 如果可拖动，包裹拖动手势
-    if (isDraggable && onDragStart != null) {
+    // 编辑模式：可拖动
+    if (isEditMode && onDragStart != null) {
       content = GestureDetector(
-        behavior: HitTestBehavior.deferToChild,
+        behavior: HitTestBehavior.translucent,
         onPanStart: onDragStart,
         onPanUpdate: onDragUpdate,
         onPanEnd: (_) => onDragEnd?.call(),
+        onTap: onTap,
+        onDoubleTap: onDoubleTap,
+        child: content,
+      );
+    } else {
+      // 预览模式：仅响应双击
+      content = GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onDoubleTap: onDoubleTap,
         child: content,
       );
     }
 
     return content;
+  }
+
+  /// 构建节点主体
+  Widget _buildNodeBody(bool isDark) {
+    return MouseRegion(
+      cursor: isEditMode ? SystemMouseCursors.grab : MouseCursor.defer,
+      child: Container(
+        width: defaultWidth,
+        decoration: BoxDecoration(
+          color: TDAppTheme.getNodeBgColor(isDark, isSelected),
+          borderRadius: BorderRadius.circular(cornerRadius),
+          border: isSelected
+              ? Border.all(
+                  color: TDAppTheme.getSelectionBorderColor(isDark),
+                  width: 2,
+                )
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 6,
+              offset: const Offset(2, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 节点主体
+            ClipRRect(
+              borderRadius: BorderRadius.circular(cornerRadius),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(isDark),
+                  ...entity.fields.asMap().entries.map((entry) =>
+                      _buildFieldRow(entry.key, entry.value, isDark)),
+                ],
+              ),
+            ),
+            // 锚点层（仅编辑模式）
+            if (isEditMode) _buildAnchorLayer(isDark),
+          ],
+        ),
+      ),
+    );
   }
 
   /// 构建表头
@@ -241,74 +252,17 @@ class ERTableNodeWidget extends StatelessWidget {
 
   /// 构建锚点层
   Widget _buildAnchorLayer(bool isDark) {
-    return Positioned.fill(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          for (int i = 0; i < entity.fields.length; i++) ...[
-            _buildAnchor(i, ERAnchorDirection.left, isDark),
-            _buildAnchor(i, ERAnchorDirection.right, isDark),
-          ],
-        ],
-      ),
-    );
-  }
+    final primaryKeyFlags = entity.fields.map((f) => f.pk).toList();
 
-  /// 构建单个锚点
-  Widget _buildAnchor(int fieldIndex, ERAnchorDirection direction, bool isDark) {
-    final field = entity.fields[fieldIndex];
-    final rowY = headerHeight + (fieldIndex * fieldRowHeight) + fieldRowHeight / 2;
-
-    // 计算锚点位置
-    final left = direction == ERAnchorDirection.left
-        ? -anchorOffset - anchorHitSize / 2
-        : null;
-    final right = direction == ERAnchorDirection.right
-        ? -anchorOffset - anchorHitSize / 2
-        : null;
-
-    final anchor = ERFieldAnchor(
-      nodeId: entity.id,
-      fieldIndex: fieldIndex,
-      direction: direction,
-      position: Offset(
-        direction == ERAnchorDirection.left
-            ? graphNode.x - anchorOffset
-            : graphNode.x + defaultWidth + anchorOffset,
-        graphNode.y + rowY,
-      ),
-    );
-
-    final color = field.pk ? Colors.amber.shade600 : Colors.blue.shade500;
-
-    return Positioned(
-      left: left,
-      right: right,
-      top: rowY - anchorHitSize / 2,
-      child: Listener(
-        onPointerDown: (_) {
-          onAnchorTap?.call(anchor);
-        },
-        behavior: HitTestBehavior.opaque,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.cell,
-          child: SizedBox(
-            width: anchorHitSize,
-            height: anchorHitSize,
-            child: Center(
-              child: Container(
-                width: anchorVisualSize,
-                height: anchorVisualSize,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 1.5),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return ERFieldAnchorLayer(
+      entityId: entity.id,
+      fieldCount: entity.fields.length,
+      primaryKeyFlags: primaryKeyFlags,
+      nodePosition: Offset(graphNode.x, graphNode.y),
+      nodeWidth: defaultWidth,
+      headerHeight: headerHeight,
+      fieldRowHeight: fieldRowHeight,
+      onAnchorTap: onAnchorTap,
     );
   }
 
