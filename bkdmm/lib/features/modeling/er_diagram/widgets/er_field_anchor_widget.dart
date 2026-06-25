@@ -105,6 +105,9 @@ class ERFieldAnchorLayer extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        // 必须有非 Positioned 子组件，否则 Stack 在无界约束下会尝试使用
+        // constraints.biggest，导致 size.isFinite 断言失败。
+        const SizedBox.shrink(),
         for (int i = 0; i < fieldCount; i++) ...[
           _buildAnchor(i, ERAnchorDirection.left),
           _buildAnchor(i, ERAnchorDirection.right),

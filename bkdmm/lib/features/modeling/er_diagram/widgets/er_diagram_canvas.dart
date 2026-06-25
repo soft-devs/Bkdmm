@@ -805,9 +805,8 @@ class _ERGraphView extends StatelessWidget {
   final Color gridColor;
   final bool isDark;
 
-  /// 虚拟画布的固定大小（足够大以支持平移和缩放）
-  static const double virtualCanvasWidth = 2000.0;
-  static const double virtualCanvasHeight = 1500.0;
+  /// 画布边距
+  static const double canvasPadding = 500.0;
 
   const _ERGraphView({
     required this.graph,
@@ -823,10 +822,28 @@ class _ERGraphView extends StatelessWidget {
     // 运行布局算法
     algorithm.run(graph, 0, 0);
 
-    // 直接渲染所有节点和边，使用固定大小的虚拟画布
+    // 动态计算虚拟画布大小：基于所有节点的位置
+    double canvasWidth = 800.0;
+    double canvasHeight = 600.0;
+
+    if (graph.nodes.isNotEmpty) {
+      double maxX = 0;
+      double maxY = 0;
+      for (final node in graph.nodes) {
+        final right = node.x + node.width;
+        final bottom = node.y + node.height;
+        if (right > maxX) maxX = right;
+        if (bottom > maxY) maxY = bottom;
+      }
+      // 加上边距，确保有足够的平移空间
+      canvasWidth = maxX + canvasPadding;
+      canvasHeight = maxY + canvasPadding;
+    }
+
+    // 直接渲染所有节点和边，使用动态大小的虚拟画布
     return SizedBox(
-      width: virtualCanvasWidth,
-      height: virtualCanvasHeight,
+      width: canvasWidth,
+      height: canvasHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -848,7 +865,7 @@ class _ERGraphView extends StatelessWidget {
               graph: graph,
               algorithm: algorithm,
             ),
-            size: const Size(virtualCanvasWidth, virtualCanvasHeight),
+            size: Size(canvasWidth, canvasHeight),
           ),
           // 节点层
           for (final node in graph.nodes)
