@@ -1,12 +1,14 @@
 import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphview/graphview.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import 'package:bkdmm/shared/models/models.dart';
 import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/utils/logging/logging_service.dart';
 import '../core/er_graph_builder.dart';
 import '../layout/layout_adapter.dart';
 import '../models/er_diagram_ui_state.dart';
@@ -76,6 +78,18 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
   /// 右键拖动起始变换
   Matrix4 _rightDragTransformStart = Matrix4.identity();
+
+  /// 是否正在拖动节点（手动处理模式）
+  bool _isDraggingNode = false;
+
+  /// 正在拖动的节点 ID
+  String? _manualDragNodeId;
+
+  /// 拖动起始屏幕位置
+  Offset _manualDragStartScreenPos = Offset.zero;
+
+  /// 拖动起始画布位置
+  Offset _manualDragStartCanvasPos = Offset.zero;
 
   @override
   void initState() {
@@ -259,11 +273,11 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
   /// 指针按下事件（右键拖动画布 + 编辑模式框选）
   void _onPointerDown(PointerDownEvent event, ERDiagramUIState uiState) {
-    debugPrint('[ERCanvas] _onPointerDown: localPosition=${event.localPosition}, buttons=${event.buttons}, kind=${event.kind}');
+    logging.d('[ERCanvas] _onPointerDown: localPosition=${event.localPosition}, buttons=${event.buttons}, kind=${event.kind}', tag: 'ERCanvas');
 
     // 右键：编辑模式下拖动画布
     if (event.kind == PointerDeviceKind.mouse && event.buttons == kSecondaryMouseButton) {
-      debugPrint('[ERCanvas] 右键按下，编辑模式=${uiState.isEditMode}');
+      logging.d('[ERCanvas] 右键按下，编辑模式=${uiState.isEditMode}', tag: 'ERCanvas');
       if (uiState.isEditMode) {
         // 编辑模式下手动处理右键拖动画布
         _isRightDragging = true;
@@ -275,7 +289,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
     // 左键：编辑模式下开始框选（仅当点击在空白区域时）
     if (event.kind == PointerDeviceKind.mouse && event.buttons == kPrimaryMouseButton) {
-      debugPrint('[ERCanvas] 左键按下，编辑模式=${uiState.isEditMode}');
+      logging.d('[ERCanvas] 左键按下，编辑模式=${uiState.isEditMode}', tag: 'ERCanvas');
       if (uiState.isEditMode) {
         // 检查是否点击在节点上
         final project = ref.read(projectNotifierProvider).project;
@@ -283,6 +297,8 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
           (m) => m.id == widget.moduleId,
           orElse: () => Module.empty,
         );
+
+        logging.d('[ERCanvas] project=${project != null}, module=${module != null}, entities=${module?.entities.length}', tag: 'ERCanvas');
 
         bool clickedOnNode = false;
         if (module != null) {
@@ -293,7 +309,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
           final inverseTransform = Matrix4.inverted(transform);
           final canvasPos = MatrixUtils.transformPoint(inverseTransform, event.localPosition);
 
-          debugPrint('[ERCanvas] 屏幕坐标=${event.localPosition}, 画布坐标=$canvasPos, 变换矩阵=$transform');
+          logging.d('[ERCanvas] 屏幕坐标=${event.localPosition}, 画布坐标=$canvasPos', tag: 'ERCanvas');
 
           // 检查每个节点
           for (final entity in module.entities) {
@@ -311,30 +327,100 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
               nodeSize.height,
             );
 
-            debugPrint('[ERCanvas] 节点 ${entity.title}: 位置=(${graphNode.x}, ${graphNode.y}), rect=$nodeRect');
+            logging.d('[ERCanvas] 节点 ${entity.title}: 位置=(${graphNode.x}, ${graphNode.y}), rect=$nodeRect, canvasPos=$canvasPos, contains=${nodeRect.contains(canvasPos)}', tag: 'ERCanvas');
 
             // 扩大点击区域以包含锚点
             final expandedRect = nodeRect.inflate(ERFieldAnchorWidget.hitSize);
             if (expandedRect.contains(canvasPos)) {
-              debugPrint('[ERCanvas] 点击在节点 ${entity.title} 上');
+              logging.d('[ERCanvas] 点击在节点 ${entity.title} 上', tag: 'ERCanvas');
               clickedOnNode = true;
               break;
             }
           }
 
-          debugPrint('[ERCanvas] clickedOnNode=$clickedOnNode');
+          logging.d('[ERCanvas] clickedOnNode=$clickedOnNode', tag: 'ERCanvas');
         }
 
         // 仅当点击在空白区域时启动框选
         if (!clickedOnNode) {
           final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
           notifier.startSelection(event.localPosition);
+        } else {
+          // 点击在节点上，但节点 Widget 可能超出命中测试范围
+          // 需要手动处理节点选中和拖动逻辑
+          logging.d('[ERCanvas] 手动触发节点选中', tag: 'ERCanvas');
+
+          // 检查是否按下 Ctrl 键
+          final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
+              .contains(LogicalKeyboardKey.controlLeft) ||
+              HardwareKeyboard.instance.logicalKeysPressed
+              .contains(LogicalKeyboardKey.controlRight);
+
+          // 找到被点击的节点
+          final transform = _transformationController.value;
+          final inverseTransform = Matrix4.inverted(transform);
+          final canvasPos = MatrixUtils.transformPoint(inverseTransform, event.localPosition);
+
+          for (final entity in module!.entities) {
+            final graphNode = module.graphCanvas.nodes.firstWhere(
+              (gn) => gn.moduleName == entity.id,
+              orElse: () => GraphNode(title: '', x: 0, y: 0),
+            );
+            if (graphNode.moduleName == null) continue;
+
+            final nodeSize = ERTableNodeWidget.calculateNodeSize(entity.fields.length);
+            final nodeRect = Rect.fromLTWH(
+              graphNode.x,
+              graphNode.y,
+              nodeSize.width,
+              nodeSize.height,
+            );
+
+            final expandedRect = nodeRect.inflate(ERFieldAnchorWidget.hitSize);
+            if (expandedRect.contains(canvasPos)) {
+              logging.d('[ERCanvas] 手动选中节点: ${entity.title}, isCtrlPressed=$isCtrlPressed', tag: 'ERCanvas');
+
+              final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+
+              // 处理选中
+              if (isCtrlPressed) {
+                notifier.selectNodeMultiple(entity.id);
+              } else {
+                notifier.selectNodeSingle(entity.id);
+              }
+
+              // 启动节点拖动
+              _isDraggingNode = true;
+              _manualDragNodeId = entity.id;
+              _manualDragStartScreenPos = event.localPosition;
+              _manualDragStartCanvasPos = Offset(graphNode.x, graphNode.y);
+
+              // 调用 startDragging 来处理多选拖动
+              notifier.startDragging(entity.id);
+
+              // 记录多选拖动的起始位置
+              final draggingNodes = ref.read(erDiagramUIProvider(widget.moduleId)).draggingNodeIds;
+              if (draggingNodes.length > 1) {
+                _multiDragStartPositions = {};
+                for (final gn in module.graphCanvas.nodes) {
+                  if (gn.moduleName != null && draggingNodes.contains(gn.moduleName!)) {
+                    _multiDragStartPositions[gn.moduleName!] = Offset(gn.x, gn.y);
+                  }
+                }
+              } else {
+                _multiDragStartPositions = {};
+              }
+
+              logging.d('[ERCanvas] 启动节点拖动: nodeId=${entity.id}, startPos=${graphNode.x},${graphNode.y}', tag: 'ERCanvas');
+              break;
+            }
+          }
         }
       }
     }
   }
 
-  /// 指针移动事件（右键拖动画布 + 编辑模式框选）
+  /// 指针移动事件（右键拖动画布 + 编辑模式框选 + 节点拖动）
   void _onPointerMove(PointerMoveEvent event, ERDiagramUIState uiState) {
     // 右键拖动画布（编辑模式）
     if (event.buttons == kSecondaryMouseButton && _isRightDragging) {
@@ -342,6 +428,12 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       final newMatrix = _rightDragTransformStart.clone();
       newMatrix.translate(delta.dx, delta.dy);
       _transformationController.value = newMatrix;
+      return;
+    }
+
+    // 节点拖动（编辑模式，手动处理）
+    if (event.buttons == kPrimaryMouseButton && _isDraggingNode) {
+      _handleNodeDrag(event);
       return;
     }
 
@@ -358,6 +450,38 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     }
   }
 
+  /// 处理节点拖动
+  void _handleNodeDrag(PointerMoveEvent event) {
+    if (_manualDragNodeId == null) return;
+
+    // 计算屏幕坐标的偏移
+    final screenDelta = event.localPosition - _manualDragStartScreenPos;
+
+    // 将屏幕偏移转换为画布偏移
+    final transform = _transformationController.value;
+    final scale = transform.getMaxScaleOnAxis(); // 获取当前缩放比例
+    final canvasDelta = screenDelta / scale;
+
+    // 获取当前拖动的节点集合
+    final draggingNodes = ref.read(erDiagramUIProvider(widget.moduleId)).draggingNodeIds;
+
+    if (draggingNodes.length > 1 && _multiDragStartPositions.isNotEmpty) {
+      // 多选拖动：移动所有选中的节点
+      for (final entry in _multiDragStartPositions.entries) {
+        final newX = entry.value.dx + canvasDelta.dx;
+        final newY = entry.value.dy + canvasDelta.dy;
+        ref.read(projectNotifierProvider.notifier)
+            .updateGraphNode(widget.moduleId, entry.key, newX, newY);
+      }
+    } else {
+      // 单节点拖动
+      final newX = _manualDragStartCanvasPos.dx + canvasDelta.dx;
+      final newY = _manualDragStartCanvasPos.dy + canvasDelta.dy;
+      ref.read(projectNotifierProvider.notifier)
+          .updateGraphNode(widget.moduleId, _manualDragNodeId!, newX, newY);
+    }
+  }
+
   /// 指针释放事件
   void _onPointerUp(
     PointerUpEvent event,
@@ -368,6 +492,16 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     // 结束右键拖动
     if (_isRightDragging) {
       _isRightDragging = false;
+      return;
+    }
+
+    // 结束节点拖动
+    if (_isDraggingNode) {
+      _isDraggingNode = false;
+      _manualDragNodeId = null;
+      _multiDragStartPositions = {};
+      ref.read(erDiagramUIProvider(widget.moduleId).notifier).endDragging();
+      logging.d('[ERCanvas] 结束节点拖动', tag: 'ERCanvas');
       return;
     }
 

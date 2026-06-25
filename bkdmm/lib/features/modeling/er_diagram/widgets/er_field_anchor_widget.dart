@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../utils/logging/logging_service.dart';
 import '../models/er_diagram_ui_state.dart';
 
 /// ER 图字段锚点组件
@@ -134,7 +135,7 @@ class ERFieldAnchorLayer extends StatelessWidget {
       child: Listener(
         behavior: HitTestBehavior.opaque, // 拦截事件，不传递给父级
         onPointerDown: (event) {
-          debugPrint('[ERAnchor] onPointerDown: entityId=$entityId, fieldIndex=$fieldIndex, direction=$direction');
+          logging.d('[ERAnchor] onPointerDown: entityId=$entityId, fieldIndex=$fieldIndex, direction=$direction', tag: 'ERCanvas');
           // 创建锚点数据
           final anchor = ERFieldAnchor(
             nodeId: entityId,

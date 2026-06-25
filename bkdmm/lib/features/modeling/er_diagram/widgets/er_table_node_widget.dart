@@ -4,6 +4,7 @@ import 'package:graphview/graphview.dart';
 
 import '../../../../shared/models/models.dart';
 import '../../../../shared/theme/td_theme.dart';
+import '../../../../utils/logging/logging_service.dart';
 import '../models/er_diagram_ui_state.dart';
 import 'er_field_anchor_widget.dart';
 
@@ -105,7 +106,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
     // 使用 Listener 拦截指针事件，阻止事件向上传递到画布
     content = Listener(
       onPointerDown: (event) {
-        debugPrint('[ERTableNode] Listener onPointerDown: ${widget.entity.title}, position=${event.localPosition}');
+        logging.d('[ERTableNode] Listener onPointerDown: ${widget.entity.title}, position=${event.localPosition}', tag: 'ERCanvas');
         // 拦截事件，不传递给父级（避免触发画布框选）
       },
       behavior: HitTestBehavior.opaque,
@@ -136,7 +137,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onTap() {
-    debugPrint('[ERTableNode] onTap: ${widget.entity.title}');
+    logging.d('[ERTableNode] onTap: ${widget.entity.title}', tag: 'ERCanvas');
     // 检查是否按下 Ctrl 键
     final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
         .contains(LogicalKeyboardKey.controlLeft) ||
@@ -146,7 +147,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onPanStart(DragStartDetails details) {
-    debugPrint('[ERTableNode] onPanStart: ${widget.entity.title}, position=${details.localPosition}');
+    logging.d('[ERTableNode] onPanStart: ${widget.entity.title}, position=${details.localPosition}', tag: 'ERCanvas');
     _isDragging = true;
     widget.onDragStart?.call(details);
   }
@@ -157,7 +158,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onPanEnd(DragEndDetails details) {
-    debugPrint('[ERTableNode] onPanEnd: ${widget.entity.title}');
+    logging.d('[ERTableNode] onPanEnd: ${widget.entity.title}', tag: 'ERCanvas');
     _isDragging = false;
     widget.onDragEnd?.call();
   }
