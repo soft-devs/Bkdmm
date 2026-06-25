@@ -102,17 +102,16 @@ class ERFieldAnchorLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // 必须有非 Positioned 子组件，否则 Stack 在无界约束下会尝试使用
-        // constraints.biggest，导致 size.isFinite 断言失败。
-        const SizedBox.shrink(),
-        for (int i = 0; i < fieldCount; i++) ...[
-          _buildAnchor(i, ERAnchorDirection.left),
-          _buildAnchor(i, ERAnchorDirection.right),
+    return Positioned.fill(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (int i = 0; i < fieldCount; i++) ...[
+            _buildAnchor(i, ERAnchorDirection.left),
+            _buildAnchor(i, ERAnchorDirection.right),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -130,7 +129,10 @@ class ERFieldAnchorLayer extends StatelessWidget {
           ? -ERFieldAnchorWidget.anchorOffset - ERFieldAnchorWidget.hitSize / 2
           : null,
       top: rowY - ERFieldAnchorWidget.hitSize / 2,
+      width: ERFieldAnchorWidget.hitSize,
+      height: ERFieldAnchorWidget.hitSize,
       child: Listener(
+        behavior: HitTestBehavior.opaque, // 拦截事件，不传递给父级
         onPointerDown: (_) {
           // 创建锚点数据
           final anchor = ERFieldAnchor(
@@ -141,21 +143,16 @@ class ERFieldAnchorLayer extends StatelessWidget {
           );
           onAnchorTap?.call(anchor);
         },
-        behavior: HitTestBehavior.opaque,
         child: MouseRegion(
           cursor: SystemMouseCursors.cell,
-          child: SizedBox(
-            width: ERFieldAnchorWidget.hitSize,
-            height: ERFieldAnchorWidget.hitSize,
-            child: Center(
-              child: Container(
-                width: ERFieldAnchorWidget.visualSize,
-                height: ERFieldAnchorWidget.visualSize,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 1.5),
-                ),
+          child: Center(
+            child: Container(
+              width: ERFieldAnchorWidget.visualSize,
+              height: ERFieldAnchorWidget.visualSize,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: 1.5),
               ),
             ),
           ),

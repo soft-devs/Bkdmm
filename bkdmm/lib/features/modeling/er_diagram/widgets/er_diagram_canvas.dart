@@ -68,6 +68,15 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   /// 缓存的算法实例
   Algorithm? _cachedAlgorithm;
 
+  /// 是否正在右键拖动画布
+  bool _isRightDragging = false;
+
+  /// 右键拖动起始位置
+  Offset _rightDragStart = Offset.zero;
+
+  /// 右键拖动起始变换
+  Matrix4 _rightDragTransformStart = Matrix4.identity();
+
   @override
   void initState() {
     super.initState();
@@ -188,6 +197,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
         : Colors.black.withValues(alpha: 0.08);
 
     return Listener(
+      behavior: HitTestBehavior.translucent,
       onPointerDown: (event) => _onPointerDown(event, uiState),
       onPointerMove: (event) => _onPointerMove(event, uiState),
       onPointerUp: (event) => _onPointerUp(event, uiState, entityMap, graphNodeMap),
@@ -206,7 +216,26 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
         },
         child: Stack(
           children: [
-            // GraphView 层（包含网格和节点）
+            // 无限网格背景层（在 InteractiveViewer 外部，使用屏幕坐标绘制）
+            // 使用 ListenableBuilder 监听变换控制器变化以重绘网格
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ListenableBuilder(
+                  listenable: _transformationController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: _InfiniteGridPainter(
+                        transformationController: _transformationController,
+                        gridColor: gridColor,
+                        gridSize: 20.0,
+                        isDark: isDark,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            // GraphView 层（节点和边）
             InteractiveViewer(
               transformationController: _transformationController,
               boundaryMargin: const EdgeInsets.all(double.infinity),
@@ -220,8 +249,6 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
                 algorithm: _cachedAlgorithm!,
                 controller: _graphViewController,
                 nodeBuilder: (node) => _buildNodeWidget(node, entityMap, graphNodeMap, uiState, isDark),
-                gridColor: gridColor,
-                isDark: isDark,
               ),
             ),
           ],
@@ -230,31 +257,80 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     );
   }
 
-  /// 指针按下事件
+  /// 指针按下事件（右键拖动画布 + 编辑模式框选）
   void _onPointerDown(PointerDownEvent event, ERDiagramUIState uiState) {
     // 右键：编辑模式下拖动画布
     if (event.kind == PointerDeviceKind.mouse && event.buttons == kSecondaryMouseButton) {
       if (uiState.isEditMode) {
-        // 编辑模式下右键拖动画布
-        // InteractiveViewer 会自动处理，这里不需要额外处理
+        // 编辑模式下手动处理右键拖动画布
+        _isRightDragging = true;
+        _rightDragStart = event.localPosition;
+        _rightDragTransformStart = _transformationController.value.clone();
       }
       return;
     }
 
-    // 左键
+    // 左键：编辑模式下开始框选（仅当点击在空白区域时）
     if (event.kind == PointerDeviceKind.mouse && event.buttons == kPrimaryMouseButton) {
       if (uiState.isEditMode) {
-        // 编辑模式：开始框选（如果不在节点上）
-        // 框选会在节点拖动之后自动取消
-        final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-        notifier.startSelection(event.localPosition);
+        // 检查是否点击在节点上
+        final project = ref.read(projectNotifierProvider).project;
+        final module = project?.modules.firstWhere(
+          (m) => m.id == widget.moduleId,
+          orElse: () => Module.empty,
+        );
+
+        bool clickedOnNode = false;
+        if (module != null) {
+          // 将屏幕坐标转换为画布坐标
+          final transform = _transformationController.value;
+          final canvasPos = MatrixUtils.transformPoint(transform, event.localPosition);
+
+          // 检查每个节点
+          for (final entity in module.entities) {
+            final graphNode = module.graphCanvas.nodes.firstWhere(
+              (gn) => gn.moduleName == entity.id,
+              orElse: () => GraphNode(title: '', x: 0, y: 0),
+            );
+            if (graphNode.moduleName == null) continue;
+
+            final nodeSize = ERTableNodeWidget.calculateNodeSize(entity.fields.length);
+            final nodeRect = Rect.fromLTWH(
+              graphNode.x,
+              graphNode.y,
+              nodeSize.width,
+              nodeSize.height,
+            );
+
+            // 扩大点击区域以包含锚点
+            final expandedRect = nodeRect.inflate(ERFieldAnchorWidget.hitSize);
+            if (expandedRect.contains(canvasPos)) {
+              clickedOnNode = true;
+              break;
+            }
+          }
+        }
+
+        // 仅当点击在空白区域时启动框选
+        if (!clickedOnNode) {
+          final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+          notifier.startSelection(event.localPosition);
+        }
       }
-      // 预览模式：InteractiveViewer 自动处理平移
     }
   }
 
-  /// 指针移动事件
+  /// 指针移动事件（右键拖动画布 + 编辑模式框选）
   void _onPointerMove(PointerMoveEvent event, ERDiagramUIState uiState) {
+    // 右键拖动画布（编辑模式）
+    if (event.buttons == kSecondaryMouseButton && _isRightDragging) {
+      final delta = event.localPosition - _rightDragStart;
+      final newMatrix = _rightDragTransformStart.clone();
+      newMatrix.translate(delta.dx, delta.dy);
+      _transformationController.value = newMatrix;
+      return;
+    }
+
     // 左键框选（编辑模式）
     if (event.buttons == kPrimaryMouseButton && uiState.isSelecting) {
       ref.read(erDiagramUIProvider(widget.moduleId).notifier)
@@ -275,6 +351,12 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     Map<String, Entity> entityMap,
     Map<String, GraphNode> graphNodeMap,
   ) {
+    // 结束右键拖动
+    if (_isRightDragging) {
+      _isRightDragging = false;
+      return;
+    }
+
     // 完成框选
     if (uiState.isSelecting) {
       final nodeRects = _calculateNodeRects(entityMap, graphNodeMap);
@@ -802,19 +884,16 @@ class _ERGraphView extends StatelessWidget {
   final Algorithm algorithm;
   final GraphViewController? controller;
   final Widget Function(Node node) nodeBuilder;
-  final Color gridColor;
-  final bool isDark;
 
-  /// 画布边距
-  static const double canvasPadding = 500.0;
+  /// 虚拟画布大小（足够大以支持无限画布效果）
+  /// 配合 InteractiveViewer 的 boundaryMargin: EdgeInsets.all(double.infinity) 使用
+  static const double virtualCanvasSize = 50000.0;
 
   const _ERGraphView({
     required this.graph,
     required this.algorithm,
     this.controller,
     required this.nodeBuilder,
-    required this.gridColor,
-    required this.isDark,
   });
 
   @override
@@ -822,50 +901,21 @@ class _ERGraphView extends StatelessWidget {
     // 运行布局算法
     algorithm.run(graph, 0, 0);
 
-    // 动态计算虚拟画布大小：基于所有节点的位置
-    double canvasWidth = 800.0;
-    double canvasHeight = 600.0;
-
-    if (graph.nodes.isNotEmpty) {
-      double maxX = 0;
-      double maxY = 0;
-      for (final node in graph.nodes) {
-        final right = node.x + node.width;
-        final bottom = node.y + node.height;
-        if (right > maxX) maxX = right;
-        if (bottom > maxY) maxY = bottom;
-      }
-      // 加上边距，确保有足够的平移空间
-      canvasWidth = maxX + canvasPadding;
-      canvasHeight = maxY + canvasPadding;
-    }
-
-    // 直接渲染所有节点和边，使用动态大小的虚拟画布
+    // 使用超大虚拟画布，配合 InteractiveViewer 的 boundaryMargin 实现无限画布效果
+    // 注意：背景色由外部的 _InfiniteGridPainter 绘制，这里不绘制背景
     return SizedBox(
-      width: canvasWidth,
-      height: canvasHeight,
+      width: virtualCanvasSize,
+      height: virtualCanvasSize,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // 背景层（网格和底色）
-          Positioned.fill(
-            child: GridPaper(
-              color: gridColor,
-              divisions: 1,
-              subdivisions: 1,
-              interval: 20,
-              child: Container(
-                color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA),
-              ),
-            ),
-          ),
           // 边层
           CustomPaint(
             painter: _EdgePainter(
               graph: graph,
               algorithm: algorithm,
             ),
-            size: Size(canvasWidth, canvasHeight),
+            size: const Size(virtualCanvasSize, virtualCanvasSize),
           ),
           // 节点层
           for (final node in graph.nodes)
@@ -906,5 +956,90 @@ class _EdgePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _EdgePainter oldDelegate) {
     return graph != oldDelegate.graph;
+  }
+}
+
+/// 无限网格绘制器
+///
+/// 在 InteractiveViewer 外部绘制网格，根据变换矩阵计算可见区域，
+/// 实现真正的无限网格效果。
+class _InfiniteGridPainter extends CustomPainter {
+  final TransformationController transformationController;
+  final Color gridColor;
+  final double gridSize;
+  final bool isDark;
+
+  _InfiniteGridPainter({
+    required this.transformationController,
+    required this.gridColor,
+    required this.gridSize,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 获取变换矩阵
+    final matrix = transformationController.value;
+
+    // 计算缩放比例
+    final scale = matrix.getMaxScaleOnAxis();
+
+    // 计算平移偏移（屏幕坐标 -> 场景坐标的逆变换）
+    final inverseMatrix = Matrix4.tryInvert(matrix) ?? Matrix4.identity();
+
+    // 可见区域在场景坐标系中的范围
+    // 屏幕左上角对应场景坐标
+    final topLeft = MatrixUtils.transformPoint(inverseMatrix, Offset.zero);
+    // 屏幕右下角对应场景坐标
+    final bottomRight = MatrixUtils.transformPoint(inverseMatrix, Offset(size.width, size.height));
+
+    // 绘制背景色
+    final bgPaint = Paint()
+      ..color = isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Offset.zero & size, bgPaint);
+
+    // 绘制网格线
+    final gridPaint = Paint()
+      ..color = gridColor
+      ..strokeWidth = 0.5 / scale // 保持网格线宽度在视觉上一致
+      ..style = PaintingStyle.stroke;
+
+    // 计算网格起始位置（对齐到网格）
+    final startX = (topLeft.dx / gridSize).floor() * gridSize;
+    final endX = (bottomRight.dx / gridSize).ceil() * gridSize;
+    final startY = (topLeft.dy / gridSize).floor() * gridSize;
+    final endY = (bottomRight.dy / gridSize).ceil() * gridSize;
+
+    // 绘制垂直网格线
+    for (var x = startX; x <= endX; x += gridSize) {
+      // 将场景坐标转换为屏幕坐标
+      final screenX = MatrixUtils.transformPoint(matrix, Offset(x, 0)).dx;
+      canvas.drawLine(
+        Offset(screenX, 0),
+        Offset(screenX, size.height),
+        gridPaint,
+      );
+    }
+
+    // 绘制水平网格线
+    for (var y = startY; y <= endY; y += gridSize) {
+      // 将场景坐标转换为屏幕坐标
+      final screenY = MatrixUtils.transformPoint(matrix, Offset(0, y)).dy;
+      canvas.drawLine(
+        Offset(0, screenY),
+        Offset(size.width, screenY),
+        gridPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _InfiniteGridPainter oldDelegate) {
+    // 当变换矩阵、网格颜色、网格大小或暗色模式变化时重绘
+    return transformationController.value != oldDelegate.transformationController.value ||
+        gridColor != oldDelegate.gridColor ||
+        gridSize != oldDelegate.gridSize ||
+        isDark != oldDelegate.isDark;
   }
 }
