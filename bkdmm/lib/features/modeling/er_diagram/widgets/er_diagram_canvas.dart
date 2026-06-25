@@ -73,6 +73,9 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   /// 鼠标位置（用于显示坐标）
   Offset _mousePosition = Offset.zero;
 
+  /// 缓存的算法实例（避免每次 build 创建新实例）
+  Algorithm? _cachedAlgorithm;
+
   @override
   void initState() {
     super.initState();
@@ -92,6 +95,13 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
   void _syncFromState() {
     final state = ref.read(erDiagramProvider(widget.moduleId));
     _graphSync.syncFromState(state);
+
+    // 创建并缓存算法
+    _cachedAlgorithm = NoOpLayoutAlgorithm(
+      anchorRegistry: _graphSync.anchorRegistry,
+      isDarkMode: Theme.of(context).brightness == Brightness.dark,
+    );
+
     setState(() {});
   }
 
@@ -144,7 +154,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
 
   /// 构建主画布
   Widget _buildMainCanvas(ERDiagramState state, bool isDark) {
-    // 更新边渲染器的暗色模式
+    // 更新布局适配器
     _layoutAdapter.isDarkMode = isDark;
 
     // 创建节点构建器
@@ -153,6 +163,9 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       final erNode = entry.value as ERNode;
       entityMap[entry.key] = erNode.entity;
     }
+
+    // 当前是否是编辑模式
+    // final isEditMode = _interactionMode == InteractionMode.edit;
 
     final builder = ERNodeWidgetBuilderState(
       selectedNodeIds: _selectedNodeIds,
@@ -168,9 +181,6 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       onNodeTap: _onNodeTap,
       onNodeDoubleTap: _onNodeDoubleTap,
     );
-
-    // 使用固定位置布局
-    _layoutAdapter.useFixedPositionLayout();
 
     // 背景网格颜色
     final gridColor = isDark
@@ -199,7 +209,7 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
           // GraphView 层
           GraphView.builder(
             graph: _graphSync.graph,
-            algorithm: _layoutAdapter.algorithm ?? NoOpLayoutAlgorithm(),
+            algorithm: _cachedAlgorithm ?? NoOpLayoutAlgorithm(),
             controller: _graphViewController,
             builder: builder.build(),
             animated: false,
@@ -253,12 +263,12 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 移动模式按钮
+          // 移动模式按钮（手掌图标）
           TDButton(
             theme: _interactionMode == InteractionMode.move
                 ? TDButtonTheme.primary
                 : TDButtonTheme.defaultTheme,
-            icon: TDIcons.unfold_more,
+            icon: Icons.pan_tool, // 手掌图标
             onTap: () => setState(() {
               _interactionMode = InteractionMode.move;
             }),
@@ -466,8 +476,12 @@ class _ERDiagramCanvasState extends ConsumerState<ERDiagramCanvas> {
     final notifier = ref.read(erDiagramProvider(widget.moduleId).notifier);
     notifier.applyLayout(positions);
 
-    // 重新同步
+    // 重新同步并更新缓存算法
     _graphSync.syncFromState(ref.read(erDiagramProvider(widget.moduleId)));
+    _cachedAlgorithm = NoOpLayoutAlgorithm(
+      anchorRegistry: _graphSync.anchorRegistry,
+      isDarkMode: Theme.of(context).brightness == Brightness.dark,
+    );
 
     setState(() {});
   }

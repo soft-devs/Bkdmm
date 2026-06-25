@@ -37,12 +37,6 @@ class NoOpLayoutAlgorithm extends Algorithm {
     // 不进行任何布局计算，保持节点现有位置
     if (graph == null) return const Size(2000, 2000);
 
-    // 调试：打印所有节点位置
-    debugPrint('NoOpLayoutAlgorithm.run() called with shiftX=$shiftX, shiftY=$shiftY');
-    for (final node in graph.nodes) {
-      debugPrint('  - node: key=${node.key?.value}, x=${node.x}, y=${node.y}, width=${node.width}, height=${node.height}');
-    }
-
     // 计算图的大小
     double minX = double.infinity;
     double minY = double.infinity;
@@ -57,13 +51,11 @@ class NoOpLayoutAlgorithm extends Algorithm {
     }
 
     if (minX == double.infinity) {
-      debugPrint('NoOpLayoutAlgorithm: returning default size');
       return const Size(2000, 2000);
     }
 
     final width = maxX - minX + 100;  // 添加一些边距
     final height = maxY - minY + 100;
-    debugPrint('NoOpLayoutAlgorithm: calculated size = ${width}x$height');
 
     return Size(width, height);
   }

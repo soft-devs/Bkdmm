@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:graphview/graphview.dart';
 import 'package:bkdmm/shared/models/models.dart';
 import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
@@ -35,13 +34,6 @@ class ERDiagramGraphSync {
   ///
   /// 将 ERDiagramState 中的节点和边转换为 graphview 的 Graph
   void syncFromState(ERDiagramState state) {
-    // 调试：打印状态中的节点信息
-    debugPrint('syncFromState: state.nodes.length = ${state.nodes.length}');
-    for (final entry in state.nodes.entries) {
-      final erNode = entry.value as ERNode;
-      debugPrint('  - node key=${entry.key}, entity.id=${erNode.entity.id}, entity.title=${erNode.entity.title}');
-    }
-
     // 清空现有数据
     graph.removeNodes(List.from(graph.nodes));
     _nodeMap.clear();
@@ -55,8 +47,6 @@ class ERDiagramGraphSync {
       graph.addNode(node);
       _nodeMap[entry.key] = node;
 
-      debugPrint('  Added node to graph: id=${erNode.id}, position=${erNode.position}');
-
       // 注册字段锚点
       anchorRegistry.registerFieldAnchors(
         entry.key,
@@ -65,8 +55,6 @@ class ERDiagramGraphSync {
         nodeWidth: erNode.size.width,
       );
     }
-
-    debugPrint('syncFromState: graph.nodeCount() = ${graph.nodeCount()}');
 
     // 添加边
     for (final entry in state.edges.entries) {
