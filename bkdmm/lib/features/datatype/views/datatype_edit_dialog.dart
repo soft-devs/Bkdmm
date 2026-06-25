@@ -127,8 +127,8 @@ class _DataTypeEditDialogState extends ConsumerState<DataTypeEditDialog> {
     final l10n = context.l10n;
 
     // Responsive width calculation
-    const double baseMinWidth = 450.0;
-    final double maxWidth = baseMinWidth * 1.3; // 585
+    const double baseMinWidth = 562.0; // 450 * 1.25
+    final double maxWidth = baseMinWidth * 1.3;
     final screenWidth = MediaQuery.of(context).size.width;
     final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
 

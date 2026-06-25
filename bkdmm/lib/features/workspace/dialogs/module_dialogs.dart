@@ -13,12 +13,16 @@ void showAddModuleDialog(BuildContext context, WidgetRef ref, List<Module> modul
   final chnnameController = TextEditingController();
   final descController = TextEditingController();
 
+  final screenWidth = MediaQuery.of(context).size.width;
+  const double baseWidth = 500.0; // 400 * 1.25
+  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+
   showDialog(
     context: context,
     builder: (context) => TDAlertDialog(
       title: '创建模块',
       contentWidget: SizedBox(
-        width: 400,
+        width: dialogWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -29,7 +33,7 @@ void showAddModuleDialog(BuildContext context, WidgetRef ref, List<Module> modul
               leftIcon: const Icon(TDIcons.code),
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TDInput(
               controller: chnnameController,
               leftLabel: '中文名称',
@@ -37,7 +41,7 @@ void showAddModuleDialog(BuildContext context, WidgetRef ref, List<Module> modul
               leftIcon: const Icon(TDIcons.translate),
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TDInput(
               controller: descController,
               leftLabel: '描述',
@@ -102,6 +106,10 @@ void showAddEntityDialog(
   String selectedModuleId = selectedModule?.id ??
       (modules.isNotEmpty ? modules.first.id : '');
 
+  final screenWidth = MediaQuery.of(context).size.width;
+  const double baseWidth = 500.0; // 400 * 1.25
+  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+
   showDialog(
     context: context,
     builder: (context) => StatefulBuilder(
@@ -109,7 +117,7 @@ void showAddEntityDialog(
         return TDAlertDialog(
           title: '创建表',
           contentWidget: SizedBox(
-            width: 400,
+            width: dialogWidth,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -139,7 +147,7 @@ void showAddEntityDialog(
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TDInput(
                   controller: titleController,
                   leftLabel: '表名称 (英文)',
@@ -147,7 +155,7 @@ void showAddEntityDialog(
                   leftIcon: const Icon(TDIcons.code),
                   backgroundColor: Colors.transparent,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TDInput(
                   controller: chnnameController,
                   leftLabel: '中文名称',
@@ -155,7 +163,7 @@ void showAddEntityDialog(
                   leftIcon: const Icon(TDIcons.translate),
                   backgroundColor: Colors.transparent,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TDInput(
                   controller: remarkController,
                   leftLabel: '备注',
@@ -297,12 +305,16 @@ void showRenameModuleDialog(BuildContext context, WidgetRef ref, Module module) 
   final controller = TextEditingController(text: module.name);
   final chnController = TextEditingController(text: module.chnname);
 
+  final screenWidth = MediaQuery.of(context).size.width;
+  const double baseWidth = 500.0; // 400 * 1.25
+  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+
   showDialog(
     context: context,
     builder: (context) => TDAlertDialog(
       title: '重命名模块',
       contentWidget: SizedBox(
-        width: 400,
+        width: dialogWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -313,7 +325,7 @@ void showRenameModuleDialog(BuildContext context, WidgetRef ref, Module module) 
               autofocus: true,
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TDInput(
               controller: chnController,
               hintText: '中文名称',
@@ -359,12 +371,16 @@ void showRenameEntityDialog(BuildContext context, WidgetRef ref, Entity entity, 
   final controller = TextEditingController(text: entity.title);
   final chnController = TextEditingController(text: entity.chnname);
 
+  final screenWidth = MediaQuery.of(context).size.width;
+  const double baseWidth = 500.0; // 400 * 1.25
+  final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
+
   showDialog(
     context: context,
     builder: (context) => TDAlertDialog(
       title: '重命名表',
       contentWidget: SizedBox(
-        width: 400,
+        width: dialogWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -375,7 +391,7 @@ void showRenameEntityDialog(BuildContext context, WidgetRef ref, Entity entity, 
               autofocus: true,
               backgroundColor: Colors.transparent,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TDInput(
               controller: chnController,
               hintText: '中文名称',

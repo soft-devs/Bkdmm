@@ -15,38 +15,44 @@ class ThemeModeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    const baseWidth = 375.0; // 300 * 1.25
+    final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
 
     return TDAlertDialog(
       title: 'Theme Mode',
       content: '',
-      contentWidget: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildThemeOption(
-            context: context,
-            tdTheme: tdTheme,
-            id: 'system',
-            title: 'System',
-            subtitle: 'Follow system settings',
-            icon: TDIcons.brightness,
-          ),
-          _buildThemeOption(
-            context: context,
-            tdTheme: tdTheme,
-            id: 'light',
-            title: 'Light',
-            subtitle: 'Always use light theme',
-            icon: TDIcons.sun_rising,
-          ),
-          _buildThemeOption(
-            context: context,
-            tdTheme: tdTheme,
-            id: 'dark',
-            title: 'Dark',
-            subtitle: 'Always use dark theme',
-            icon: TDIcons.moon,
-          ),
-        ],
+      contentWidget: SizedBox(
+        width: dialogWidth,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildThemeOption(
+              context: context,
+              tdTheme: tdTheme,
+              id: 'system',
+              title: 'System',
+              subtitle: 'Follow system settings',
+              icon: TDIcons.brightness,
+            ),
+            _buildThemeOption(
+              context: context,
+              tdTheme: tdTheme,
+              id: 'light',
+              title: 'Light',
+              subtitle: 'Always use light theme',
+              icon: TDIcons.sun_rising,
+            ),
+            _buildThemeOption(
+              context: context,
+              tdTheme: tdTheme,
+              id: 'dark',
+              title: 'Dark',
+              subtitle: 'Always use dark theme',
+              icon: TDIcons.moon,
+            ),
+          ],
+        ),
       ),
       leftBtn: TDDialogButtonOptions(
         title: 'Cancel',

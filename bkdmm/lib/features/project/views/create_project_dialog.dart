@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
+import '../../../shared/utils/responsive_utils.dart';
+
 /// Create project dialog - Dialog for creating new projects
 ///
 /// Provides a form for users to:
@@ -72,12 +74,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final formSpacing = ResponsiveUtils.getFormFieldSpacing(context);
 
-    // Responsive width calculation
-    final screenWidth = MediaQuery.of(context).size.width;
-    const double minDialogWidth = 600.0;
-    const double maxDialogWidth = 780.0; // 600 * 1.3
-    final dialogWidth = (screenWidth * 0.85).clamp(minDialogWidth, maxDialogWidth);
+    // Responsive width calculation using utility
+    final dialogWidth = ResponsiveUtils.getDialogWidth(context, DialogSizePreset.project);
 
     return TDAlertDialog(
       title: 'Create New Project',
@@ -101,7 +101,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   onChanged: (_) => _clearError(),
                   autofocus: true,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: formSpacing),
 
                 // Description field (multiline)
                 TDInput(
@@ -113,54 +113,54 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   maxLines: 3,
                   onChanged: (_) => _clearError(),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: formSpacing),
 
                 // File path field
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: TDInput(
-                        controller: _pathController,
-                        leftLabel: 'Save Location *',
-                        hintText: 'Choose save location',
-                        backgroundColor: Colors.transparent,
-                        leftIcon: const Icon(TDIcons.save),
-                        onChanged: (_) => _clearError(),
-                      ),
+                    TDInput(
+                      controller: _pathController,
+                      leftLabel: 'Save Location *',
+                      hintText: 'Choose save location',
+                      backgroundColor: Colors.transparent,
+                      leftIcon: const Icon(TDIcons.save),
+                      onChanged: (_) => _clearError(),
                     ),
-                    const SizedBox(width: 8),
-                    TDButton(
-                      onTap: _pickSaveLocation,
-                      icon: TDIcons.folder_open,
-                      type: TDButtonType.outline,
-                      theme: TDButtonTheme.defaultTheme,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        TDButton(
+                          onTap: _pickSaveLocation,
+                          icon: TDIcons.folder_open,
+                          text: 'Browse...',
+                          type: TDButtonType.outline,
+                          theme: TDButtonTheme.defaultTheme,
+                          size: TDButtonSize.small,
+                        ),
+                        const SizedBox(width: 8),
+                        TDButton(
+                          onTap: () => _setQuickLocation('Documents'),
+                          icon: TDIcons.file,
+                          text: 'Documents',
+                          type: TDButtonType.text,
+                          theme: TDButtonTheme.defaultTheme,
+                          size: TDButtonSize.small,
+                        ),
+                        const SizedBox(width: 8),
+                        TDButton(
+                          onTap: () => _setQuickLocation('Desktop'),
+                          icon: TDIcons.desktop,
+                          text: 'Desktop',
+                          type: TDButtonType.text,
+                          theme: TDButtonTheme.defaultTheme,
+                          size: TDButtonSize.small,
+                        ),
+                      ],
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // Quick location buttons
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    TDButton(
-                      onTap: () => _setQuickLocation('Documents'),
-                      icon: TDIcons.file,
-                      text: 'Documents',
-                      type: TDButtonType.text,
-                      theme: TDButtonTheme.defaultTheme,
-                      size: TDButtonSize.small,
-                    ),
-                    TDButton(
-                      onTap: () => _setQuickLocation('Desktop'),
-                      icon: TDIcons.desktop,
-                      text: 'Desktop',
-                      type: TDButtonType.text,
-                      theme: TDButtonTheme.defaultTheme,
-                      size: TDButtonSize.small,
-                    ),
-                  ],
-                ),
 
                 // Error message
                 if (_error != null) ...[

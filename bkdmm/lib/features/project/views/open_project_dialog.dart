@@ -57,8 +57,8 @@ class _OpenProjectDialogState extends State<OpenProjectDialog> {
     // Responsive dialog dimensions
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    const double baseWidth = 600.0;
-    const double baseHeight = 400.0;
+    const double baseWidth = 750.0; // 600 * 1.25
+    const double baseHeight = 500.0; // 400 * 1.25
     final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
     final dialogHeight = (screenHeight * 0.7).clamp(baseHeight, baseHeight * 1.3);
 

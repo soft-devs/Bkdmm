@@ -256,8 +256,8 @@ class _IndexEditorState extends State<IndexEditor> {
           final dialogL10n = context.l10n;
           // Responsive dialog width calculation
           final screenWidth = MediaQuery.of(context).size.width;
-          const baseMinWidth = 400.0;
-          final maxWidth = baseMinWidth * 1.4; // 560
+          const baseMinWidth = 500.0; // 400 * 1.25
+          final maxWidth = baseMinWidth * 1.4;
           final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
 
           return TDAlertDialog(

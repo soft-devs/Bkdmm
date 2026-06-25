@@ -29,7 +29,7 @@ class AutoSaveDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
-    const baseWidth = 300.0;
+    const baseWidth = 375.0; // 300 * 1.25
     final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
 
     return TDAlertDialog(

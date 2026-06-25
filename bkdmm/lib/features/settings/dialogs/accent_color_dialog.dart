@@ -25,7 +25,7 @@ class AccentColorDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final tdTheme = TDTheme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
-    const baseWidth = 280.0;
+    const baseWidth = 350.0; // 280 * 1.25
     final dialogWidth = (screenWidth * 0.85).clamp(baseWidth, baseWidth * 1.3);
 
     return TDAlertDialog(

@@ -38,8 +38,10 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     // Responsive dialog size
-    final dialogWidth = screenWidth.clamp(600.0, 900.0);
-    final dialogHeight = screenHeight.clamp(400.0, 600.0);
+    const double baseWidth = 750.0; // 600 * 1.25
+    const double baseHeight = 500.0; // 400 * 1.25
+    final dialogWidth = screenWidth.clamp(baseWidth, baseWidth * 1.3);
+    final dialogHeight = screenHeight.clamp(baseHeight, baseHeight * 1.3);
 
     return Dialog(
       backgroundColor: Colors.transparent,
