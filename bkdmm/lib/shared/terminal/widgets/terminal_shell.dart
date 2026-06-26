@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import 'terminal_output.dart';
-import '../providers/terminal_provider.dart';
 
 /// 终端 Shell 主组件
 class TerminalShell extends ConsumerWidget {

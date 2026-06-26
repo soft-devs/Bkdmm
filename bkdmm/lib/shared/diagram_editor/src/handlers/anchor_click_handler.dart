@@ -5,7 +5,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import '../core/diagram_node.dart';
 import 'diagram_event.dart';
 import 'diagram_context.dart';
 import 'diagram_handler.dart';
@@ -123,12 +122,6 @@ class ConnectionHandler extends DiagramEventHandler {
   /// 当前连线的源锚点
   String? _sourceAnchorId;
 
-  /// 源锚点位置
-  Offset? _sourcePosition;
-
-  /// 当前鼠标位置（用于预览）
-  Offset? _currentPosition;
-
   ConnectionHandler({
     super.priority = 30,
     super.name = 'ConnectionHandler',
@@ -158,7 +151,6 @@ class ConnectionHandler extends DiagramEventHandler {
 
     if (event is DiagramPointerMoveEvent) {
       // 更新连线预览
-      _currentPosition = event.localPosition;
       updateState(HandlerUpdate.updateConnectionPreview(event.localPosition));
       return true;
     }
@@ -175,8 +167,6 @@ class ConnectionHandler extends DiagramEventHandler {
 
       // 重置状态
       _sourceAnchorId = null;
-      _sourcePosition = null;
-      _currentPosition = null;
       return true;
     }
 
@@ -186,8 +176,6 @@ class ConnectionHandler extends DiagramEventHandler {
   /// 开始连线（由 AnchorClickHandler 调用）
   void startConnection(String anchorId, Offset position) {
     _sourceAnchorId = anchorId;
-    _sourcePosition = position;
-    _currentPosition = position;
   }
 
   /// 获取当前连线状态
@@ -207,7 +195,5 @@ class ConnectionHandler extends DiagramEventHandler {
   @override
   void reset() {
     _sourceAnchorId = null;
-    _sourcePosition = null;
-    _currentPosition = null;
   }
 }

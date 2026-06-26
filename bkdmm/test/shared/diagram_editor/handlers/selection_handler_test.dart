@@ -9,6 +9,7 @@ import 'package:bkdmm/shared/diagram_editor/src/core/diagram_state.dart' hide In
 
 // 显式导入需要的类型，避免与 Flutter 的同名类冲突
 import 'package:bkdmm/shared/diagram_editor/src/handlers/diagram_context.dart' as diag_ctx;
+import 'package:bkdmm/shared/diagram_editor/src/integration/er_interaction_manager.dart' show InteractionMode;
 
 void main() {
   group('SelectionHandler', () {
@@ -62,7 +63,7 @@ void main() {
       );
       final context = _createMockContext(
         isOnCanvas: true,
-        interactionMode: diag_ctx.InteractionMode.move,
+        interactionMode: InteractionMode.move,
       );
 
       expect(handler.canHandle(event, context), false);
@@ -219,7 +220,7 @@ void main() {
 /// 创建模拟上下文
 diag_ctx.DiagramContext _createMockContext({
   bool isOnCanvas = false,
-  diag_ctx.InteractionMode interactionMode = diag_ctx.InteractionMode.edit,
+  InteractionMode interactionMode = InteractionMode.edit,
 }) {
   return diag_ctx.DiagramContext(
     diagramId: 'test',

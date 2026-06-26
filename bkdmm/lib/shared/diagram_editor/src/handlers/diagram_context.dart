@@ -11,6 +11,7 @@ import 'package:flutter/material.dart' show Matrix4, MatrixUtils;
 import '../core/diagram_node.dart';
 import '../core/diagram_edge.dart';
 import '../core/diagram_state.dart' hide InteractionMode;
+import '../integration/er_interaction_manager.dart' show InteractionMode;
 
 /// 图表上下文
 ///
@@ -262,16 +263,4 @@ enum HitTestType {
 
   /// 命中空白画布
   canvas,
-}
-
-/// 交互模式
-enum InteractionMode {
-  /// 移动模式 - 仅查看，pan/zoom
-  move,
-
-  /// 编辑模式 - 可拖拽节点、创建连线
-  edit,
-
-  /// 只读模式 - 不可交互
-  readonly,
 }

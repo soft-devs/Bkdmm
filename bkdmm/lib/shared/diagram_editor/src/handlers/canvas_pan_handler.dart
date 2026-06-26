@@ -21,9 +21,6 @@ class CanvasPanHandler extends DiagramEventHandler {
   /// 平移起始位置（屏幕坐标）
   Offset? _panStartPosition;
 
-  /// 平移起始时的变换矩阵
-  Matrix4? _panStartTransform;
-
   CanvasPanHandler({
     super.priority = 100,
     super.name = 'CanvasPanHandler',
@@ -89,7 +86,6 @@ class CanvasPanHandler extends DiagramEventHandler {
   ) {
     _isPanning = true;
     _panStartPosition = event.localPosition;
-    _panStartTransform = context.transform.clone();
 
     return true;
   }
@@ -122,7 +118,6 @@ class CanvasPanHandler extends DiagramEventHandler {
     // 重置状态
     _isPanning = false;
     _panStartPosition = null;
-    _panStartTransform = null;
 
     return true;
   }
@@ -142,7 +137,6 @@ class CanvasPanHandler extends DiagramEventHandler {
   void reset() {
     _isPanning = false;
     _panStartPosition = null;
-    _panStartTransform = null;
   }
 
   /// 是否正在平移
@@ -175,9 +169,6 @@ class HoverHandler extends DiagramEventHandler {
     void Function(HandlerUpdate update) updateState,
   ) async {
     if (event is! DiagramHoverEvent) return false;
-
-    // 检查悬停位置
-    final scenePos = context.toScene(event.localPosition);
 
     // 更新悬停状态
     if (context.isOnNode) {

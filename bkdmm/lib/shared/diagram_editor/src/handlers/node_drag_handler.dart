@@ -26,9 +26,6 @@ class NodeDragHandler extends DiagramEventHandler {
   /// 当前拖动的节点 ID
   String? _draggedNodeId;
 
-  /// 多选拖动时的起始位置
-  Map<String, Offset> _multiDragStartPositions = {};
-
   /// 是否已经超过拖动阈值
   bool _hasExceededThreshold = false;
 
@@ -152,7 +149,6 @@ class NodeDragHandler extends DiagramEventHandler {
     _isDragging = false;
     _dragStartPosition = null;
     _draggedNodeId = null;
-    _multiDragStartPositions = {};
     _hasExceededThreshold = false;
 
     return true;
@@ -174,7 +170,6 @@ class NodeDragHandler extends DiagramEventHandler {
     _isDragging = false;
     _dragStartPosition = null;
     _draggedNodeId = null;
-    _multiDragStartPositions = {};
     _hasExceededThreshold = false;
   }
 

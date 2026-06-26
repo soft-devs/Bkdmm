@@ -4,15 +4,11 @@
 /// 替代原来分散在 er_diagram_canvas.dart 中的事件处理代码。
 library;
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../handlers/diagram_event.dart';
 import '../handlers/diagram_context.dart';
-import '../handlers/diagram_handler.dart';
 import '../handlers/handler_registry.dart';
 import '../handlers/anchor_click_handler.dart';
 import '../handlers/node_drag_handler.dart';
@@ -133,9 +129,6 @@ class ERInteractionManager {
 
   /// 当前交互状态
   ERInteractionState _state = const ERInteractionState();
-
-  /// 节点位置缓存（用于多选拖动）
-  Map<String, Offset> _nodeStartPositions = {};
 
   ERInteractionManager({
     required this.transformController,
@@ -344,9 +337,6 @@ class ERInteractionManager {
       draggingNodeId: nodeId,
       dragStartPosition: event.localPosition,
     );
-
-    // 记录所有选中节点的起始位置
-    _nodeStartPositions = {};
     // 注意：实际的节点位置需要从外部获取
   }
 
@@ -360,7 +350,6 @@ class ERInteractionManager {
       dragStartPosition: null,
       clearDragging: true,
     );
-    _nodeStartPositions = {};
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -495,7 +484,6 @@ class ERInteractionManager {
   void reset() {
     _state = const ERInteractionState();
     _registry.resetAll();
-    _nodeStartPositions = {};
     _isPanning = false;
   }
 }

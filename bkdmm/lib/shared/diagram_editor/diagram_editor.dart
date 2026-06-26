@@ -29,7 +29,7 @@ export 'src/commands/diagram_command.dart';
 export 'src/commands/history_controller.dart';
 
 // Integration (Phase 4)
-export 'src/integration/er_interaction_manager.dart';
+export 'src/integration/er_interaction_manager.dart' show InteractionMode, ERInteractionState, ERInteractionManager;
 export 'src/integration/er_interaction_provider.dart';
 
 // Controllers (TODO: implement these controllers)
