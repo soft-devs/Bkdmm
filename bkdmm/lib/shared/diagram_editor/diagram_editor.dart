@@ -19,6 +19,11 @@ export 'src/handlers/node_drag_handler.dart';
 export 'src/handlers/selection_handler.dart';
 export 'src/handlers/canvas_pan_handler.dart';
 
+// Model
+export 'src/model/node_model.dart';
+export 'src/model/edge_model.dart';
+export 'src/model/transform_model.dart';
+
 // Spatial (Phase 1)
 export 'src/spatial/spatial_index.dart';
 export 'src/spatial/simple_index.dart';
@@ -30,3 +35,6 @@ export 'src/commands/history_controller.dart';
 // Integration (Phase 4)
 export 'src/integration/er_interaction_manager.dart' show InteractionMode, ERInteractionState, ERInteractionManager;
 export 'src/integration/er_interaction_provider.dart';
+
+// View (Phase 5)
+export 'src/view/tool_overlay.dart';

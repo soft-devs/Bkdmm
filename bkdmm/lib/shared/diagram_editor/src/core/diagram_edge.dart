@@ -105,6 +105,46 @@ class EdgeStyle {
       dashConfig: dashConfig ?? this.dashConfig,
     );
   }
+
+  /// Convert to JSON map
+  Map<String, dynamic> toJson() {
+    return {
+      'color': color.toARGB32(),
+      'width': width,
+      'lineType': lineType.name,
+      'shape': shape.name,
+      'showArrow': showArrow,
+      'arrowSize': arrowSize,
+      'curveFactor': curveFactor,
+      'dashConfig': dashConfig?.pattern,
+    };
+  }
+
+  /// Create from JSON map
+  factory EdgeStyle.fromJson(Map<String, dynamic> json) {
+    return EdgeStyle(
+      color: Color(json['color'] as int? ?? 0xFF666666),
+      width: (json['width'] as num?)?.toDouble() ?? 2.0,
+      lineType: EdgeLineType.values.firstWhere(
+        (e) => e.name == json['lineType'],
+        orElse: () => EdgeLineType.solid,
+      ),
+      shape: EdgeShape.values.firstWhere(
+        (e) => e.name == json['shape'],
+        orElse: () => EdgeShape.straight,
+      ),
+      showArrow: json['showArrow'] as bool? ?? false,
+      arrowSize: (json['arrowSize'] as num?)?.toDouble() ?? 10.0,
+      curveFactor: (json['curveFactor'] as num?)?.toDouble() ?? 0.3,
+      dashConfig: json['dashConfig'] != null
+          ? DashConfig(
+              pattern: (json['dashConfig'] as List<dynamic>)
+                  .map((e) => (e as num).toDouble())
+                  .toList(),
+            )
+          : null,
+    );
+  }
 }
 
 /// 线条类型

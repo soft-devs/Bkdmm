@@ -349,7 +349,7 @@ class _FieldTableState extends State<FieldTable> {
             // Remark
             _buildTextCell(field.remark ?? '', remarkWidth, tdTheme, isSelected),
             // Actions
-            _buildActionsCell(field, actionsWidth, tdTheme),
+            // _buildActionsCell(field, actionsWidth, tdTheme),
           ],
         ),
       ),
