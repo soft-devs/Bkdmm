@@ -16,8 +16,12 @@ export 'providers/er_diagram_ui_provider.dart';
 
 // 画布和 Widget
 export 'widgets/er_diagram_canvas.dart';
+export 'widgets/er_diagram_canvas_v2.dart';
 export 'widgets/er_table_node_widget.dart';
 export 'widgets/er_field_anchor_widget.dart';
 
 // Graph 构建器
 export 'core/er_graph_builder.dart';
+
+// 布局
+export 'layout/layout_adapter.dart';
