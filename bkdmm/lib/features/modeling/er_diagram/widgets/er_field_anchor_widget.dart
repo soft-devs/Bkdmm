@@ -133,7 +133,7 @@ class ERFieldAnchorLayer extends StatelessWidget {
       width: ERFieldAnchorWidget.hitSize,
       height: ERFieldAnchorWidget.hitSize,
       child: Listener(
-        behavior: HitTestBehavior.opaque, // 拦截事件，不传递给父级
+        behavior: HitTestBehavior.translucent, // 不阻止事件传递给父级
         onPointerDown: (event) {
           logging.d('[ERAnchor] onPointerDown: entityId=$entityId, fieldIndex=$fieldIndex, direction=$direction', tag: 'ERCanvas');
           // 创建锚点数据

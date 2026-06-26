@@ -18,7 +18,7 @@ import '../widgets/property_section.dart';
 import '../widgets/property_field.dart';
 import '../widgets/stat_tile.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
-import '../../modeling/er_diagram/widgets/er_diagram_canvas_v2.dart';
+import '../../modeling/er_diagram/widgets/er_diagram_canvas.dart';
 
 /// Workspace view - Main project editing interface with tab management
 ///
@@ -321,8 +321,40 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
     return ERDiagramCanvasV2(
       moduleId: module.id,
       onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
+      onEntityPreview: (entity) => _showEntityPreviewDialog(module, entity),
       onContextMenu: (position, entity) =>
           _showDiagramContextMenu(position, entity, module),
+    );
+  }
+
+  void _showEntityPreviewDialog(Module module, Entity entity) {
+    // 预览模式下双击显示只读弹窗
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(entity.title),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('中文名称: ${entity.chnname}'),
+              const SizedBox(height: 8),
+              Text('字段列表:'),
+              ...entity.fields.map((f) => Padding(
+                padding: const EdgeInsets.only(left: 8, top: 4),
+                child: Text('• ${f.name}: ${f.type}${f.pk ? ' (主键)' : ''}'),
+              )),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
     );
   }
 

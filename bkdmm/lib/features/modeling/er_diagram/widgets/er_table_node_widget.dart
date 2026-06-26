@@ -106,7 +106,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
     // 编辑模式：可拖动和点击
     if (widget.isEditMode && widget.onDragStart != null) {
       content = GestureDetector(
-        behavior: HitTestBehavior.deferToChild, // 让子组件（锚点）优先处理事件
+        behavior: HitTestBehavior.translucent, // 同时处理自己和子组件的事件
         onTap: _onTap,
         onDoubleTap: widget.onDoubleTap,
         onPanStart: _onPanStart,
@@ -117,7 +117,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
     } else {
       // 预览模式：仅响应双击
       content = GestureDetector(
-        behavior: HitTestBehavior.deferToChild,
+        behavior: HitTestBehavior.translucent,
         onDoubleTap: widget.onDoubleTap,
         child: content,
       );

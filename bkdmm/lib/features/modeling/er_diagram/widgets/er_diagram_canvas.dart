@@ -72,6 +72,28 @@ class _ERDiagramCanvasV2State extends ConsumerState<ERDiagramCanvasV2> {
   /// 鼠标位置（用于显示坐标）
   Offset _mousePosition = Offset.zero;
 
+  /// 拖动起始位置映射（节点ID -> 场景坐标）
+  final Map<String, Offset> _dragStartPositions = {};
+
+  /// 获取图节点
+  GraphNode? _getGraphNode(String entityId) {
+    final project = ref.read(projectNotifierProvider).project;
+    if (project == null) return null;
+
+    final module = project.modules.firstWhere(
+      (m) => m.id == widget.moduleId,
+      orElse: () => Module.empty,
+    );
+
+    try {
+      return module.graphCanvas.nodes.firstWhere(
+        (gn) => gn.moduleName == entityId,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -721,14 +743,42 @@ class _ERDiagramCanvasV2State extends ConsumerState<ERDiagramCanvasV2> {
     }
 
     notifier.startDragging(nodeId);
+
+    // 记录拖动起始位置
+    _dragStartPositions.clear();
+    for (final dragId in currentUiState.draggingNodeIds) {
+      final gn = _getGraphNode(dragId);
+      if (gn != null) {
+        _dragStartPositions[dragId] = Offset(gn.x, gn.y);
+      }
+    }
+    // 如果当前节点不在拖动列表中，添加它
+    if (!_dragStartPositions.containsKey(nodeId)) {
+      _dragStartPositions[nodeId] = Offset(graphNode.x, graphNode.y);
+    }
   }
 
   void _onNodeDragUpdate(String nodeId, DragUpdateDetails details) {
-    // 拖动更新由原有的 ERTableNodeWidget 处理
+    final uiState = ref.read(erDiagramUIProvider(widget.moduleId));
+    if (uiState.draggingNodeIds.isEmpty) return;
+
+    // 计算位移增量（场景坐标）
+    final scale = _transformationController.value.getMaxScaleOnAxis();
+    final delta = details.delta / scale;
+
+    // 移动所有拖动中的节点
+    final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+    for (final dragId in uiState.draggingNodeIds) {
+      final gn = _getGraphNode(dragId);
+      if (gn != null) {
+        notifier.moveNode(dragId, gn.x + delta.dx, gn.y + delta.dy);
+      }
+    }
   }
 
   void _onNodeDragEnd(String nodeId) {
     ref.read(erDiagramUIProvider(widget.moduleId).notifier).endDragging();
+    _dragStartPositions.clear();
   }
 
   void _onAnchorTap(ERFieldAnchor anchor, GraphNode graphNode) {
