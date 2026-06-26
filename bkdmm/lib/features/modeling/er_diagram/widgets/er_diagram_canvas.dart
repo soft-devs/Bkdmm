@@ -345,8 +345,8 @@ class _ERDiagramCanvasV2State extends ConsumerState<ERDiagramCanvasV2> {
               boundaryMargin: const EdgeInsets.all(double.infinity),
               minScale: 0.1,
               maxScale: 5.0,
-              panEnabled: uiState.isPreviewMode,
-              scaleEnabled: true,
+              panEnabled: false, // 禁用 InteractiveViewer 的平移，我们自己处理
+              scaleEnabled: true, // 保留缩放
               child: _ERGraphView(
                 graph: graph,
                 algorithm: _cachedAlgorithm!,
