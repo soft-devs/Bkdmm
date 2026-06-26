@@ -336,6 +336,10 @@ Future<String> getLogDirectory() async {
 /// UI 控制台输出器
 ///
 /// 将日志输出到 Flutter UI 控制台组件
+///
+/// 注意：这个输出器接收的是 Printer 格式化后的 lines，
+/// 所以消息已经包含时间戳、级别和颜色码。
+/// LogEntry 会解析 ANSI 颜色码并正确显示。
 class UiConsoleOutput extends LogOutput {
   /// 日志回调函数
   final void Function(LogEntry entry) onLog;
@@ -344,10 +348,14 @@ class UiConsoleOutput extends LogOutput {
 
   @override
   void output(OutputEvent event) {
-    // 使用当前时间作为时间戳
     final now = DateTime.now();
 
+    // DevPrinter 输出的第一行是主消息行
+    // 格式: ANSI颜色 时间戳 级别 图标 ANSI重置 消息内容
+    // 例如: \x1B[32m10:33:17.074 INFO  🚀 \x1B[0m日志服务初始化完成
     for (final line in event.lines) {
+      if (line.trim().isEmpty) continue;
+
       final entry = LogEntry(
         id: '${now.millisecondsSinceEpoch}_${line.hashCode}',
         timestamp: now,

@@ -195,6 +195,23 @@ void showAddEntityDialog(
               Navigator.pop(context);
 
               final now = DateTime.now();
+
+              // 获取有效的默认字段配置并生成默认字段
+              final effectiveDefaults = ref.read(effectiveDefaultFieldsProvider);
+              final fieldTemplates = effectiveDefaults.generateDefaultFieldTemplates();
+              final defaultFields = fieldTemplates.map((template) {
+                return Field(
+                  id: IdGenerator.generate(),
+                  name: template['name'] as String,
+                  chnname: template['chnname'] as String,
+                  type: template['type'] as String,
+                  pk: template['pk'] as bool? ?? false,
+                  notNull: template['notNull'] as bool? ?? false,
+                  autoIncrement: template['autoIncrement'] as bool? ?? false,
+                  remark: template['remark'] as String?,
+                );
+              }).toList();
+
               final entity = Entity(
                 id: IdGenerator.generate(),
                 title: titleController.text.trim(),
@@ -204,7 +221,7 @@ void showAddEntityDialog(
                 remark: remarkController.text.trim().isNotEmpty
                     ? remarkController.text.trim()
                     : null,
-                fields: [],
+                fields: defaultFields,
                 indexes: [],
                 createdAt: now,
                 updatedAt: now,

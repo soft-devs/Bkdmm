@@ -318,7 +318,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    return ERDiagramCanvasV2(
+    return ERDiagramCanvas(
       moduleId: module.id,
       onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
       onEntityPreview: (entity) => _showEntityPreviewDialog(module, entity),

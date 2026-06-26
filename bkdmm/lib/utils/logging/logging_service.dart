@@ -5,11 +5,15 @@
 /// - 生产环境文件日志 (自动轮转)
 /// - 敏感信息脱敏
 /// - Riverpod 状态日志
+/// - UI 日志流输出
 library;
+
+import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
+import '../../shared/log_viewer/models/log_entry.dart';
 import 'logging_config.dart';
 import 'logging_outputs.dart';
 
@@ -24,6 +28,13 @@ class LoggingService {
 
   /// 敏感字段列表
   static final List<String> _sensitiveFields = [];
+
+  /// UI 日志流控制器
+  static final StreamController<LogEntry> _logStreamController =
+      StreamController<LogEntry>.broadcast();
+
+  /// UI 日志流 (供 LogViewer 订阅)
+  static Stream<LogEntry> get logStream => _logStreamController.stream;
 
   /// 初始化日志服务
   ///
@@ -56,6 +67,15 @@ class LoggingService {
       ));
     }
 
+    // 添加 UI 控制台输出器
+    if (_config!.enableUiConsole) {
+      outputs.add(UiConsoleOutput(
+        onLog: (entry) {
+          _logStreamController.add(entry);
+        },
+      ));
+    }
+
     // 创建 Logger 实例
     _logger = Logger(
       filter: _BkdmmLogFilter(_config!),
@@ -80,6 +100,7 @@ class LoggingService {
   /// 销毁日志服务
   static Future<void> destroy() async {
     await _logger?.close();
+    await _logStreamController.close();
     _logger = null;
     _initialized = false;
   }

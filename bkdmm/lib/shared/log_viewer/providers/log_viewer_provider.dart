@@ -3,8 +3,11 @@
 /// 使用 Riverpod 管理日志状态
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../utils/logging/logging_service.dart';
 import '../models/log_entry.dart';
 import '../models/log_filter.dart';
 import '../services/log_buffer.dart';
@@ -71,11 +74,23 @@ class LogViewerNotifier extends StateNotifier<LogViewerState> {
   /// 最大日志数量
   final int maxLogs;
 
+  /// 日志流订阅
+  StreamSubscription<LogEntry>? _logSubscription;
+
   /// 创建日志查看器状态管理器
   LogViewerNotifier({
     this.maxLogs = 1000,
   })  : _buffer = LogBuffer<LogEntry>(maxLogs),
-        super(const LogViewerState());
+        super(const LogViewerState()) {
+    _subscribeToLogStream();
+  }
+
+  /// 订阅日志流
+  void _subscribeToLogStream() {
+    _logSubscription = LoggingService.logStream.listen((entry) {
+      addLog(entry);
+    });
+  }
 
   /// 添加日志
   void addLog(LogEntry entry) {
@@ -149,6 +164,13 @@ class LogViewerNotifier extends StateNotifier<LogViewerState> {
   void clear() {
     _buffer.clear();
     state = const LogViewerState();
+  }
+
+  /// 销毁时取消订阅
+  @override
+  void dispose() {
+    _logSubscription?.cancel();
+    super.dispose();
   }
 
   /// 导出日志为文本

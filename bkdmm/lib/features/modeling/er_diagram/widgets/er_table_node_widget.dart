@@ -103,12 +103,22 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
     // 节点主体
     Widget content = _buildNodeBody(isDark);
 
+    // 使用 Listener 拦截指针事件，阻止事件向上传递到画布
+    content = Listener(
+      onPointerDown: (event) {
+        logging.d('[ERTableNode] Listener onPointerDown: ${widget.entity.title}, position=${event.localPosition}', tag: 'ERCanvas');
+        // 拦截事件，不传递给父级（避免触发画布框选）
+      },
+      behavior: HitTestBehavior.opaque,
+      child: content,
+    );
+
     // 编辑模式：可拖动和点击
     if (widget.isEditMode && widget.onDragStart != null) {
       content = GestureDetector(
-        behavior: HitTestBehavior.translucent, // 同时处理自己和子组件的事件
+        behavior: HitTestBehavior.opaque,
         onTap: _onTap,
-        onDoubleTap: _onDoubleTap,
+        onDoubleTap: widget.onDoubleTap,
         onPanStart: _onPanStart,
         onPanUpdate: _onPanUpdate,
         onPanEnd: _onPanEnd,
@@ -117,8 +127,8 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
     } else {
       // 预览模式：仅响应双击
       content = GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onDoubleTap: _onDoubleTap,
+        behavior: HitTestBehavior.opaque,
+        onDoubleTap: widget.onDoubleTap,
         child: content,
       );
     }
@@ -127,42 +137,30 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onTap() {
-    logging.d('[ERTableNode] 👆 onTap: ${widget.entity.title}, mode=${widget.interactionMode}', tag: 'EventTrace');
+    logging.d('[ERTableNode] onTap: ${widget.entity.title}', tag: 'ERCanvas');
     // 检查是否按下 Ctrl 键
     final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
         .contains(LogicalKeyboardKey.controlLeft) ||
         HardwareKeyboard.instance.logicalKeysPressed
         .contains(LogicalKeyboardKey.controlRight);
-    logging.d('[ERTableNode] 👆 onTap: ctrl=$isCtrlPressed', tag: 'EventTrace');
-    // 暂不处理
-    // widget.onTap?.call(isCtrlPressed);
-  }
-
-  void _onDoubleTap() {
-    logging.d('[ERTableNode] 👆👆 onDoubleTap: ${widget.entity.title}, mode=${widget.interactionMode}', tag: 'EventTrace');
-    // 暂不处理
-    // widget.onDoubleTap?.call();
+    widget.onTap?.call(isCtrlPressed);
   }
 
   void _onPanStart(DragStartDetails details) {
-    logging.d('[ERTableNode] 🖐️ onPanStart: ${widget.entity.title}, pos=${details.localPosition}, mode=${widget.interactionMode}', tag: 'EventTrace');
+    logging.d('[ERTableNode] onPanStart: ${widget.entity.title}, position=${details.localPosition}', tag: 'ERCanvas');
     _isDragging = true;
-    // 暂不处理
-    // widget.onDragStart?.call(details);
+    widget.onDragStart?.call(details);
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
-    logging.d('[ERTableNode] 🖐️ onPanUpdate: ${widget.entity.title}, delta=${details.delta}, pos=${details.localPosition}', tag: 'EventTrace');
-    // 暂不处理
-    // widget.onDragUpdate?.call(details);
+    widget.onDragUpdate?.call(details);
   }
 
   void _onPanEnd(DragEndDetails details) {
-    logging.d('[ERTableNode] 🖐️ onPanEnd: ${widget.entity.title}', tag: 'EventTrace');
+    logging.d('[ERTableNode] onPanEnd: ${widget.entity.title}', tag: 'ERCanvas');
     _isDragging = false;
-    // 暂不处理
-    // widget.onDragEnd?.call();
+    widget.onDragEnd?.call();
   }
 
   /// 构建节点主体
