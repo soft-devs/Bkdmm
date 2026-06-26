@@ -103,20 +103,10 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
     // 节点主体
     Widget content = _buildNodeBody(isDark);
 
-    // 使用 Listener 拦截指针事件，阻止事件向上传递到画布
-    content = Listener(
-      onPointerDown: (event) {
-        logging.d('[ERTableNode] Listener onPointerDown: ${widget.entity.title}, position=${event.localPosition}', tag: 'ERCanvas');
-        // 拦截事件，不传递给父级（避免触发画布框选）
-      },
-      behavior: HitTestBehavior.opaque,
-      child: content,
-    );
-
     // 编辑模式：可拖动和点击
     if (widget.isEditMode && widget.onDragStart != null) {
       content = GestureDetector(
-        behavior: HitTestBehavior.opaque,
+        behavior: HitTestBehavior.deferToChild, // 让子组件（锚点）优先处理事件
         onTap: _onTap,
         onDoubleTap: widget.onDoubleTap,
         onPanStart: _onPanStart,
@@ -127,7 +117,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
     } else {
       // 预览模式：仅响应双击
       content = GestureDetector(
-        behavior: HitTestBehavior.opaque,
+        behavior: HitTestBehavior.deferToChild,
         onDoubleTap: widget.onDoubleTap,
         child: content,
       );
