@@ -28,6 +28,10 @@ export 'src/spatial/simple_index.dart';
 export 'src/commands/diagram_command.dart';
 export 'src/commands/history_controller.dart';
 
+// Integration (Phase 4)
+export 'src/integration/er_interaction_manager.dart';
+export 'src/integration/er_interaction_provider.dart';
+
 // Controllers (TODO: implement these controllers)
 // export 'src/controllers/viewport_controller.dart';
 // export 'src/controllers/selection_controller.dart';
