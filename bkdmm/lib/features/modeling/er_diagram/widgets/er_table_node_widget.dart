@@ -108,7 +108,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
       content = GestureDetector(
         behavior: HitTestBehavior.translucent, // 同时处理自己和子组件的事件
         onTap: _onTap,
-        onDoubleTap: widget.onDoubleTap,
+        onDoubleTap: _onDoubleTap,
         onPanStart: _onPanStart,
         onPanUpdate: _onPanUpdate,
         onPanEnd: _onPanEnd,
@@ -118,7 +118,7 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
       // 预览模式：仅响应双击
       content = GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onDoubleTap: widget.onDoubleTap,
+        onDoubleTap: _onDoubleTap,
         child: content,
       );
     }
@@ -127,30 +127,42 @@ class _ERTableNodeWidgetState extends State<ERTableNodeWidget> {
   }
 
   void _onTap() {
-    logging.d('[ERTableNode] onTap: ${widget.entity.title}', tag: 'ERCanvas');
+    logging.d('[ERTableNode] 👆 onTap: ${widget.entity.title}, mode=${widget.interactionMode}', tag: 'EventTrace');
     // 检查是否按下 Ctrl 键
     final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
         .contains(LogicalKeyboardKey.controlLeft) ||
         HardwareKeyboard.instance.logicalKeysPressed
         .contains(LogicalKeyboardKey.controlRight);
-    widget.onTap?.call(isCtrlPressed);
+    logging.d('[ERTableNode] 👆 onTap: ctrl=$isCtrlPressed', tag: 'EventTrace');
+    // 暂不处理
+    // widget.onTap?.call(isCtrlPressed);
+  }
+
+  void _onDoubleTap() {
+    logging.d('[ERTableNode] 👆👆 onDoubleTap: ${widget.entity.title}, mode=${widget.interactionMode}', tag: 'EventTrace');
+    // 暂不处理
+    // widget.onDoubleTap?.call();
   }
 
   void _onPanStart(DragStartDetails details) {
-    logging.d('[ERTableNode] onPanStart: ${widget.entity.title}, position=${details.localPosition}', tag: 'ERCanvas');
+    logging.d('[ERTableNode] 🖐️ onPanStart: ${widget.entity.title}, pos=${details.localPosition}, mode=${widget.interactionMode}', tag: 'EventTrace');
     _isDragging = true;
-    widget.onDragStart?.call(details);
+    // 暂不处理
+    // widget.onDragStart?.call(details);
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
-    widget.onDragUpdate?.call(details);
+    logging.d('[ERTableNode] 🖐️ onPanUpdate: ${widget.entity.title}, delta=${details.delta}, pos=${details.localPosition}', tag: 'EventTrace');
+    // 暂不处理
+    // widget.onDragUpdate?.call(details);
   }
 
   void _onPanEnd(DragEndDetails details) {
-    logging.d('[ERTableNode] onPanEnd: ${widget.entity.title}', tag: 'ERCanvas');
+    logging.d('[ERTableNode] 🖐️ onPanEnd: ${widget.entity.title}', tag: 'EventTrace');
     _isDragging = false;
-    widget.onDragEnd?.call();
+    // 暂不处理
+    // widget.onDragEnd?.call();
   }
 
   /// 构建节点主体

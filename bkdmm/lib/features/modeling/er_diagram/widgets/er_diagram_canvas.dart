@@ -362,94 +362,17 @@ class _ERDiagramCanvasV2State extends ConsumerState<ERDiagramCanvasV2> {
 
   /// 指针按下事件
   void _onPointerDown(PointerDownEvent event, ERDiagramUIState uiState, Module module) {
-    logging.d('[ERCanvasV2] onPointerDown: localPosition=${event.localPosition}, buttons=${event.buttons}', tag: 'ERCanvasV2');
+    logging.d('[ERCanvasV2] ⬇️ onPointerDown: pos=${event.localPosition}, buttons=${event.buttons}, kind=${event.kind}', tag: 'EventTrace');
 
-    // 使用交互管理器处理
-    final scenePos = _interactionManager.toScene(event.localPosition);
-    final hitResult = _interactionManager.spatialIndex.hitTest(scenePos);
-
-    // 右键：编辑模式下开始平移
-    if (event.buttons == kSecondaryMouseButton && uiState.isEditMode) {
-      // 平移由 CanvasPanHandler 处理
-      return;
-    }
-
-    // 左键处理
-    if (event.buttons == kPrimaryMouseButton) {
-      if (uiState.isEditMode) {
-        if (hitResult.isOnAnchor) {
-          // 点击锚点：开始连线
-          final anchor = hitResult.anchor;
-          if (anchor != null && anchor is ERFieldAnchor) {
-            final graphNode = module.graphCanvas.nodes.firstWhere(
-              (gn) => gn.moduleName == anchor.nodeId,
-              orElse: () => GraphNode(title: '', x: 0, y: 0),
-            );
-
-            // 计算锚点的实际位置
-            final rowY = ERTableNodeWidget.headerHeight +
-                (anchor.fieldIndex * ERTableNodeWidget.fieldRowHeight) +
-                ERTableNodeWidget.fieldRowHeight / 2;
-            final anchorPosition = Offset(
-              anchor.direction == ERAnchorDirection.left
-                  ? graphNode.x - ERFieldAnchorWidget.anchorOffset
-                  : graphNode.x + ERTableNodeWidget.defaultWidth + ERFieldAnchorWidget.anchorOffset,
-              graphNode.y + rowY,
-            );
-
-            final updatedAnchor = ERFieldAnchor(
-              nodeId: anchor.nodeId,
-              fieldIndex: anchor.fieldIndex,
-              direction: anchor.direction,
-              position: anchorPosition,
-            );
-
-            ref.read(erDiagramUIProvider(widget.moduleId).notifier).startConnection(updatedAnchor);
-          }
-        } else if (hitResult.isOnNode) {
-          // 点击节点：选择并可能开始拖动
-          final nodeId = hitResult.nodeId;
-          if (nodeId != null) {
-            final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
-                .contains(LogicalKeyboardKey.controlLeft) ||
-                HardwareKeyboard.instance.logicalKeysPressed
-                .contains(LogicalKeyboardKey.controlRight);
-
-            final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-            if (isCtrlPressed) {
-              notifier.selectNodeMultiple(nodeId);
-            } else {
-              notifier.selectNodeSingle(nodeId);
-            }
-          }
-        } else {
-          // 点击空白区域：开始框选
-          ref.read(erDiagramUIProvider(widget.moduleId).notifier).startSelection(event.localPosition);
-        }
-      }
-    }
+    // 暂不处理，只记录
+    logging.d('[ERCanvasV2] ⬇️ onPointerDown: mode=${uiState.interactionMode}, isEdit=${uiState.isEditMode}', tag: 'EventTrace');
   }
 
   /// 指针移动事件
   void _onPointerMove(PointerMoveEvent event, ERDiagramUIState uiState, Module module) {
-    // 右键拖动画布（编辑模式）
-    if (event.buttons == kSecondaryMouseButton && uiState.isEditMode) {
-      // 平移由 Listener 的 onPointerDown 启动，这里处理更新
-      // InteractiveViewer 会处理这个，但我们可能需要手动处理
-      return;
-    }
+    logging.d('[ERCanvasV2] ➡️ onPointerMove: pos=${event.localPosition}, buttons=${event.buttons}, delta=${event.delta}', tag: 'EventTrace');
 
-    // 更新连线预览
-    if (uiState.isConnecting) {
-      ref.read(erDiagramUIProvider(widget.moduleId).notifier)
-          .updateConnectionPreview(event.localPosition);
-    }
-
-    // 更新框选
-    if (uiState.isSelecting) {
-      ref.read(erDiagramUIProvider(widget.moduleId).notifier)
-          .updateSelection(event.localPosition);
-    }
+    // 暂不处理，只记录
   }
 
   /// 指针释放事件
@@ -459,47 +382,9 @@ class _ERDiagramCanvasV2State extends ConsumerState<ERDiagramCanvasV2> {
     Map<String, Entity> entityMap,
     Map<String, GraphNode> graphNodeMap,
   ) {
-    // 完成连线
-    if (uiState.isConnecting) {
-      final scenePos = _interactionManager.toScene(event.localPosition);
-      final hitResult = _interactionManager.spatialIndex.hitTest(scenePos);
+    logging.d('[ERCanvasV2] ⬆️ onPointerUp: pos=${event.localPosition}, buttons=${event.buttons}, kind=${event.kind}', tag: 'EventTrace');
 
-      if (hitResult.isOnAnchor) {
-        final anchor = hitResult.anchor;
-        if (anchor != null && anchor is ERFieldAnchor) {
-          final graphNode = graphNodeMap[anchor.nodeId] ??
-              GraphNode(title: '', x: 0, y: 0);
-
-          // 计算锚点的实际位置
-          final rowY = ERTableNodeWidget.headerHeight +
-              (anchor.fieldIndex * ERTableNodeWidget.fieldRowHeight) +
-              ERTableNodeWidget.fieldRowHeight / 2;
-          final anchorPosition = Offset(
-            anchor.direction == ERAnchorDirection.left
-                ? graphNode.x - ERFieldAnchorWidget.anchorOffset
-                : graphNode.x + ERTableNodeWidget.defaultWidth + ERFieldAnchorWidget.anchorOffset,
-            graphNode.y + rowY,
-          );
-
-          final updatedAnchor = ERFieldAnchor(
-            nodeId: anchor.nodeId,
-            fieldIndex: anchor.fieldIndex,
-            direction: anchor.direction,
-            position: anchorPosition,
-          );
-
-          ref.read(erDiagramUIProvider(widget.moduleId).notifier).completeConnection(updatedAnchor);
-        }
-      } else {
-        ref.read(erDiagramUIProvider(widget.moduleId).notifier).cancelConnection();
-      }
-    }
-
-    // 完成框选
-    if (uiState.isSelecting) {
-      final nodeRects = _calculateNodeRects(entityMap, graphNodeMap);
-      ref.read(erDiagramUIProvider(widget.moduleId).notifier).completeSelection(nodeRects);
-    }
+    // 暂不处理，只记录
   }
 
   /// 指针信号事件（滚轮缩放）
@@ -706,107 +591,53 @@ class _ERDiagramCanvasV2State extends ConsumerState<ERDiagramCanvasV2> {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 事件处理
+  // 事件处理（来自 ERTableNodeWidget 的回调）
   // ═══════════════════════════════════════════════════════════════════
 
   /// 节点点击事件
   void _onNodeTap(String nodeId, bool isCtrlPressed) {
-    final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-
-    if (isCtrlPressed) {
-      notifier.selectNodeMultiple(nodeId);
-    } else {
-      notifier.selectNodeSingle(nodeId);
-    }
-
-    // 取消框选
-    final uiState = ref.read(erDiagramUIProvider(widget.moduleId));
-    if (uiState.isSelecting) {
-      notifier.cancelSelection();
-    }
+    logging.d('[ERCanvasV2] 🎯 _onNodeTap: nodeId=$nodeId, ctrl=$isCtrlPressed', tag: 'EventTrace');
+    // 暂不处理
+    // final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+    // if (isCtrlPressed) {
+    //   notifier.selectNodeMultiple(nodeId);
+    // } else {
+    //   notifier.selectNodeSingle(nodeId);
+    // }
   }
 
   void _onNodeDoubleTap(Entity entity, bool isEditMode) {
-    if (isEditMode) {
-      widget.onEntityEdit?.call(entity);
-    } else {
-      widget.onEntityPreview?.call(entity);
-    }
+    logging.d('[ERCanvasV2] 🎯🎯 _onNodeDoubleTap: entity=${entity.title}, isEdit=$isEditMode', tag: 'EventTrace');
+    // 暂不处理
+    // if (isEditMode) {
+    //   widget.onEntityEdit?.call(entity);
+    // } else {
+    //   widget.onEntityPreview?.call(entity);
+    // }
   }
 
   void _onNodeDragStart(String nodeId, DragStartDetails details, GraphNode graphNode) {
-    final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-    final currentUiState = ref.read(erDiagramUIProvider(widget.moduleId));
-
-    if (currentUiState.isSelecting) {
-      notifier.cancelSelection();
-    }
-
-    notifier.startDragging(nodeId);
-
-    // 记录拖动起始位置
-    _dragStartPositions.clear();
-    for (final dragId in currentUiState.draggingNodeIds) {
-      final gn = _getGraphNode(dragId);
-      if (gn != null) {
-        _dragStartPositions[dragId] = Offset(gn.x, gn.y);
-      }
-    }
-    // 如果当前节点不在拖动列表中，添加它
-    if (!_dragStartPositions.containsKey(nodeId)) {
-      _dragStartPositions[nodeId] = Offset(graphNode.x, graphNode.y);
-    }
+    logging.d('[ERCanvasV2] 🎯 _onNodeDragStart: nodeId=$nodeId, pos=${details.localPosition}', tag: 'EventTrace');
+    // 暂不处理
+    // final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
+    // final currentUiState = ref.read(erDiagramUIProvider(widget.moduleId));
+    // notifier.startDragging(nodeId);
   }
 
   void _onNodeDragUpdate(String nodeId, DragUpdateDetails details) {
-    final uiState = ref.read(erDiagramUIProvider(widget.moduleId));
-    if (uiState.draggingNodeIds.isEmpty) return;
-
-    // 计算位移增量（场景坐标）
-    final scale = _transformationController.value.getMaxScaleOnAxis();
-    final delta = details.delta / scale;
-
-    // 移动所有拖动中的节点
-    final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-    for (final dragId in uiState.draggingNodeIds) {
-      final gn = _getGraphNode(dragId);
-      if (gn != null) {
-        notifier.moveNode(dragId, gn.x + delta.dx, gn.y + delta.dy);
-      }
-    }
+    logging.d('[ERCanvasV2] 🎯 _onNodeDragUpdate: nodeId=$nodeId, delta=${details.delta}', tag: 'EventTrace');
+    // 暂不处理
   }
 
   void _onNodeDragEnd(String nodeId) {
-    ref.read(erDiagramUIProvider(widget.moduleId).notifier).endDragging();
-    _dragStartPositions.clear();
+    logging.d('[ERCanvasV2] 🎯 _onNodeDragEnd: nodeId=$nodeId', tag: 'EventTrace');
+    // 暂不处理
+    // ref.read(erDiagramUIProvider(widget.moduleId).notifier).endDragging();
   }
 
   void _onAnchorTap(ERFieldAnchor anchor, GraphNode graphNode) {
-    final notifier = ref.read(erDiagramUIProvider(widget.moduleId).notifier);
-
-    // 计算锚点的实际位置
-    final rowY = ERTableNodeWidget.headerHeight +
-        (anchor.fieldIndex * ERTableNodeWidget.fieldRowHeight) +
-        ERTableNodeWidget.fieldRowHeight / 2;
-    final anchorPosition = Offset(
-      anchor.direction == ERAnchorDirection.left
-          ? graphNode.x - ERFieldAnchorWidget.anchorOffset
-          : graphNode.x + ERTableNodeWidget.defaultWidth + ERFieldAnchorWidget.anchorOffset,
-      graphNode.y + rowY,
-    );
-
-    final updatedAnchor = ERFieldAnchor(
-      nodeId: anchor.nodeId,
-      fieldIndex: anchor.fieldIndex,
-      direction: anchor.direction,
-      position: anchorPosition,
-    );
-
-    if (!ref.read(erDiagramUIProvider(widget.moduleId)).isConnecting) {
-      notifier.startConnection(updatedAnchor);
-    } else {
-      notifier.completeConnection(updatedAnchor);
-    }
+    logging.d('[ERCanvasV2] 🎯 _onAnchorTap: nodeId=${anchor.nodeId}, field=${anchor.fieldIndex}, dir=${anchor.direction}', tag: 'EventTrace');
+    // 暂不处理
   }
 
   // ═══════════════════════════════════════════════════════════════════
