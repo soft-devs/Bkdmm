@@ -7,10 +7,11 @@ import '../../../../shared/models/models.dart';
 /// Field table widget with custom table implementation
 ///
 /// Features:
-/// - Columns: Primary Key, Field Name, Data Type, Chinese Name, Not Null, Auto Increment, Remark, Actions
+/// - Columns: Order, Primary Key, Field Name, Data Type, Chinese Name, Not Null, Auto Increment, Remark, Actions
 /// - Inline editing with checkboxes and type selector
 /// - Add/edit/delete rows
 /// - Row selection with highlight
+/// - Drag to reorder fields
 class FieldTable extends StatefulWidget {
   final List<Field> fields;
   final List<DataType> dataTypes;
@@ -114,56 +115,57 @@ class _FieldTableState extends State<FieldTable> {
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
 
-        // Column widths - fixed columns
+        // Column widths - all columns get explicit widths
+        // Fixed/narrow columns: order, pk, notNull, autoInc, actions
+        const double orderWidth = 36.0; // Drag handle column
         const double pkWidth = 48.0;
         const double notNullWidth = 64.0;
         const double autoIncWidth = 72.0;
-        const double actionsWidth = 56.0; // Reduced to fit edit + delete icons
-        const double fixedTotal = pkWidth + notNullWidth + autoIncWidth + actionsWidth;
+        const double actionsWidth = 72.0;
 
-        // Flexible columns - calculate remaining width and distribute
-        final remainingWidth = availableWidth - fixedTotal;
+        // Total fixed columns width
+        const double fixedColumnsWidth = orderWidth + pkWidth + notNullWidth + autoIncWidth + actionsWidth;
 
-        // Ensure minimum widths are respected, then distribute proportionally
-        const double minNameWidth = 100.0;
-        const double minTypeWidth = 80.0;
-        const double minChnnameWidth = 80.0;
-        const double minRemarkWidth = 60.0;
+        // Calculate remaining width for flexible columns
+        final remainingWidth = availableWidth - fixedColumnsWidth;
+
+        // Minimum widths for flexible columns
+        const double minNameWidth = 80.0;
+        const double minTypeWidth = 70.0;
+        const double minChnnameWidth = 70.0;
+        const double minRemarkWidth = 50.0;
         const double totalMinFlexible = minNameWidth + minTypeWidth + minChnnameWidth + minRemarkWidth;
 
-        // If remaining space is too small, use minimum widths
+        // If remaining space is too small, enable horizontal scroll
         if (remainingWidth < totalMinFlexible) {
-          // Fall back to minimum widths - table will scroll horizontally
-          final nameWidth = minNameWidth;
-          final typeWidth = minTypeWidth;
-          final chnnameWidth = minChnnameWidth;
-          final remarkWidth = minRemarkWidth;
-
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width: fixedTotal + totalMinFlexible,
+              width: fixedColumnsWidth + totalMinFlexible,
               child: _buildTableContent(
                 tdTheme,
                 l10n,
-                pkWidth, nameWidth, typeWidth, chnnameWidth,
-                notNullWidth, autoIncWidth, remarkWidth, actionsWidth,
+                orderWidth, pkWidth,
+                minNameWidth, minTypeWidth, minChnnameWidth, minRemarkWidth,
+                notNullWidth, autoIncWidth, actionsWidth,
               ),
             ),
           );
         }
 
-        // Distribute remaining width proportionally
-        final nameWidth = (remainingWidth * 0.40).clamp(minNameWidth, remainingWidth - minTypeWidth - minChnnameWidth - minRemarkWidth);
-        final typeWidth = (remainingWidth * 0.20).clamp(minTypeWidth, remainingWidth - nameWidth - minChnnameWidth - minRemarkWidth);
-        final chnnameWidth = (remainingWidth * 0.20).clamp(minChnnameWidth, remainingWidth - nameWidth - typeWidth - minRemarkWidth);
+        // Distribute remaining width proportionally (40%, 20%, 20%, 20%)
+        final nameWidth = (remainingWidth * 0.40).clamp(minNameWidth, double.infinity);
+        final typeWidth = (remainingWidth * 0.20).clamp(minTypeWidth, double.infinity);
+        final chnnameWidth = (remainingWidth * 0.20).clamp(minChnnameWidth, double.infinity);
+        // remarkWidth takes the remaining to ensure total equals availableWidth
         final remarkWidth = remainingWidth - nameWidth - typeWidth - chnnameWidth;
 
         return _buildTableContent(
           tdTheme,
           l10n,
-          pkWidth, nameWidth, typeWidth, chnnameWidth,
-          notNullWidth, autoIncWidth, remarkWidth, actionsWidth,
+          orderWidth, pkWidth,
+          nameWidth, typeWidth, chnnameWidth, remarkWidth,
+          notNullWidth, autoIncWidth, actionsWidth,
         );
       },
     );
@@ -172,6 +174,7 @@ class _FieldTableState extends State<FieldTable> {
   Widget _buildTableContent(
     TDThemeData tdTheme,
     AppLocalizations l10n,
+    double orderWidth,
     double pkWidth,
     double nameWidth,
     double typeWidth,
@@ -192,28 +195,34 @@ class _FieldTableState extends State<FieldTable> {
         child: Column(
           children: [
             // Header row
-            _buildHeaderRow(tdTheme, l10n, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
+            _buildHeaderRow(tdTheme, l10n, orderWidth, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
 
-            // Data rows
+            // Data rows with reorder support
             Expanded(
-              child: ListView.builder(
+              child: ReorderableListView.builder(
+                buildDefaultDragHandles: false,
                 itemCount: widget.fields.length,
+                onReorder: (oldIndex, newIndex) {
+                  widget.onReorderFields(oldIndex, newIndex);
+                },
                 itemBuilder: (context, index) {
                   final field = widget.fields[index];
                   final isSelected = _selectedFieldIds.contains(field.id);
                   return _buildDataRow(
-                    field,
-                    index,
-                    isSelected,
-                    tdTheme,
-                    pkWidth,
-                    nameWidth,
-                    typeWidth,
-                    chnnameWidth,
-                    notNullWidth,
-                    autoIncWidth,
-                    remarkWidth,
-                    actionsWidth,
+                    key: ValueKey(field.id),
+                    field: field,
+                    index: index,
+                    isSelected: isSelected,
+                    tdTheme: tdTheme,
+                    orderWidth: orderWidth,
+                    pkWidth: pkWidth,
+                    nameWidth: nameWidth,
+                    typeWidth: typeWidth,
+                    chnnameWidth: chnnameWidth,
+                    notNullWidth: notNullWidth,
+                    autoIncWidth: autoIncWidth,
+                    remarkWidth: remarkWidth,
+                    actionsWidth: actionsWidth,
                   );
                 },
               ),
@@ -227,6 +236,7 @@ class _FieldTableState extends State<FieldTable> {
   Widget _buildHeaderRow(
     TDThemeData tdTheme,
     AppLocalizations l10n,
+    double orderWidth,
     double pkWidth,
     double nameWidth,
     double typeWidth,
@@ -246,6 +256,7 @@ class _FieldTableState extends State<FieldTable> {
       ),
       child: Row(
         children: [
+          _buildHeaderCell('#', orderWidth, tdTheme, centered: true),
           _buildHeaderCell(l10n.pk, pkWidth, tdTheme, centered: true),
           _buildHeaderCell(l10n.fieldName, nameWidth, tdTheme),
           _buildHeaderCell(l10n.dataType, typeWidth, tdTheme),
@@ -280,25 +291,28 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  Widget _buildDataRow(
-    Field field,
-    int index,
-    bool isSelected,
-    TDThemeData tdTheme,
-    double pkWidth,
-    double nameWidth,
-    double typeWidth,
-    double chnnameWidth,
-    double notNullWidth,
-    double autoIncWidth,
-    double remarkWidth,
-    double actionsWidth,
-  ) {
+  Widget _buildDataRow({
+    required Key key,
+    required Field field,
+    required int index,
+    required bool isSelected,
+    required TDThemeData tdTheme,
+    required double orderWidth,
+    required double pkWidth,
+    required double nameWidth,
+    required double typeWidth,
+    required double chnnameWidth,
+    required double notNullWidth,
+    required double autoIncWidth,
+    required double remarkWidth,
+    required double actionsWidth,
+  }) {
     final rowColor = isSelected
         ? tdTheme.brandNormalColor.withValues(alpha: 0.08)
         : (index % 2 == 1 ? tdTheme.bgColorSecondaryContainer.withValues(alpha: 0.3) : tdTheme.bgColorContainer);
 
     return InkWell(
+      key: key,
       onTap: () {
         setState(() {
           if (_selectedFieldIds.contains(field.id)) {
@@ -318,6 +332,8 @@ class _FieldTableState extends State<FieldTable> {
         ),
         child: Row(
           children: [
+            // Order/drag handle
+            _buildOrderCell(index, orderWidth, tdTheme),
             // PK checkbox
             _buildCheckboxCell(field, 'pk', pkWidth, tdTheme, isSelected),
             // Field name - clickable for edit
@@ -335,6 +351,31 @@ class _FieldTableState extends State<FieldTable> {
             // Actions
             _buildActionsCell(field, actionsWidth, tdTheme),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderCell(int index, double width, TDThemeData tdTheme) {
+    return Container(
+      width: width,
+      height: 44,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
+      ),
+      child: ReorderableDragStartListener(
+        index: index,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.grab,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              TDIcons.move,
+              size: 16,
+              color: tdTheme.textColorSecondary,
+            ),
+          ),
         ),
       ),
     );
@@ -481,45 +522,31 @@ class _FieldTableState extends State<FieldTable> {
   }
 
   Widget _buildActionsCell(Field field, double width, TDThemeData tdTheme) {
-    // Responsive layout: adjust icon sizes based on available width
-    final iconSize = width < 48 ? 12.0 : (width < 56 ? 13.0 : 14.0);
-    final padding = width < 48 ? 2.0 : (width < 56 ? 3.0 : 4.0);
-
     return Container(
       width: width,
       height: 44,
       alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(horizontal: padding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Edit button - flexible
-          Flexible(
-            child: InkWell(
-              onTap: () => _showEditFieldDialog(field),
-              child: Padding(
-                padding: EdgeInsets.all(padding),
-                child: Icon(
-                  TDIcons.edit,
-                  size: iconSize,
-                  color: tdTheme.textColorSecondary,
-                ),
-              ),
+          // Edit button
+          InkWell(
+            onTap: () => _showEditFieldDialog(field),
+            child: Icon(
+              TDIcons.edit,
+              size: 16,
+              color: tdTheme.textColorSecondary,
             ),
           ),
-          // Delete button - flexible
-          Flexible(
-            child: InkWell(
-              onTap: () => _confirmDeleteField(field),
-              child: Padding(
-                padding: EdgeInsets.all(padding),
-                child: Icon(
-                  TDIcons.delete,
-                  size: iconSize,
-                  color: tdTheme.errorNormalColor,
-                ),
-              ),
+          const SizedBox(width: 8),
+          // Delete button
+          InkWell(
+            onTap: () => _confirmDeleteField(field),
+            child: Icon(
+              TDIcons.delete,
+              size: 16,
+              color: tdTheme.errorNormalColor,
             ),
           ),
         ],

@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../shared/log_viewer/models/log_entry.dart';
+import '../../shared/log_viewer/services/ansi_parser.dart';
 
 /// 日志级别颜色映射 (ANSI 颜色码)
 class LogColors {
@@ -337,30 +338,58 @@ Future<String> getLogDirectory() async {
 ///
 /// 将日志输出到 Flutter UI 控制台组件
 ///
-/// 注意：这个输出器接收的是 Printer 格式化后的 lines，
-/// 所以消息已经包含时间戳、级别和颜色码。
-/// LogEntry 会解析 ANSI 颜色码并正确显示。
+/// 从 DevPrinter 格式化的行中提取消息内容：
+/// 格式: ANSI颜色 时间戳 级别 图标 ANSI重置 消息内容
+/// 例如: \x1B[32m10:33:17.074 INFO  🚀 \x1B[0m[LoggingService] 日志服务初始化完成
 class UiConsoleOutput extends LogOutput {
   /// 日志回调函数
   final void Function(LogEntry entry) onLog;
 
   UiConsoleOutput({required this.onLog});
 
+  /// 解析 DevPrinter 输出行的正则表达式
+  /// 格式: ANSI颜色 时间戳 级别 图标 ANSI重置 消息
+  static final _logLinePattern = RegExp(
+    r'^\x1B\[\d+m' // ANSI 颜色码
+    r'\d{2}:\d{2}:\d{2}\.\d{3}\s+' // 时间戳
+    r'\w+\s+' // 级别
+    r'[^\x1B]+\s+' // 图标
+    r'\x1B\[0m\s*' // ANSI 重置
+    r'(.*)$', // 消息内容
+  );
+
   @override
   void output(OutputEvent event) {
     final now = DateTime.now();
 
-    // DevPrinter 输出的第一行是主消息行
-    // 格式: ANSI颜色 时间戳 级别 图标 ANSI重置 消息内容
-    // 例如: \x1B[32m10:33:17.074 INFO  🚀 \x1B[0m日志服务初始化完成
     for (final line in event.lines) {
       if (line.trim().isEmpty) continue;
+
+      // 尝试从 DevPrinter 格式中提取消息
+      String message = line;
+      String? source;
+
+      final match = _logLinePattern.firstMatch(line);
+      if (match != null) {
+        message = match.group(1) ?? line;
+      } else {
+        // 可能是错误行或堆栈行，去掉 ANSI 码
+        message = AnsiParser.strip(line);
+      }
+
+      // 解析 source (格式: [source] message)
+      final tagMatch = RegExp(r'^\[([^\]]+)\]\s*(.*)$').firstMatch(message);
+      if (tagMatch != null) {
+        source = tagMatch.group(1);
+        message = tagMatch.group(2) ?? message;
+      }
 
       final entry = LogEntry(
         id: '${now.millisecondsSinceEpoch}_${line.hashCode}',
         timestamp: now,
         level: _mapLevel(event.level),
-        rawMessage: line,
+        rawMessage: message,
+        source: source,
       );
       onLog(entry);
     }

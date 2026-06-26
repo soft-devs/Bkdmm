@@ -1,201 +1,85 @@
-# Diagram Editor Refactoring Documentation
+# 图编辑器重构文档
 
-This directory contains comprehensive documentation for refactoring the Bkdmm diagram editor module.
-
-## Document Index
-
-| # | Document | Description |
-|---|----------|-------------|
-| 01 | [Refactoring Plan](01-refactoring-plan.md) | Overall refactoring strategy, phases, and file checklist |
-| 02 | [Event Delegation Pattern](02-event-delegation-pattern.md) | Centralized event handling with priority-based dispatch |
-| 03 | [Command Pattern](03-command-pattern-undo-redo.md) | Undo/redo implementation with command objects |
-| 04 | [Spatial Indexing](04-spatial-indexing.md) | O(log n) hit testing with quadtree/spatial index |
-| 05 | [State Machine Pattern](05-state-machine-pattern.md) | Dart 3 sealed classes for interaction states |
-| 06 | [Gesture Handling](06-gesture-handling.md) | Flutter gesture disambiguation and best practices |
-| 07 | [GraphView Library](07-graphview-library.md) | GraphView capabilities and limitations |
-| 08 | [Riverpod Architecture](08-riverpod-architecture.md) | State management patterns with Riverpod |
-
-## Quick Start
-
-### Current Architecture Problems
-
-1. **~400 lines of event handling code** scattered across multiple widgets
-2. **No undo/redo** - all operations are irreversible
-3. **O(n) hit testing** - performance degrades with node count
-4. **Gesture conflicts** - node drag vs canvas pan
-5. **Tight coupling** - ER-specific logic mixed with generic code
-
-### Target Architecture
-
-```
-lib/shared/diagram_editor/
-├── controllers/           # State management
-│   ├── interaction_controller.dart
-│   ├── selection_controller.dart
-│   ├── viewport_controller.dart
-│   └── history_controller.dart
-│
-├── handlers/              # Event handling (NEW)
-│   ├── handler_registry.dart
-│   ├── anchor_click_handler.dart
-│   ├── node_drag_handler.dart
-│   ├── selection_handler.dart
-│   └── canvas_pan_handler.dart
-│
-├── commands/              # Undo/redo (NEW)
-│   ├── diagram_command.dart
-│   ├── move_node_command.dart
-│   └── add_edge_command.dart
-│
-├── spatial/               # Hit testing (NEW)
-│   ├── spatial_index.dart
-│   └── quadtree.dart
-│
-└── widgets/
-    ├── diagram_canvas.dart
-    └── diagram_toolbar.dart
-```
-
-### Implementation Phases
-
-| Phase | Duration | Deliverables |
-|-------|----------|--------------|
-| 1. Foundation | 2-3 days | Handler registry, spatial index |
-| 2. Core Handlers | 2-3 days | All event handlers |
-| 3. Commands | 1-2 days | Undo/redo system |
-| 4. ER Migration | 2-3 days | Migrate ER diagram to new framework |
-| 5. Extensions | Ongoing | Flowchart, UML diagrams |
-
-## Key Patterns
-
-### Event Delegation
-
-```dart
-// Single entry point for all events
-Listener(
-  onPointerDown: (event) => handlerRegistry.dispatch(event, context),
-  child: Canvas(),
-)
-
-// Priority-based handling
-handlers = [
-  AnchorClickHandler(priority: 10),   // First
-  NodeDragHandler(priority: 20),      // Second
-  SelectionHandler(priority: 50),     // Third
-  CanvasPanHandler(priority: 100),    // Last
-];
-```
-
-### Command Pattern
-
-```dart
-// Every mutation is a command
-final command = MoveNodeCommand(
-  nodeId: 'table1',
-  oldPosition: Offset(100, 100),
-  newPosition: Offset(200, 150),
-);
-
-historyController.execute(command);  // Execute + track
-historyController.undo();            // Reverse
-historyController.redo();            // Re-execute
-```
-
-### State Machine
-
-```dart
-// Exhaustive state handling with sealed classes
-sealed class InteractionState { ... }
-class IdleState extends InteractionState { ... }
-class DraggingNodeState extends InteractionState { ... }
-class ConnectingState extends InteractionState { ... }
-
-// Compiler ensures all states are handled
-switch (state) {
-  case IdleState(): return 'Ready';
-  case DraggingNodeState(:final nodeId): return 'Dragging $nodeId';
-  // Missing cases = compiler error
-}
-```
-
-### Spatial Index
-
-```dart
-// O(log n) instead of O(n)
-final hitResult = spatialIndex.hitTest(point);
-
-// Quadtree for large graphs
-if (nodeCount > 100) {
-  spatialIndex = QuadtreeSpatialIndex(bounds: canvasBounds);
-}
-```
-
-## Performance Targets
-
-| Metric | Current | Target |
-|--------|---------|--------|
-| Hit Testing (100 nodes) | ~5ms | ~0.5ms |
-| Event Dispatch | N/A | < 1ms |
-| Max Nodes | ~100 | ~500+ |
-| Memory per Node | ~2KB | ~1KB |
-
-## File Checklist
-
-### New Files (22)
-
-- [ ] `controllers/interaction_controller.dart`
-- [ ] `controllers/selection_controller.dart`
-- [ ] `controllers/viewport_controller.dart`
-- [ ] `controllers/history_controller.dart`
-- [ ] `handlers/diagram_event.dart`
-- [ ] `handlers/diagram_context.dart`
-- [ ] `handlers/diagram_handler.dart`
-- [ ] `handlers/handler_registry.dart`
-- [ ] `handlers/anchor_click_handler.dart`
-- [ ] `handlers/node_drag_handler.dart`
-- [ ] `handlers/selection_handler.dart`
-- [ ] `handlers/canvas_pan_handler.dart`
-- [ ] `commands/diagram_command.dart`
-- [ ] `commands/move_node_command.dart`
-- [ ] `commands/add_edge_command.dart`
-- [ ] `commands/delete_elements_command.dart`
-- [ ] `spatial/spatial_index.dart`
-- [ ] `spatial/simple_index.dart`
-- [ ] `spatial/quadtree.dart`
-- [ ] `widgets/diagram_toolbar.dart`
-- [ ] `widgets/coordinate_display.dart`
-- [ ] `providers/history_provider.dart`
-
-### Modified Files (4)
-
-- [ ] `core/diagram_canvas.dart`
-- [ ] `core/diagram_state.dart`
-- [ ] `features/modeling/er_diagram/er_diagram_canvas.dart`
-- [ ] `diagram_editor.dart` (exports)
-
-## References
-
-### Internal Documentation
-- [WORKFLOW.md](WORKFLOW.md) - Step-by-step implementation workflow with daily tasks
-
-### Flutter Documentation
-- [Flutter Gestures](https://docs.flutter.dev/ui/advanced/gestures)
-- [Flutter Performance](https://docs.flutter.dev/perf)
-
-### Dart Features
-- [Dart 3 Sealed Classes](https://dart.dev/language/class-modifiers#sealed)
-- [Pattern Matching](https://dart.dev/language/patterns)
-
-### Design Patterns
-- [Command Pattern](https://refactoring.guru/design-patterns/command)
-- [State Pattern](https://refactoring.guru/design-patterns/state)
-- [Chain of Responsibility](https://refactoring.guru/design-patterns/chain-of-responsibility)
-
-### Libraries
-- [Riverpod](https://riverpod.dev)
-- [GraphView](https://pub.dev/packages/graphview)
+基于 LogicFlow 架构重新设计 Bkdmm 图编辑器。
 
 ---
 
-*Documentation Version: 1.0*
-*Last Updated: 2025-06-25*
+## 📚 文档索引
+
+### 新架构设计
+
+| # | 文档 | 说明 |
+|---|------|------|
+| 01 | [架构总览](01-architecture-overview.md) | V2 架构设计、核心组件、文件结构 |
+| 02 | [数据模型](02-data-model.md) | GraphModel、NodeModel、TransformModel 设计 |
+| 03 | [事件系统](03-event-system.md) | EventCenter 实现、事件类型、事件参数 |
+| 04 | [实现指南](04-implementation-guide.md) | **LogicFlow 核心思想提取与 Flutter 适配代码** |
+
+### 迁移参考
+
+| # | 文档 | 说明 |
+|---|------|------|
+| 05 | [V1 迁移清单](05-v1-migration-checklist.md) | V1 功能清单、迁移状态、测试验证 |
+
+---
+
+## 🎯 快速开始
+
+### 1. 理解架构
+
+阅读顺序：**04 → 01 → 02 → 03**
+
+- [实现指南](04-implementation-guide.md) - 理解核心设计理念
+- [架构总览](01-architecture-overview.md) - 查看整体架构
+- [数据模型](02-data-model.md) - 深入 Model 设计
+- [事件系统](03-event-system.md) - 了解事件机制
+
+### 2. 核心改进
+
+| V1 问题 | V2 解决方案 |
+|---------|-------------|
+| InteractiveViewer 拦截事件 | 手动 TransformModel |
+| 事件分散在 Widget | EventCenter 统一管理 |
+| Widget 与逻辑耦合 | Model-View 分离 |
+| 状态管理混乱 | ChangeNotifier 响应式 |
+
+### 3. 架构概览
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     DiagramEditor                           │
+│                                                             │
+│  ┌───────────────────────────────────────────────────────┐ │
+│  │ GraphModel (数据模型)                                  │ │
+│  │  - nodes: List<NodeModel>                             │ │
+│  │  - edges: List<EdgeModel>                             │ │
+│  │  - transformModel: TransformModel                     │ │
+│  │  - eventCenter: EventCenter                           │ │
+│  └───────────────────────────────────────────────────────┘ │
+│                          │                                  │
+│                          │ notifyListeners()                │
+│                          ▼                                  │
+│  ┌───────────────────────────────────────────────────────┐ │
+│  │ GraphView (渲染视图)                                   │ │
+│  │  - CanvasOverlay (节点/边渲染)                         │ │
+│  │  - ModificationOverlay (交互层)                        │ │
+│  │  - ToolOverlay (工具层)                                │ │
+│  └───────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔧 技术栈
+
+| LogicFlow (TS) | Flutter 适配 |
+|----------------|--------------|
+| MobX `@observable` | `ChangeNotifier` |
+| Preact `@observer` | `ListenableBuilder` |
+| EventEmitter | 自定义 `EventCenter` |
+| SVG 渲染 | `CustomPaint` |
+| `<div>` 分层 | `Stack` widget |
+
+---
+
+*最后更新: 2025-06-26*

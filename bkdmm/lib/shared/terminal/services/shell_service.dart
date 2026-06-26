@@ -4,8 +4,8 @@
 library;
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
 
 import '../models/terminal_state.dart';
 
@@ -58,10 +58,21 @@ class ShellService {
     }
 
     try {
+      // Windows CMD 需要使用 /K 参数执行 chcp 65001 设置 UTF-8 编码
+      List<String> arguments;
+      if (Platform.isWindows && _shellType == ShellType.cmd) {
+        // /K 执行命令后保持窗口打开
+        arguments = ['/K', 'chcp', '65001'];
+      } else if (_shellType == ShellType.powershell) {
+        arguments = ['-NoExit', '-Command', '']; // 保持 PowerShell 打开
+      } else {
+        arguments = [];
+      }
+
       // 启动进程
       _process = await Process.start(
         _shellType.executable,
-        [],
+        arguments,
         runInShell: true,
         environment: Platform.environment,
         workingDirectory: _workingDirectory,
@@ -69,6 +80,7 @@ class ShellService {
 
       _stdin = _process!.stdin;
 
+      // 使用 UTF-8 解码（已通过 chcp 65001 设置）
       // 监听标准输出
       _stdoutSubscription = _process!.stdout
           .transform(utf8.decoder)

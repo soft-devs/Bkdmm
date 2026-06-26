@@ -5,7 +5,10 @@
       "Bash(flutter clean *)",
       "Bash(flutter pub *)",
       "Skill(bkdmm-flutter-fix-loop)",
-      "Skill(bkdmm-flutter-fix-loop:*)"
+      "Skill(bkdmm-flutter-fix-loop:*)",
+      "Bash(flutter run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
