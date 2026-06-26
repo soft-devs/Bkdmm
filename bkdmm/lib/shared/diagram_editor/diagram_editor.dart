@@ -7,7 +7,6 @@ library;
 // Core exports
 export 'src/core/diagram_node.dart';
 export 'src/core/diagram_edge.dart';
-export 'src/core/diagram_canvas.dart';
 export 'src/core/diagram_state.dart' hide InteractionMode;
 
 // Handlers (Phase 1-2)
@@ -31,17 +30,3 @@ export 'src/commands/history_controller.dart';
 // Integration (Phase 4)
 export 'src/integration/er_interaction_manager.dart' show InteractionMode, ERInteractionState, ERInteractionManager;
 export 'src/integration/er_interaction_provider.dart';
-
-// Controllers (TODO: implement these controllers)
-// export 'src/controllers/viewport_controller.dart';
-// export 'src/controllers/selection_controller.dart';
-// export 'src/controllers/gesture_handler.dart';
-// export 'src/controllers/history_manager.dart';
-
-// Layout - 注意：graphview_layout.dart 已被删除，使用 ER 图的 layout_adapter.dart
-// export 'src/layout/graphview_layout.dart';
-export 'src/layout/layout_engine.dart';
-
-// Render
-export 'src/render/renderers.dart';
-export 'src/render/anchor_renderer.dart';
