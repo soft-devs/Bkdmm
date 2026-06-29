@@ -546,27 +546,28 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     );
   }
 
-  /// Build fields preview table using TDTable
+  /// Build fields preview table using TDTable with flexible columns
   Widget _buildFieldsPreviewTable(Entity entity, TDThemeData tdTheme) {
-    // 准备表格数据
+    // 准备表格数据 - 所有值必须是字符串类型
     final data = entity.fields.take(10).toList().asMap().entries.map((entry) {
       final index = entry.key;
       final field = entry.value;
-      return {
+      return <String, dynamic>{
         'order': '${index + 1}',
-        'pk': field.pk ? '✓' : '',
+        'pk': field.pk ? '1' : '',
         'name': field.name,
         'type': field.type,
         'chnname': field.chnname,
-        'field': field, // 保存原始字段数据用于渲染
+        '_field': field,
       };
     }).toList();
 
+    // 弹性列配置 - 固定列和弹性列混合
     final columns = [
       TDTableCol(
         title: '#',
         colKey: 'order',
-        width: 36,
+        width: 40,
         align: TDTableColAlign.center,
       ),
       TDTableCol(
@@ -574,40 +575,45 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
         colKey: 'pk',
         width: 50,
         align: TDTableColAlign.center,
-        cellBuilder: (context, index) {
-          final field = data[index]['field'] as Field;
-          if (field.pk) {
-            return Icon(TDIcons.check, size: 14, color: tdTheme.brandNormalColor);
-          }
-          return const SizedBox();
+        cellBuilder: (context, rowIndex) {
+          final field = data[rowIndex]['_field'] as Field;
+          return Icon(
+            field.pk ? TDIcons.check_rectangle_filled : TDIcons.rectangle,
+            size: 16,
+            color: field.pk ? tdTheme.brandNormalColor : tdTheme.textColorPlaceholder,
+          );
         },
       ),
+      // 弹性列 - 不设置 width
       TDTableCol(
         title: 'Name',
         colKey: 'name',
-        width: 120,
         ellipsis: true,
       ),
       TDTableCol(
         title: 'Type',
         colKey: 'type',
-        width: 100,
         ellipsis: true,
       ),
       TDTableCol(
         title: 'Chinese Name',
         colKey: 'chnname',
-        width: 100,
         ellipsis: true,
       ),
     ];
 
-    return TDTable(
-      columns: columns,
-      data: data,
-      bordered: true,
-      rowHeight: 38,
-      backgroundColor: tdTheme.bgColorContainer,
+    // 计算表格高度：表头 + 数据行 + 边距
+    final tableHeight = 38.0 * (data.length + 1) + 16.0; // 表头 + 数据行 + 底部边距
+
+    return SizedBox(
+      height: tableHeight,
+      child: TDTable(
+        columns: columns,
+        data: data,
+        bordered: true,
+        rowHeight: 38,
+        backgroundColor: tdTheme.bgColorContainer,
+      ),
     );
   }
 

@@ -4,13 +4,13 @@ import '../../../../core/i18n/i18n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/models/models.dart';
 
-/// Field table widget using TDTable with drag-to-reorder support
+/// Field table widget using TDTable with flexible column widths
 ///
 /// Features:
 /// - Columns: Order, Primary Key, Field Name, Data Type, Chinese Name, Not Null, Auto Increment, Remark, Actions
 /// - Inline editing with checkboxes and type selector
 /// - Add/edit/delete rows
-/// - Drag to reorder fields
+/// - Click to edit field name, chinese name, remark
 class FieldTable extends StatefulWidget {
   final List<Field> fields;
   final List<DataType> dataTypes;
@@ -34,7 +34,18 @@ class FieldTable extends StatefulWidget {
 }
 
 class _FieldTableState extends State<FieldTable> {
-  final Set<String> _selectedFieldIds = {};
+  // 内联编辑状态
+  String? _editingFieldId;
+  String? _editingProperty;
+  final TextEditingController _editController = TextEditingController();
+  final FocusNode _editFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _editController.dispose();
+    _editFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +71,12 @@ class _FieldTableState extends State<FieldTable> {
                 fontWeight: FontWeight.w600,
               ),
               const Spacer(),
-              // Add field button
               TDButton(
                 text: l10n.addField,
                 icon: TDIcons.add,
                 theme: TDButtonTheme.primary,
                 type: TDButtonType.fill,
-                onTap: () => _showAddFieldDialog(),
+                onTap: () => _showFieldDialog(null),
               ),
             ],
           ),
@@ -76,7 +86,7 @@ class _FieldTableState extends State<FieldTable> {
         Expanded(
           child: widget.fields.isEmpty
               ? _buildEmptyState(tdTheme, l10n)
-              : _buildTableWithReorder(tdTheme, l10n),
+              : _buildTable(context, tdTheme, l10n),
         ),
       ],
     );
@@ -109,389 +119,263 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  Widget _buildTableWithReorder(TDThemeData tdTheme, AppLocalizations l10n) {
-    // 固定列宽总和
-    const double totalWidth = 36 + 48 + 120 + 100 + 100 + 64 + 72 + 100 + 72; // 712
+  Widget _buildTable(BuildContext context, TDThemeData tdTheme, AppLocalizations l10n) {
+    // 准备表格数据 - 所有值必须是字符串类型
+    final tableData = widget.fields.asMap().entries.map((entry) {
+      final field = entry.value;
+      return <String, dynamic>{
+        'order': '${entry.key + 1}',
+        'pk': field.pk ? '1' : '',
+        'name': field.name,
+        'type': field.type,
+        'chnname': field.chnname,
+        'notNull': field.notNull ? '1' : '',
+        'autoIncrement': field.autoIncrement ? '1' : '',
+        'remark': field.remark ?? '',
+        '_field': field,
+        '_index': entry.key,
+      };
+    }).toList();
+
+    // 弹性列配置 - 不设置 width，让 TDTable 自动分配
+    // 固定宽度列：order, pk, notNull, autoIncrement, actions
+    // 弹性列：name, type, chnname, remark（自动按比例分配）
+    final columns = [
+      TDTableCol(
+        title: '#',
+        colKey: 'order',
+        width: 40,
+        align: TDTableColAlign.center,
+      ),
+      TDTableCol(
+        title: l10n.pk,
+        colKey: 'pk',
+        width: 50,
+        align: TDTableColAlign.center,
+        cellBuilder: (context, rowIndex) => _buildPkCell(rowIndex, tdTheme),
+      ),
+      TDTableCol(
+        title: l10n.fieldName,
+        colKey: 'name',
+        ellipsis: true,
+        cellBuilder: (context, rowIndex) => _buildEditableCell(rowIndex, 'name', tdTheme),
+      ),
+      TDTableCol(
+        title: l10n.dataType,
+        colKey: 'type',
+        ellipsis: true,
+        cellBuilder: (context, rowIndex) => _buildTypeCell(rowIndex, tdTheme),
+      ),
+      TDTableCol(
+        title: l10n.chineseName,
+        colKey: 'chnname',
+        ellipsis: true,
+        cellBuilder: (context, rowIndex) => _buildEditableCell(rowIndex, 'chnname', tdTheme),
+      ),
+      TDTableCol(
+        title: l10n.notNull,
+        colKey: 'notNull',
+        width: 60,
+        align: TDTableColAlign.center,
+        cellBuilder: (context, rowIndex) => _buildBoolCell(rowIndex, 'notNull', tdTheme),
+      ),
+      TDTableCol(
+        title: l10n.autoIncrement,
+        colKey: 'autoIncrement',
+        width: 70,
+        align: TDTableColAlign.center,
+        cellBuilder: (context, rowIndex) => _buildBoolCell(rowIndex, 'autoIncrement', tdTheme),
+      ),
+      TDTableCol(
+        title: l10n.fieldRemark,
+        colKey: 'remark',
+        ellipsis: true,
+        cellBuilder: (context, rowIndex) => _buildEditableCell(rowIndex, 'remark', tdTheme),
+      ),
+      TDTableCol(
+        title: l10n.actions,
+        colKey: 'actions',
+        width: 70,
+        align: TDTableColAlign.center,
+        cellBuilder: (context, rowIndex) => _buildActionsCell(rowIndex, tdTheme),
+      ),
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 如果容器宽度小于表格总宽度，启用水平滚动
-        if (constraints.maxWidth < totalWidth) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: totalWidth,
-              height: constraints.maxHeight,
-              child: _buildReorderableList(tdTheme, l10n),
-            ),
-          );
-        }
+        return TDTable(
+          columns: columns,
+          data: tableData,
+          bordered: true,
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          rowHeight: 40,
+          backgroundColor: tdTheme.bgColorContainer,
+          stripe: true,
+          onCellTap: (rowIndex, row, col) {
+            final field = row['_field'] as Field;
+            final colKey = col.colKey;
 
-        // 宽度足够，直接显示
-        return _buildReorderableList(tdTheme, l10n);
-      },
-    );
-  }
-
-  Widget _buildReorderableList(TDThemeData tdTheme, AppLocalizations l10n) {
-    // 使用 ReorderableListView 包装 TDTable 的内容
-    return ReorderableListView.builder(
-      buildDefaultDragHandles: false,
-      itemCount: widget.fields.length + 1, // +1 for header
-      onReorder: (oldIndex, newIndex) {
-        // Header can't be reordered
-        if (oldIndex == 0 || newIndex == 0) return;
-        // Adjust indices (account for header)
-        widget.onReorderFields(oldIndex - 1, newIndex - 1);
-      },
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          // Header row - not draggable
-          return _buildHeaderRow(tdTheme, l10n);
-        }
-        final fieldIndex = index - 1;
-        final field = widget.fields[fieldIndex];
-        final isSelected = _selectedFieldIds.contains(field.id);
-        return _buildDataRow(
-          key: ValueKey(field.id),
-          field: field,
-          index: fieldIndex,
-          isSelected: isSelected,
-          tdTheme: tdTheme,
-          l10n: l10n,
+            // 可编辑列：点击进入编辑模式
+            if (colKey == 'name' || colKey == 'chnname' || colKey == 'remark') {
+              _startEditing(field, colKey!);
+            }
+          },
         );
       },
     );
   }
 
-  Widget _buildHeaderRow(TDThemeData tdTheme, AppLocalizations l10n) {
-    return Container(
-      key: const ValueKey('__header__'),
-      height: 44,
-      decoration: BoxDecoration(
-        color: tdTheme.bgColorSecondaryContainer,
-        border: Border(
-          bottom: BorderSide(color: tdTheme.componentBorderColor),
-        ),
-      ),
-      child: Row(
-        children: [
-          _buildHeaderCell('#', 36, tdTheme, centered: true),
-          _buildHeaderCell(l10n.pk, 48, tdTheme, centered: true),
-          _buildHeaderCell(l10n.fieldName, 120, tdTheme),
-          _buildHeaderCell(l10n.dataType, 100, tdTheme),
-          _buildHeaderCell(l10n.chineseName, 100, tdTheme),
-          _buildHeaderCell(l10n.notNull, 64, tdTheme, centered: true),
-          _buildHeaderCell(l10n.autoIncrement, 72, tdTheme, centered: true),
-          _buildHeaderCell(l10n.fieldRemark, 100, tdTheme),
-          _buildHeaderCell(l10n.actions, 72, tdTheme, centered: true, isLast: true),
-        ],
+  /// 序号单元格
+  Widget _buildPkCell(int rowIndex, TDThemeData tdTheme) {
+    final field = widget.fields[rowIndex];
+    return GestureDetector(
+      onTap: () => _updateField(field, 'pk', !field.pk),
+      child: Icon(
+        field.pk ? TDIcons.check_rectangle_filled : TDIcons.rectangle,
+        size: 16,
+        color: field.pk ? tdTheme.brandNormalColor : tdTheme.textColorPlaceholder,
       ),
     );
   }
 
-  Widget _buildHeaderCell(String title, double width, TDThemeData tdTheme, {bool centered = false, bool isLast = false}) {
-    return Container(
-      width: width,
-      height: 44,
-      alignment: centered ? Alignment.center : Alignment.centerLeft,
-      padding: EdgeInsets.symmetric(horizontal: centered ? 4 : 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
-      ),
-      child: TDText(
-        title,
-        font: tdTheme.fontBodySmall,
-        fontWeight: FontWeight.w600,
-        textColor: tdTheme.textColorSecondary,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
+  /// 可编辑单元格（字段名、中文名、备注）
+  Widget _buildEditableCell(int rowIndex, String property, TDThemeData tdTheme) {
+    final field = widget.fields[rowIndex];
+    final value = _getFieldValue(field, property);
+    final isEditing = _editingFieldId == field.id && _editingProperty == property;
 
-  Widget _buildDataRow({
-    required Key key,
-    required Field field,
-    required int index,
-    required bool isSelected,
-    required TDThemeData tdTheme,
-    required AppLocalizations l10n,
-  }) {
-    final rowColor = isSelected
-        ? tdTheme.brandNormalColor.withValues(alpha: 0.08)
-        : (index % 2 == 1 ? tdTheme.bgColorSecondaryContainer.withValues(alpha: 0.3) : tdTheme.bgColorContainer);
-
-    return InkWell(
-      key: key,
-      onTap: () {
-        setState(() {
-          if (_selectedFieldIds.contains(field.id)) {
-            _selectedFieldIds.remove(field.id);
-          } else {
-            _selectedFieldIds.add(field.id);
-          }
-        });
-      },
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: rowColor,
-          border: Border(
-            bottom: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.2)),
+    if (isEditing) {
+      return TextField(
+        controller: _editController,
+        focusNode: _editFocusNode,
+        autofocus: true,
+        style: TextStyle(fontSize: 14, color: tdTheme.textColorPrimary),
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: BorderSide(color: tdTheme.brandNormalColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: BorderSide(color: tdTheme.brandNormalColor, width: 2),
           ),
         ),
-        child: Row(
-          children: [
-            // Order/drag handle
-            _buildOrderCell(index, 36, tdTheme),
-            // PK checkbox
-            _buildCheckboxCell(field, 'pk', 48, tdTheme, isSelected),
-            // Field name
-            _buildEditableTextCell(field.name, 120, tdTheme, isSelected, () => _showEditFieldDialog(field)),
-            // Data type
-            _buildTypeCell(field, 100, tdTheme, isSelected),
-            // Chinese name
-            _buildEditableTextCell(field.chnname, 100, tdTheme, isSelected, () => _showEditFieldDialog(field)),
-            // Not Null
-            _buildCheckboxCell(field, 'notNull', 64, tdTheme, isSelected),
-            // Auto Increment
-            _buildCheckboxCell(field, 'autoIncrement', 72, tdTheme, isSelected),
-            // Remark
-            _buildTextCell(field.remark ?? '', 100, tdTheme, isSelected),
-            // Actions
-            _buildActionsCell(field, 72, tdTheme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrderCell(int index, double width, TDThemeData tdTheme) {
-    return Container(
-      width: width,
-      height: 44,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
-      ),
-      child: ReorderableDragStartListener(
-        index: index + 1, // +1 because header is at index 0
-        child: MouseRegion(
-          cursor: SystemMouseCursors.grab,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Icon(
-              TDIcons.move,
-              size: 16,
-              color: tdTheme.textColorSecondary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCheckboxCell(Field field, String property, double width, TDThemeData tdTheme, bool isRowSelected) {
-    bool value = false;
-    switch (property) {
-      case 'pk':
-        value = field.pk;
-        break;
-      case 'notNull':
-        value = field.notNull;
-        break;
-      case 'autoIncrement':
-        value = field.autoIncrement;
-        break;
+        onSubmitted: (newValue) => _finishEditing(field, property, newValue),
+        onEditingComplete: () => _finishEditing(field, property, _editController.text),
+      );
     }
 
-    return Container(
-      width: width,
-      height: 44,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
-      ),
-      child: GestureDetector(
-        onTap: () {
-          _updateFieldProperty(field, property, !value);
-        },
-        child: Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: value
-                ? tdTheme.brandNormalColor
-                : tdTheme.bgColorContainer,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: value
-                  ? tdTheme.brandNormalColor
-                  : tdTheme.componentBorderColor,
-              width: 1.5,
-            ),
-          ),
-          child: value
-              ? Icon(TDIcons.check, size: 14, color: Colors.white)
-              : null,
-        ),
-      ),
+    return TDText(
+      value,
+      font: tdTheme.fontBodySmall,
+      textColor: tdTheme.textColorPrimary,
+      overflow: TextOverflow.ellipsis,
+      maxLines: 1,
     );
   }
 
-  Widget _buildTextCell(String value, double width, TDThemeData tdTheme, bool isRowSelected) {
-    return Container(
-      width: width,
-      height: 44,
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
-      ),
-      child: TDText(
-        value,
-        font: tdTheme.fontBodySmall,
-        textColor: isRowSelected
-            ? tdTheme.brandNormalColor
-            : tdTheme.textColorPrimary,
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
-      ),
-    );
-  }
-
-  Widget _buildEditableTextCell(String value, double width, TDThemeData tdTheme, bool isRowSelected, VoidCallback onTap) {
+  /// 类型选择单元格
+  Widget _buildTypeCell(int rowIndex, TDThemeData tdTheme) {
+    final field = widget.fields[rowIndex];
     return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: 44,
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: TDText(
-                value,
-                font: tdTheme.fontBodySmall,
-                textColor: isRowSelected
-                    ? tdTheme.brandNormalColor
-                    : tdTheme.textColorPrimary,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-            Icon(
-              TDIcons.edit,
-              size: 14,
-              color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTypeCell(Field field, double width, TDThemeData tdTheme, bool isRowSelected) {
-    return Container(
-      width: width,
-      height: 44,
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
-      ),
-      child: InkWell(
-        onTap: () => _showTypeSelector(field, tdTheme),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: TDText(
-                field.type,
-                font: tdTheme.fontBodySmall,
-                textColor: isRowSelected
-                    ? tdTheme.brandNormalColor
-                    : tdTheme.textColorPrimary,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              TDIcons.chevron_down,
-              size: 12,
-              color: tdTheme.textColorSecondary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionsCell(Field field, double width, TDThemeData tdTheme) {
-    return Container(
-      width: width,
-      height: 44,
-      alignment: Alignment.center,
+      onTap: () => _showTypeSelector(field),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Edit button
-          InkWell(
-            onTap: () => _showEditFieldDialog(field),
-            child: Icon(
-              TDIcons.edit,
-              size: 16,
-              color: tdTheme.textColorSecondary,
+          Flexible(
+            child: TDText(
+              field.type,
+              font: tdTheme.fontBodySmall,
+              textColor: tdTheme.textColorPrimary,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
-          // Delete button
-          InkWell(
-            onTap: () => _confirmDeleteField(field),
-            child: Icon(
-              TDIcons.delete,
-              size: 16,
-              color: tdTheme.errorNormalColor,
-            ),
-          ),
+          Icon(TDIcons.chevron_down, size: 12, color: tdTheme.textColorSecondary),
         ],
       ),
     );
   }
 
-  void _showTypeSelector(Field field, TDThemeData tdTheme) {
-    final l10n = context.l10n;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => TDMultiPicker(
-        title: l10n.selectDataType,
-        data: [widget.dataTypes.map((dt) => dt.name).toList()],
-        initialIndexes: [
-          widget.dataTypes.indexWhere((dt) => dt.name == field.type).clamp(0, widget.dataTypes.length - 1),
-        ],
-        onConfirm: (selected) {
-          if (selected.isNotEmpty && selected[0] < widget.dataTypes.length) {
-            final newType = widget.dataTypes[selected[0]].name;
-            if (newType != field.type) {
-              _updateFieldProperty(field, 'type', newType);
-            }
-          }
-          Navigator.pop(context);
-        },
-        onCancel: (_) => Navigator.pop(context),
+  /// Boolean 单元格（非空、自增）
+  Widget _buildBoolCell(int rowIndex, String property, TDThemeData tdTheme) {
+    final field = widget.fields[rowIndex];
+    final value = property == 'notNull' ? field.notNull : field.autoIncrement;
+
+    return GestureDetector(
+      onTap: () => _updateField(field, property, !value),
+      child: Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          color: value ? tdTheme.brandNormalColor : tdTheme.bgColorContainer,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: value ? tdTheme.brandNormalColor : tdTheme.componentBorderColor,
+            width: 1.5,
+          ),
+        ),
+        child: value ? Icon(TDIcons.check, size: 12, color: Colors.white) : null,
       ),
     );
   }
 
-  void _updateFieldProperty(Field field, String property, dynamic value) {
+  /// 操作单元格
+  Widget _buildActionsCell(int rowIndex, TDThemeData tdTheme) {
+    final field = widget.fields[rowIndex];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: () => _showFieldDialog(field),
+          child: Icon(TDIcons.edit, size: 16, color: tdTheme.textColorSecondary),
+        ),
+        const SizedBox(width: 8),
+        InkWell(
+          onTap: () => _confirmDelete(field),
+          child: Icon(TDIcons.delete, size: 16, color: tdTheme.errorColor6),
+        ),
+      ],
+    );
+  }
+
+  String _getFieldValue(Field field, String property) {
+    switch (property) {
+      case 'name':
+        return field.name;
+      case 'chnname':
+        return field.chnname;
+      case 'remark':
+        return field.remark ?? '';
+      default:
+        return '';
+    }
+  }
+
+  void _startEditing(Field field, String property) {
+    setState(() {
+      _editingFieldId = field.id;
+      _editingProperty = property;
+      _editController.text = _getFieldValue(field, property);
+    });
+    _editFocusNode.requestFocus();
+  }
+
+  void _finishEditing(Field field, String property, String newValue) {
+    if (newValue.trim() != _getFieldValue(field, property)) {
+      _updateField(field, property, newValue.trim());
+    }
+    setState(() {
+      _editingFieldId = null;
+      _editingProperty = null;
+      _editController.clear();
+    });
+  }
+
+  void _updateField(Field field, String property, dynamic value) {
     Field updatedField;
     switch (property) {
       case 'pk':
@@ -506,18 +390,45 @@ class _FieldTableState extends State<FieldTable> {
       case 'type':
         updatedField = field.copyWith(type: value as String);
         break;
+      case 'name':
+        if ((value as String).isEmpty) return;
+        updatedField = field.copyWith(name: value);
+        break;
+      case 'chnname':
+        updatedField = field.copyWith(chnname: (value as String).isEmpty ? field.name : value);
+        break;
+      case 'remark':
+        updatedField = field.copyWith(remark: (value as String).isEmpty ? null : value);
+        break;
       default:
         return;
     }
     widget.onUpdateField(field.id, updatedField);
   }
 
-  void _showAddFieldDialog() {
-    _showFieldDialog(null);
-  }
-
-  void _showEditFieldDialog(Field field) {
-    _showFieldDialog(field);
+  void _showTypeSelector(Field field) {
+    final l10n = context.l10n;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => TDMultiPicker(
+        title: l10n.selectDataType,
+        data: [widget.dataTypes.map((dt) => dt.name).toList()],
+        initialIndexes: [
+          widget.dataTypes.indexWhere((dt) => dt.name == field.type).clamp(0, widget.dataTypes.length - 1),
+        ],
+        onConfirm: (selected) {
+          if (selected.isNotEmpty && selected[0] < widget.dataTypes.length) {
+            final newType = widget.dataTypes[selected[0]].name;
+            if (newType != field.type) {
+              _updateField(field, 'type', newType);
+            }
+          }
+          Navigator.pop(context);
+        },
+        onCancel: (_) => Navigator.pop(context),
+      ),
+    );
   }
 
   void _showFieldDialog(Field? existingField) {
@@ -536,11 +447,8 @@ class _FieldTableState extends State<FieldTable> {
         builder: (context, setState) {
           final tdTheme = TDTheme.of(context);
           final dialogL10n = context.l10n;
-          // Responsive dialog width
           final screenWidth = MediaQuery.of(context).size.width;
-          const baseMinWidth = 400.0;
-          final maxWidth = baseMinWidth * 1.4; // 560
-          final dialogWidth = (screenWidth * 0.85).clamp(baseMinWidth, maxWidth);
+          final dialogWidth = (screenWidth * 0.85).clamp(400.0, 560.0);
 
           return TDAlertDialog(
             title: existingField == null ? l10n.addField : l10n.editField,
@@ -559,11 +467,7 @@ class _FieldTableState extends State<FieldTable> {
                       backgroundColor: Colors.transparent,
                     ),
                     const SizedBox(height: 12),
-                    _buildTypeSelectorFormField(
-                      context: context,
-                      selectedType: selectedType,
-                      onTypeChanged: (type) => setState(() => selectedType = type),
-                    ),
+                    _buildTypeSelectorFormField(context, selectedType, (type) => setState(() => selectedType = type)),
                     const SizedBox(height: 12),
                     TDInput(
                       controller: chnnameController,
@@ -573,7 +477,6 @@ class _FieldTableState extends State<FieldTable> {
                       backgroundColor: Colors.transparent,
                     ),
                     const SizedBox(height: 12),
-                    // Checkbox section in a container
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -588,9 +491,7 @@ class _FieldTableState extends State<FieldTable> {
                             onCheckBoxChanged: (checked) {
                               setState(() {
                                 isPk = checked;
-                                if (isPk) {
-                                  isNotNull = true;
-                                }
+                                if (isPk) isNotNull = true;
                               });
                             },
                           ),
@@ -599,17 +500,13 @@ class _FieldTableState extends State<FieldTable> {
                             title: l10n.notNull,
                             checked: isNotNull,
                             enable: !isPk,
-                            onCheckBoxChanged: isPk ? null : (checked) {
-                              setState(() => isNotNull = checked);
-                            },
+                            onCheckBoxChanged: isPk ? null : (checked) => setState(() => isNotNull = checked),
                           ),
                           const SizedBox(height: 8),
                           TDCheckbox(
                             title: l10n.autoIncrement,
                             checked: isAutoIncrement,
-                            onCheckBoxChanged: (checked) {
-                              setState(() => isAutoIncrement = checked);
-                            },
+                            onCheckBoxChanged: (checked) => setState(() => isAutoIncrement = checked),
                           ),
                         ],
                       ),
@@ -652,9 +549,7 @@ class _FieldTableState extends State<FieldTable> {
                   pk: isPk,
                   notNull: isNotNull,
                   autoIncrement: isAutoIncrement,
-                  remark: remarkController.text.trim().isNotEmpty
-                      ? remarkController.text.trim()
-                      : null,
+                  remark: remarkController.text.trim().isNotEmpty ? remarkController.text.trim() : null,
                 );
 
                 if (existingField == null) {
@@ -671,11 +566,7 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  Widget _buildTypeSelectorFormField({
-    required BuildContext context,
-    required String selectedType,
-    required Function(String) onTypeChanged,
-  }) {
+  Widget _buildTypeSelectorFormField(BuildContext context, String selectedType, Function(String) onTypeChanged) {
     final tdTheme = TDTheme.of(context);
     final l10n = context.l10n;
 
@@ -692,8 +583,7 @@ class _FieldTableState extends State<FieldTable> {
             ],
             onConfirm: (selected) {
               if (selected.isNotEmpty && selected[0] < widget.dataTypes.length) {
-                final newType = widget.dataTypes[selected[0]].name;
-                onTypeChanged(newType);
+                onTypeChanged(widget.dataTypes[selected[0]].name);
               }
               Navigator.pop(ctx);
             },
@@ -712,11 +602,7 @@ class _FieldTableState extends State<FieldTable> {
           children: [
             Icon(TDIcons.data, size: 20, color: tdTheme.textColorSecondary),
             const SizedBox(width: 12),
-            TDText(
-              l10n.dataTypeLabel,
-              font: tdTheme.fontBodyMedium,
-              textColor: tdTheme.textColorSecondary,
-            ),
+            TDText(l10n.dataTypeLabel, font: tdTheme.fontBodyMedium, textColor: tdTheme.textColorSecondary),
             const SizedBox(width: 12),
             Expanded(
               child: TDText(
@@ -734,7 +620,7 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  void _confirmDeleteField(Field field) {
+  void _confirmDelete(Field field) {
     final l10n = context.l10n;
     showDialog(
       context: context,
@@ -753,9 +639,6 @@ class _FieldTableState extends State<FieldTable> {
           type: TDButtonType.fill,
           action: () {
             widget.onDeleteField(field.id);
-            setState(() {
-              _selectedFieldIds.remove(field.id);
-            });
             Navigator.pop(context);
           },
         ),
