@@ -103,16 +103,24 @@ class DataTypeCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  TDText(
-                    type.name,
-                    font: tdTheme.fontTitleSmall,
-                    fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: TDText(
+                      type.name,
+                      font: tdTheme.fontTitleSmall,
+                      fontWeight: FontWeight.w600,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  TDText(
-                    type.chnname,
-                    font: tdTheme.fontBodyMedium,
-                    textColor: tdTheme.fontGyColor2,
+                  Flexible(
+                    child: TDText(
+                      type.chnname,
+                      font: tdTheme.fontBodyMedium,
+                      textColor: tdTheme.fontGyColor2,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ],
               ),
@@ -123,6 +131,8 @@ class DataTypeCard extends StatelessWidget {
                     type.remark!,
                     font: tdTheme.fontBodySmall,
                     textColor: tdTheme.fontGyColor3,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
                 ),
             ],

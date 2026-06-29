@@ -11,11 +11,34 @@
 
 library er_diagram;
 
-// 模型和状态
-export 'models/er_diagram_ui_state.dart';
-export 'providers/er_diagram_ui_provider.dart';
+// ============================================================================
+// 新架构 (diagram_editor 框架)
+// ============================================================================
 
-// 画布和 Widget
-export 'widgets/er_diagram_canvas.dart';
+// 控制器
+export 'controllers/er_diagram_controller.dart';
+
+// 视图
+export 'views/er_diagram_view.dart';
+export 'views/er_interaction_overlay.dart';
+
+// 绘制器
+export 'painters/er_relation_painter_adapter.dart';
+
+// Widget
 export 'widgets/er_table_node_widget.dart';
+export 'widgets/er_table_node_widget_v2.dart';
 export 'widgets/er_field_anchor_widget.dart';
+
+// 模型和状态 (保留兼容)
+export 'models/er_diagram_ui_state.dart';
+
+// ============================================================================
+// 旧架构 (保留兼容，后续移除)
+// ============================================================================
+
+// 旧画布 (保留用于回退)
+export 'widgets/er_diagram_canvas.dart';
+
+// 旧 Provider (保留用于兼容)
+export 'providers/er_diagram_ui_provider.dart';

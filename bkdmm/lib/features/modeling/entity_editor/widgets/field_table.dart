@@ -4,13 +4,13 @@ import '../../../../core/i18n/i18n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/models/models.dart';
 
-/// Field table widget using TDTable with flexible column widths
+/// Field table widget - 字段编辑表格
 ///
-/// Features:
-/// - Columns: Order, Primary Key, Field Name, Data Type, Chinese Name, Not Null, Auto Increment, Remark, Actions
-/// - Inline editing with checkboxes and type selector
-/// - Add/edit/delete rows
-/// - Click to edit field name, chinese name, remark
+/// 布局设计遵循:
+/// - 使用 LayoutBuilder 获取约束，响应式处理宽度
+/// - 表格需要明确的宽度约束
+/// - 固定宽度列使用最小宽度，弹性列自动分配剩余空间
+/// - 窄屏时启用横向滚动
 class FieldTable extends StatefulWidget {
   final List<Field> fields;
   final List<DataType> dataTypes;
@@ -54,44 +54,52 @@ class _FieldTableState extends State<FieldTable> {
 
     return Column(
       children: [
-        // Toolbar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: tdTheme.bgColorSecondaryContainer,
-            border: Border(
-              bottom: BorderSide(color: tdTheme.componentBorderColor),
-            ),
-          ),
-          child: Row(
-            children: [
-              TDText(
-                '${l10n.fields} (${widget.fields.length})',
-                font: tdTheme.fontTitleSmall,
-                fontWeight: FontWeight.w600,
-              ),
-              const Spacer(),
-              TDButton(
-                text: l10n.addField,
-                icon: TDIcons.add,
-                theme: TDButtonTheme.primary,
-                type: TDButtonType.fill,
-                onTap: () => _showFieldDialog(null),
-              ),
-            ],
-          ),
-        ),
+        // 工具栏 - 固定高度
+        _buildToolbar(tdTheme, l10n),
 
-        // Table content
+        // 表格内容 - 填充剩余空间
         Expanded(
           child: widget.fields.isEmpty
               ? _buildEmptyState(tdTheme, l10n)
-              : _buildTable(context, tdTheme, l10n),
+              : _buildTableContent(context, tdTheme, l10n),
         ),
       ],
     );
   }
 
+  /// 工具栏
+  Widget _buildToolbar(TDThemeData tdTheme, AppLocalizations l10n) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: tdTheme.bgColorSecondaryContainer,
+        border: Border(
+          bottom: BorderSide(color: tdTheme.componentBorderColor),
+        ),
+      ),
+      child: Row(
+        children: [
+          TDText(
+            '${l10n.fields} (${widget.fields.length})',
+            font: tdTheme.fontTitleSmall,
+            fontWeight: FontWeight.w600,
+          ),
+          const Spacer(),
+          TDButton(
+            text: l10n.addField,
+            icon: TDIcons.add,
+            theme: TDButtonTheme.primary,
+            type: TDButtonType.fill,
+            size: TDButtonSize.small,
+            onTap: () => _showFieldDialog(null),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 空状态
   Widget _buildEmptyState(TDThemeData tdTheme, AppLocalizations l10n) {
     return Center(
       child: Column(
@@ -119,8 +127,42 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  Widget _buildTable(BuildContext context, TDThemeData tdTheme, AppLocalizations l10n) {
-    // 准备表格数据 - 所有值必须是字符串类型
+  /// 表格内容 - 使用 LayoutBuilder 响应式处理
+  Widget _buildTableContent(BuildContext context, TDThemeData tdTheme, AppLocalizations l10n) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 计算表格所需的最小宽度
+        // 固定列: # (32) + PK (40) + 非空 (48) + 自增 (48) + 操作 (56) = 224
+        // 弹性列: 字段名 + 类型 + 中文名 + 备注 (需要至少 200)
+        const fixedColumnsWidth = 32 + 40 + 48 + 48 + 56;
+        const minFlexibleWidth = 200;
+        const minTableWidth = fixedColumnsWidth + minFlexibleWidth;
+
+        final availableWidth = constraints.maxWidth;
+        final needHorizontalScroll = availableWidth < minTableWidth;
+
+        // 构建表格
+        final table = _buildDataTable(tdTheme, l10n, availableWidth);
+
+        if (needHorizontalScroll) {
+          // 窄屏: 启用横向滚动
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: minTableWidth + 200, // 给弹性列更多空间
+              child: table,
+            ),
+          );
+        }
+
+        return table;
+      },
+    );
+  }
+
+  /// 构建数据表格
+  Widget _buildDataTable(TDThemeData tdTheme, AppLocalizations l10n, double availableWidth) {
+    // 准备表格数据
     final tableData = widget.fields.asMap().entries.map((entry) {
       final field = entry.value;
       return <String, dynamic>{
@@ -137,23 +179,24 @@ class _FieldTableState extends State<FieldTable> {
       };
     }).toList();
 
-    // 弹性列配置 - 不设置 width，让 TDTable 自动分配
-    // 固定宽度列：order, pk, notNull, autoIncrement, actions
-    // 弹性列：name, type, chnname, remark（自动按比例分配）
+    // 列配置
+    // 固定宽度列: #, PK, 非空, 自增, 操作
+    // 弹性列: 字段名, 类型, 中文名, 备注 (通过不设置 width 实现自动分配)
     final columns = [
       TDTableCol(
         title: '#',
         colKey: 'order',
-        width: 40,
+        width: 32,
         align: TDTableColAlign.center,
       ),
       TDTableCol(
         title: l10n.pk,
         colKey: 'pk',
-        width: 50,
+        width: 40,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildPkCell(rowIndex, tdTheme),
       ),
+      // 弹性列 - 不设置 width
       TDTableCol(
         title: l10n.fieldName,
         colKey: 'name',
@@ -175,17 +218,18 @@ class _FieldTableState extends State<FieldTable> {
       TDTableCol(
         title: l10n.notNull,
         colKey: 'notNull',
-        width: 60,
+        width: 48,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildBoolCell(rowIndex, 'notNull', tdTheme),
       ),
       TDTableCol(
         title: l10n.autoIncrement,
         colKey: 'autoIncrement',
-        width: 70,
+        width: 48,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildBoolCell(rowIndex, 'autoIncrement', tdTheme),
       ),
+      // 弹性列
       TDTableCol(
         title: l10n.fieldRemark,
         colKey: 'remark',
@@ -195,38 +239,33 @@ class _FieldTableState extends State<FieldTable> {
       TDTableCol(
         title: l10n.actions,
         colKey: 'actions',
-        width: 70,
+        width: 56,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildActionsCell(rowIndex, tdTheme),
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return TDTable(
-          columns: columns,
-          data: tableData,
-          bordered: true,
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          rowHeight: 40,
-          backgroundColor: tdTheme.bgColorContainer,
-          stripe: true,
-          onCellTap: (rowIndex, row, col) {
-            final field = row['_field'] as Field;
-            final colKey = col.colKey;
+    return TDTable(
+      columns: columns,
+      data: tableData,
+      bordered: true,
+      width: availableWidth,
+      rowHeight: 40,
+      backgroundColor: tdTheme.bgColorContainer,
+      stripe: true,
+      onCellTap: (rowIndex, row, col) {
+        final field = row['_field'] as Field;
+        final colKey = col.colKey;
 
-            // 可编辑列：点击进入编辑模式
-            if (colKey == 'name' || colKey == 'chnname' || colKey == 'remark') {
-              _startEditing(field, colKey!);
-            }
-          },
-        );
+        // 可编辑列: 点击进入编辑模式
+        if (colKey == 'name' || colKey == 'chnname' || colKey == 'remark') {
+          _startEditing(field, colKey!);
+        }
       },
     );
   }
 
-  /// 序号单元格
+  /// 主键单元格
   Widget _buildPkCell(int rowIndex, TDThemeData tdTheme) {
     final field = widget.fields[rowIndex];
     return GestureDetector(
@@ -239,7 +278,7 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  /// 可编辑单元格（字段名、中文名、备注）
+  /// 可编辑单元格
   Widget _buildEditableCell(int rowIndex, String property, TDThemeData tdTheme) {
     final field = widget.fields[rowIndex];
     final value = _getFieldValue(field, property);
@@ -254,12 +293,9 @@ class _FieldTableState extends State<FieldTable> {
         decoration: InputDecoration(
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(4),
-            borderSide: BorderSide(color: tdTheme.brandNormalColor),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(4),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: tdTheme.brandNormalColor, width: 2),
           ),
         ),
@@ -299,7 +335,7 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  /// Boolean 单元格（非空、自增）
+  /// Boolean 单元格
   Widget _buildBoolCell(int rowIndex, String property, TDThemeData tdTheme) {
     final field = widget.fields[rowIndex];
     final value = property == 'notNull' ? field.notNull : field.autoIncrement;
@@ -331,12 +367,18 @@ class _FieldTableState extends State<FieldTable> {
       children: [
         InkWell(
           onTap: () => _showFieldDialog(field),
-          child: Icon(TDIcons.edit, size: 16, color: tdTheme.textColorSecondary),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Icon(TDIcons.edit, size: 14, color: tdTheme.textColorSecondary),
+          ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         InkWell(
           onTap: () => _confirmDelete(field),
-          child: Icon(TDIcons.delete, size: 16, color: tdTheme.errorColor6),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Icon(TDIcons.delete, size: 14, color: tdTheme.errorColor6),
+          ),
         ),
       ],
     );
@@ -447,14 +489,12 @@ class _FieldTableState extends State<FieldTable> {
         builder: (context, setState) {
           final tdTheme = TDTheme.of(context);
           final dialogL10n = context.l10n;
-          final screenWidth = MediaQuery.of(context).size.width;
-          final dialogWidth = (screenWidth * 0.85).clamp(400.0, 560.0);
 
           return TDAlertDialog(
             title: existingField == null ? l10n.addField : l10n.editField,
             content: '',
             contentWidget: SizedBox(
-              width: dialogWidth,
+              width: 480,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -610,6 +650,7 @@ class _FieldTableState extends State<FieldTable> {
                 font: tdTheme.fontBodyMedium,
                 textColor: tdTheme.textColorPrimary,
                 textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),

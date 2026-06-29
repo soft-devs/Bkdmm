@@ -150,6 +150,7 @@ export 'src/spatial/simple_index.dart';
 
 export 'src/commands/diagram_command.dart';
 export 'src/commands/history_controller.dart';
+export 'src/commands/er/er_commands.dart';
 
 // ============================================================================
 // Integration 层 - 集成管理
@@ -163,7 +164,7 @@ export 'src/integration/er_interaction_provider.dart';
 // View 层 - 视图渲染
 // ============================================================================
 
-export 'src/view/graph_view.dart';
+export 'src/view/graph_view.dart' show GraphView, GraphGridConfig, ViewportConfig, GraphEdgePainter;
 export 'src/view/tool_overlay.dart';
 export 'src/view/modification_overlay.dart';
 export 'src/view/canvas_overlay.dart';
@@ -179,3 +180,11 @@ export 'src/view/painter/grid_painter.dart';
 
 export 'src/er/er_table_node_model.dart';
 export 'src/er/er_relation_edge_model.dart';
+export 'src/er/er_relation_painter.dart' show ERRelationPainter, ERRelationPainterConfig;
+
+// ============================================================================
+// Adapters 层 - 数据适配器
+// ============================================================================
+
+export 'src/adapters/er_node_adapter.dart';
+export 'src/adapters/er_edge_adapter.dart' hide AnchorDirection;

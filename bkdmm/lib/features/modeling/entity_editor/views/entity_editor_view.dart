@@ -546,9 +546,15 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     );
   }
 
-  /// Build fields preview table using TDTable with flexible columns
+  /// Build fields preview table - 字段预览表格
+  ///
+  /// 布局设计遵循:
+  /// - 使用 LayoutBuilder 获取约束，响应式处理宽度
+  /// - 表格需要明确的宽度约束
+  /// - 固定宽度列使用最小宽度，弹性列自动分配剩余空间
+  /// - 行高固定为 36
   Widget _buildFieldsPreviewTable(Entity entity, TDThemeData tdTheme) {
-    // 准备表格数据 - 所有值必须是字符串类型
+    // 准备表格数据
     final data = entity.fields.take(10).toList().asMap().entries.map((entry) {
       final index = entry.key;
       final field = entry.value;
@@ -562,7 +568,9 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
       };
     }).toList();
 
-    // 弹性列配置 - 固定列和弹性列混合
+    // 列配置
+    // 固定列: # (40) + PK (48) = 88
+    // 弹性列: Name + Type + Chinese Name (自动分配剩余宽度)
     final columns = [
       TDTableCol(
         title: '#',
@@ -573,13 +581,13 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
       TDTableCol(
         title: 'PK',
         colKey: 'pk',
-        width: 50,
+        width: 48,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) {
           final field = data[rowIndex]['_field'] as Field;
           return Icon(
             field.pk ? TDIcons.check_rectangle_filled : TDIcons.rectangle,
-            size: 16,
+            size: 14,
             color: field.pk ? tdTheme.brandNormalColor : tdTheme.textColorPlaceholder,
           );
         },
@@ -602,18 +610,51 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
       ),
     ];
 
-    // 计算表格高度：表头 + 数据行 + 边距
-    final tableHeight = 38.0 * (data.length + 1) + 16.0; // 表头 + 数据行 + 底部边距
+    // 计算表格高度: 表头 + 数据行
+    const rowHeight = 36.0;
+    final tableHeight = rowHeight * (data.length + 1);
 
-    return SizedBox(
-      height: tableHeight,
-      child: TDTable(
-        columns: columns,
-        data: data,
-        bordered: true,
-        rowHeight: 38,
-        backgroundColor: tdTheme.bgColorContainer,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 计算表格所需的最小宽度
+        const fixedColumnsWidth = 40 + 48;
+        const minFlexibleWidth = 150;
+        const minTableWidth = fixedColumnsWidth + minFlexibleWidth;
+
+        final availableWidth = constraints.maxWidth;
+
+        // 如果宽度不足，使用横向滚动
+        if (availableWidth < minTableWidth) {
+          return SizedBox(
+            height: tableHeight,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: minTableWidth + 100,
+                child: TDTable(
+                  columns: columns,
+                  data: data,
+                  bordered: true,
+                  rowHeight: rowHeight,
+                  backgroundColor: tdTheme.bgColorContainer,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: tableHeight,
+          child: TDTable(
+            columns: columns,
+            data: data,
+            bordered: true,
+            width: availableWidth,
+            rowHeight: rowHeight,
+            backgroundColor: tdTheme.bgColorContainer,
+          ),
+        );
+      },
     );
   }
 

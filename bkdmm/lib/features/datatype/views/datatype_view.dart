@@ -90,62 +90,147 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           ),
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            TDIcons.data,
-            color: tdTheme.brandNormalColor,
-          ),
-          const SizedBox(width: 8),
-          TDText(
-            l10n.dataTypeManagement,
-            font: tdTheme.fontTitleMedium,
-            fontWeight: FontWeight.w600,
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: tdTheme.grayColor3,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TDText(
-              l10n.typesCount(state.dataTypes.length),
-              font: tdTheme.fontBodySmall,
-              textColor: tdTheme.fontGyColor2,
-            ),
-          ),
-          if (state.isDirty)
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: tdTheme.brandLightColor,
-                borderRadius: BorderRadius.circular(12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Check if we have enough space for the full header
+          final hasFullSpace = constraints.maxWidth > 600;
+
+          if (hasFullSpace) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  TDIcons.data,
+                  color: tdTheme.brandNormalColor,
+                ),
+                const SizedBox(width: 8),
+                TDText(
+                  l10n.dataTypeManagement,
+                  font: tdTheme.fontTitleMedium,
+                  fontWeight: FontWeight.w600,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: tdTheme.grayColor3,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TDText(
+                    l10n.typesCount(state.dataTypes.length),
+                    font: tdTheme.fontBodySmall,
+                    textColor: tdTheme.fontGyColor2,
+                  ),
+                ),
+                if (state.isDirty)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: tdTheme.brandLightColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TDText(
+                      l10n.modified,
+                      font: tdTheme.fontBodySmall,
+                      textColor: tdTheme.brandNormalColor,
+                    ),
+                  ),
+                const Spacer(),
+                // Action buttons
+                TDButton(
+                  text: l10n.restoreDefaults,
+                  theme: TDButtonTheme.defaultTheme,
+                  icon: TDIcons.history,
+                  onTap: () => showRestoreDefaultsDialog(context, ref, _updateProject),
+                ),
+                const SizedBox(width: 12),
+                TDButton(
+                  text: l10n.addType,
+                  theme: TDButtonTheme.primary,
+                  icon: TDIcons.add,
+                  onTap: () => showAddDataTypeDialog(context, ref, _updateProject),
+                ),
+              ],
+            );
+          }
+
+          // Compact layout for narrow screens
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    TDIcons.data,
+                    color: tdTheme.brandNormalColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TDText(
+                      l10n.dataTypeManagement,
+                      font: tdTheme.fontTitleMedium,
+                      fontWeight: FontWeight.w600,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: tdTheme.grayColor3,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TDText(
+                      l10n.typesCount(state.dataTypes.length),
+                      font: tdTheme.fontBodySmall,
+                      textColor: tdTheme.fontGyColor2,
+                    ),
+                  ),
+                  if (state.isDirty)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: tdTheme.brandLightColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TDText(
+                        l10n.modified,
+                        font: tdTheme.fontBodySmall,
+                        textColor: tdTheme.brandNormalColor,
+                      ),
+                    ),
+                ],
               ),
-              child: TDText(
-                l10n.modified,
-                font: tdTheme.fontBodySmall,
-                textColor: tdTheme.brandNormalColor,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TDButton(
+                    text: l10n.restoreDefaults,
+                    theme: TDButtonTheme.defaultTheme,
+                    icon: TDIcons.history,
+                    size: TDButtonSize.small,
+                    onTap: () => showRestoreDefaultsDialog(context, ref, _updateProject),
+                  ),
+                  const SizedBox(width: 8),
+                  TDButton(
+                    text: l10n.addType,
+                    theme: TDButtonTheme.primary,
+                    icon: TDIcons.add,
+                    size: TDButtonSize.small,
+                    onTap: () => showAddDataTypeDialog(context, ref, _updateProject),
+                  ),
+                ],
               ),
-            ),
-          const Spacer(),
-          // Action buttons
-          TDButton(
-            text: l10n.restoreDefaults,
-            theme: TDButtonTheme.defaultTheme,
-            icon: TDIcons.history,
-            onTap: () => showRestoreDefaultsDialog(context, ref, _updateProject),
-          ),
-          const SizedBox(width: 12),
-          TDButton(
-            text: l10n.addType,
-            theme: TDButtonTheme.primary,
-            icon: TDIcons.add,
-            onTap: () => showAddDataTypeDialog(context, ref, _updateProject),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -154,49 +239,57 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
     final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Search field
-          Expanded(
-            child: TDInput(
-              hintText: l10n.searchTypes,
-              leftIcon: Icon(TDIcons.search, color: tdTheme.fontGyColor3),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Filter toggles using TDTag wrapped in GestureDetector
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showDefaultTypes = !_showDefaultTypes;
-              });
-            },
-            child: TDTag(
-              l10n.defaultTypes,
-              theme: _showDefaultTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
-              size: TDTagSize.medium,
-            ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showCustomTypes = !_showCustomTypes;
-              });
-            },
-            child: TDTag(
-              l10n.customTypes,
-              theme: _showCustomTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
-              size: TDTagSize.medium,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final hasFullSpace = constraints.maxWidth > 500;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Search field
+              Expanded(
+                child: TDInput(
+                  hintText: l10n.searchTypes,
+                  leftIcon: Icon(TDIcons.search, color: tdTheme.fontGyColor3),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
+              ),
+              if (hasFullSpace) ...[
+                const SizedBox(width: 16),
+                // Filter toggles using TDTag wrapped in GestureDetector
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showDefaultTypes = !_showDefaultTypes;
+                    });
+                  },
+                  child: TDTag(
+                    l10n.defaultTypes,
+                    theme: _showDefaultTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+                    size: TDTagSize.medium,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showCustomTypes = !_showCustomTypes;
+                    });
+                  },
+                  child: TDTag(
+                    l10n.customTypes,
+                    theme: _showCustomTypes ? TDTagTheme.primary : TDTagTheme.defaultTheme,
+                    size: TDTagSize.medium,
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -281,6 +374,8 @@ class _DataTypeViewState extends ConsumerState<DataTypeView> {
           title,
           font: tdTheme.fontTitleSmall,
           fontWeight: FontWeight.w600,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
         const SizedBox(width: 8),
         Container(
