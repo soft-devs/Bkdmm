@@ -958,6 +958,6 @@ class VirtualizedCanvas extends StatelessWidget {
 
 ---
 
-*文档版本: 2.0*
+*文档版本: 2.1*
 *基于 LogicFlow 架构设计*
-*最后更新: 2025-06-26*
+*最后更新: 2026-06-29*

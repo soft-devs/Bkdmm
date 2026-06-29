@@ -171,7 +171,6 @@ class ModificationOverlay extends StatelessWidget {
   /// 构建拖拽占位符
   Widget _buildDragPlaceholders() {
     final selectedIds = state.selection.selectedNodeIds;
-    final draggedId = state.interaction.draggedNodeId;
 
     return Stack(
       children: selectedIds.map((nodeId) {
@@ -199,7 +198,7 @@ class ModificationOverlay extends StatelessWidget {
                 color: dragPlaceholderColor,
                 borderRadius: BorderRadius.circular(4 * context.zoom),
                 border: Border.all(
-                  color: dragPlaceholderColor.withOpacity(0.8),
+                  color: dragPlaceholderColor.withValues(alpha: 0.8),
                   width: 1,
                 ),
               ),
@@ -227,7 +226,7 @@ class _BoxSelectionPainter extends CustomPainter {
 
     // 绘制半透明填充
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.1)
+      ..color = color.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
     canvas.drawRect(rect, fillPaint);
 
@@ -546,7 +545,7 @@ class DragPlaceholderOverlay extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(4 * this.context.zoom),
                 border: Border.all(
-                  color: color.withOpacity(0.8),
+                  color: color.withValues(alpha: 0.8),
                   width: 1,
                 ),
               ),

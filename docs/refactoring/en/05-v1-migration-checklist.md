@@ -2,31 +2,102 @@
 
 ## 概述
 
-本文档记录 V1 版本 ER 图画布的所有功能，用于指导 V2 版本的迁移和测试验证。
+本文档记录当前 ER 图画布的所有功能，用于测试验证和未来扩展参考。
 
 ---
 
-## 一、画布功能 (Canvas Features)
+## 一、架构概览
 
-### 1.1 视口控制
+### 1.1 当前实现方式
+
+ER 图基于 `diagram_editor` 框架实现：
+
+```
+ERDiagramCanvas
+    │
+    ├── 使用 diagram_editor 框架
+    │   ├── DiagramState 状态管理
+    │   ├── GraphView 分层渲染
+    │   ├── ERInteractionManager 交互处理
+    │   └── NodeModel/EdgeModel 数据封装
+    │
+    └── ER 图特有组件
+        ├── ERTableNodeWidget 表节点渲染
+        ├── ERFieldAnchorWidget 字段锚点
+        └── ERDiagramUIState/UIProvider UI 状态管理
+```
+
+### 1.2 数据流
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                         数据流向                                      │
+│                                                                       │
+│  ProjectNotifier (Riverpod)                                          │
+│       │                                                               │
+│       │ 提供                                                          │
+│       ▼                                                               │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │ Module                                                           ││
+│  │  ├── entities: List<Entity>      # 实体数据                      ││
+│  │  └── graphCanvas.nodes: List<GraphNode>  # 节点位置              ││
+│  │  └── graphCanvas.edges: List<GraphEdge>  # 关系连线              ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│       │                                                               │
+│       │ 转换                                                          │
+│       ▼                                                               │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │ DiagramState (diagram_editor)                                    ││
+│  │  ├── nodes: Map<String, DiagramNode>                             ││
+│  │  ├── nodeStates: Map<String, NodeState>                          ││
+│  │  └── viewport/interaction/selection 状态                         ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│       │                                                               │
+│       │ 渲染                                                          │
+│       ▼                                                               │
+│  GraphView → ERTableNodeWidget                                       │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                         UI 状态管理                                   │
+│                                                                       │
+│  erDiagramUIProvider(moduleId)                                       │
+│       │                                                               │
+│       ▼                                                               │
+│  ERDiagramUIState                                                    │
+│  ├── interactionMode: preview/edit                                   │
+│  ├── selectedNodeIds: Set<String>                                    │
+│  ├── hoveredNodeId: String?                                          │
+│  ├── draggingNodeIds: Set<String>                                    │
+│  ├── viewport: ERViewportState                                       │
+│  ├── connection: ERConnectionState                                   │
+│  └── selection: ERSelectionState                                     │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 二、画布功能 (Canvas Features)
+
+### 2.1 视口控制
 
 | 功能 | 操作 | 预览模式 | 编辑模式 | 实现位置 |
 |------|------|:--------:|:--------:|----------|
-| 平移画布 | 左键拖动 | ✅ | ❌ | InteractiveViewer (panEnabled=true) |
-| 平移画布 | 右键拖动 | ❌ | ✅ | 画布 Listener 手动处理 |
-| 缩放画布 | 滚轮 | ✅ | ✅ | InteractiveViewer |
+| 平移画布 | 左键拖动 | ✅ | ❌ | GraphView 内部 |
+| 平移画布 | 右键拖动 | ❌ | ✅ | ERInteractionManager |
+| 缩放画布 | 滚轮 | ✅ | ✅ | GraphView 内部 |
 | 缩放画布 | 工具栏按钮 | ✅ | ✅ | `_zoomIn()`, `_zoomOut()` |
 | 适应屏幕 | 工具栏按钮 | ✅ | ✅ | `_fitToScreen()` |
-| 显示坐标 | 鼠标悬停 | ✅ | ✅ | 左下角坐标显示 |
+| 显示坐标 | 鼠标悬停 | ✅ | ✅ | `_buildCoordinateDisplay()` |
 
-### 1.2 交互模式
+### 2.2 交互模式
 
-| 模式 | 说明 | panEnabled | 可用操作 |
-|------|------|:----------:|----------|
-| 预览模式 (Preview) | 仅查看，不可编辑 | true | 左键拖动画布、滚轮缩放、双击预览实体 |
-| 编辑模式 (Edit) | 可编辑实体和关系 | false | 左键选节点/框选/拖动/连线、右键拖动画布 |
+| 模式 | 说明 | 可用操作 |
+|------|------|----------|
+| 预览模式 (Preview) | 仅查看，不可编辑 | 左键拖动画布、滚轮缩放、双击预览实体 |
+| 编辑模式 (Edit) | 可编辑实体和关系 | 左键选节点/框选/拖动/连线、右键拖动画布、双击编辑实体 |
 
-### 1.3 工具栏功能
+### 2.3 工具栏功能
 
 | 按钮 | 功能 | 实现方法 |
 |------|------|----------|
@@ -35,23 +106,25 @@
 | 放大 | 放大画布 | `_zoomIn()` |
 | 缩小 | 缩小画布 | `_zoomOut()` |
 | 适应屏幕 | 缩放以适应所有节点 | `_fitToScreen()` |
-| 自动布局 | Sugiyama 算法自动布局 | `_autoLayout()` |
+| 撤销 | 撤销操作 | `_undo()` |
+| 重做 | 重做操作 | `_redo()` |
+| 自动布局 | 自动排列节点 | `_autoLayout()` (TODO) |
 
-### 1.4 渲染层
+### 2.4 渲染层
 
 | 层级 | 内容 | 实现方式 |
 |------|------|----------|
-| 背景层 | 无限网格 | `_InfiniteGridPainter` (在 InteractiveViewer 外部) |
-| 节点层 | 表节点 Widget | `_ERGraphView` → `ERTableNodeWidget` |
-| 边层 | 实体关系连线 | `_EdgePainter` |
-| 连线预览层 | 连线时的虚线预览 | `_ConnectionPreviewPainter` (屏幕坐标) |
-| 框选预览层 | 框选矩形 | `_SelectionRectPainter` (屏幕坐标) |
+| 主画布 | GraphView 分层渲染 | diagram_editor 框架 |
+| 工具栏 | 右上角工具按钮 | Positioned Widget |
+| 坐标显示 | 左下角坐标信息 | Positioned Widget |
+| 连线预览 | 连线时的虚线预览 | `_ConnectionPreviewPainter` |
+| 框选预览 | 框选矩形 | `_SelectionRectPainter` |
 
 ---
 
-## 二、节点功能 (Node Features)
+## 三、节点功能 (Node Features)
 
-### 2.1 节点渲染
+### 3.1 节点渲染 (ERTableNodeWidget)
 
 | 功能 | 说明 | 实现位置 |
 |------|------|----------|
@@ -60,37 +133,33 @@
 | 主键标记 | 钥匙图标 | `Icons.vpn_key` |
 | 选中状态 | 蓝色边框 + 阴影 | `isSelected` 参数 |
 | 尺寸计算 | 根据字段数量计算高度 | `calculateNodeSize()` |
+| 锚点显示 | 字段两侧连接点 | `ERFieldAnchorWidget` |
 
-### 2.2 节点交互
+### 3.2 节点交互
 
 | 操作 | 模式 | 功能 | 实现方式 |
 |------|------|------|----------|
-| 单击 | 编辑 | 选中节点 | `GestureDetector.onTap` |
-| Ctrl+单击 | 编辑 | 多选/取消选中 | `isCtrlPressed` 检测 |
+| 单击 | 编辑 | 选中节点 | `_onNodeTap()` |
+| Ctrl+单击 | 编辑 | 多选/取消选中 | `selectNodeMultiple()` |
 | 双击 | 预览 | 打开预览弹窗 | `onEntityPreview` 回调 |
 | 双击 | 编辑 | 打开编辑弹窗 | `onEntityEdit` 回调 |
-| 拖动 | 编辑 | 移动节点 | `GestureDetector.onPanStart/Update/End` |
-| 拖动 (多选) | 编辑 | 移动所有选中节点 | `draggingNodeIds` + `_multiDragStartPositions` |
+| 拖动 | 编辑 | 移动节点 | `_onNodeDragStart/Update/End()` |
+| 拖动 (多选) | 编辑 | 移动所有选中节点 | `_multiDragStartPositions` |
 
-### 2.3 事件拦截机制
+### 3.3 节点尺寸常量
 
-节点使用双重策略确保事件正确处理：
-
+```dart
+static const double defaultWidth = 200.0;
+static const double headerHeight = 40.0;
+static const double fieldRowHeight = 28.0;
+static const double minNodeHeight = 80.0;
 ```
-Listener (opaque)     ← 拦截事件，阻止传递给画布
-  └── GestureDetector ← 处理手势
-        └── 节点内容
-```
-
-**关键配置**：
-- `Listener.behavior = HitTestBehavior.opaque` - 拦截所有事件
-- `GestureDetector.behavior = HitTestBehavior.opaque` - 确保整个节点区域可响应
 
 ---
 
-## 三、锚点功能 (Anchor Features)
+## 四、锚点功能 (Anchor Features)
 
-### 3.1 锚点渲染
+### 4.1 锚点渲染 (ERFieldAnchorWidget)
 
 | 功能 | 说明 |
 |------|------|
@@ -99,113 +168,31 @@ Listener (opaque)     ← 拦截事件，阻止传递给画布
 | 颜色 | 主键字段黄色，普通字段蓝色 |
 | 显示条件 | 仅编辑模式显示 |
 
-### 3.2 锚点交互
+### 4.2 锚点交互
 
 | 操作 | 功能 | 实现方式 |
 |------|------|----------|
 | 第一次点击 | 开始连线 | `startConnection()` |
 | 第二次点击 | 完成连线 | `completeConnection()` |
-| 移动预览 | 显示连线预览 | `updateConnectionPreview()` |
+| 移动预览 | 显示连线预览 | `connection.previewEnd` |
 
-### 3.3 事件处理
-
-锚点使用独立的 `Listener`，优先级最高：
+### 4.3 锚点数据结构
 
 ```dart
-Listener(
-  behavior: HitTestBehavior.opaque,
-  onPointerDown: (event) {
-    // 创建锚点数据，触发 onAnchorTap
-  },
-  child: MouseRegion(
-    cursor: SystemMouseCursors.cell,
-    child: 锚点视觉元素,
-  ),
-)
-```
+class ERFieldAnchor {
+  final String nodeId;         // 所属节点ID（实体ID）
+  final int fieldIndex;        // 字段索引
+  final ERAnchorDirection direction;  // 锚点方向 (left/right)
+  final Offset position;       // 锚点位置（绝对坐标）
+  
+  String get id => '$nodeId:field:$fieldIndex:${direction.name}';
+}
 
----
-
-## 四、事件机制 (Event Mechanism)
-
-### 4.1 Widget 层级结构
-
-```
-ERDiagramCanvas (画布)
-├── Listener (画布级事件监听, translucent)
-│   └── MouseRegion
-│       └── Stack
-│           ├── IgnorePointer (网格背景)
-│           └── InteractiveViewer (动态 panEnabled)
-│               └── _ERGraphView
-│                   └── ERTableNodeWidget (节点)
-│                       ├── Listener (opaque, 拦截事件)
-│                       │   └── GestureDetector (处理手势)
-│                       │       └── 节点内容
-│                       └── ERFieldAnchorLayer (锚点层)
-│                           └── Listener (每个锚点)
-```
-
-### 4.2 事件处理流程
-
-#### 预览模式
-
-```
-用户操作 → Listener (translucent, 记录) → InteractiveViewer (panEnabled=true)
-                                             ↓
-                                    内置手势处理 (平移/缩放)
-```
-
-#### 编辑模式
-
-```
-用户操作 → Listener (translucent, 记录)
-                ↓
-           检查按钮类型
-                ↓
-    ┌──────────┴──────────┐
-    ↓                     ↓
- 右键拖动             左键操作
- (手动平移)              ↓
-               InteractiveViewer (panEnabled=false)
-                        ↓
-                   手动命中测试
-                        ↓
-         ┌──────────────┼──────────────┐
-         ↓              ↓              ↓
-     在锚点上        在节点上       在空白区域
-   (锚点处理)      (节点处理)     (开始框选)
-```
-
-### 4.3 手动命中测试
-
-V1 版本的关键设计，解决远距离节点事件失效问题：
-
-```dart
-// 1. 屏幕坐标 → 画布坐标
-final transform = _transformationController.value;
-final inverseTransform = Matrix4.inverted(transform);
-final canvasPos = MatrixUtils.transformPoint(inverseTransform, event.localPosition);
-
-// 2. 遍历节点检查点击位置
-for (final entity in module.entities) {
-  final nodeRect = Rect.fromLTWH(graphNode.x, graphNode.y, width, height);
-  // 扩大点击区域以包含锚点
-  final expandedRect = nodeRect.inflate(ERFieldAnchorWidget.hitSize);
-  if (expandedRect.contains(canvasPos)) {
-    // 手动触发选中/拖动
-    break;
-  }
+enum ERAnchorDirection {
+  left,   // 出边连接点
+  right,  // 入边连接点
 }
 ```
-
-### 4.4 HitTestBehavior 说明
-
-| 值 | 行为 | 使用位置 |
-|---|------|----------|
-| `translucent` | 事件穿透到子组件，同时自己也收到事件 | 画布 Listener |
-| `opaque` | 拦截事件，阻止传递给父级 | 节点 Listener、锚点 Listener |
-| `deferToChild` | 仅当点击子组件时才响应 | 不使用 |
 
 ---
 
@@ -215,13 +202,14 @@ for (final entity in module.entities) {
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `interactionMode` | `ERInteractionMode` | 当前交互模式 (preview/edit) |
+| `moduleId` | `String` | 模块 ID |
+| `interactionMode` | `ERInteractionMode` | 当前交互模式 |
 | `selectedNodeIds` | `Set<String>` | 选中的节点 ID 集合 |
+| `hoveredNodeId` | `String?` | 悬停的节点 ID |
 | `draggingNodeIds` | `Set<String>` | 正在拖动的节点 ID 集合 |
-| `isConnecting` | `bool` | 是否正在连线 |
-| `connection` | `ConnectionState` | 连线状态 (源锚点、预览终点) |
-| `isSelecting` | `bool` | 是否正在框选 |
-| `selection` | `SelectionState` | 框选状态 (框选矩形) |
+| `viewport` | `ERViewportState` | 视口状态 (zoom, pan) |
+| `connection` | `ERConnectionState` | 连线状态 |
+| `selection` | `ERSelectionState` | 框选状态 |
 
 ### 5.2 Provider 结构
 
@@ -236,57 +224,89 @@ erDiagramUIProvider(moduleId)
     └── ERDiagramUIState                    # UI 状态
 ```
 
+### 5.3 状态更新方法
+
+```dart
+// 模式切换
+void enterPreviewMode();
+void enterEditMode();
+void toggleMode();
+
+// 选择
+void selectNodeSingle(String nodeId);
+void selectNodeMultiple(String nodeId);
+void selectNodesByRect(Set<String> nodeIds);
+void clearSelection();
+void selectAll(List<String> nodeIds);
+
+// 悬停
+void setHoveredNode(String? nodeId);
+
+// 拖动
+void startDragging(String nodeId);
+void endDragging();
+
+// 连线
+void startConnection(ERFieldAnchor anchor);
+void updateConnectionPreview(Offset position);
+void completeConnection(ERFieldAnchor anchor);
+void cancelConnection();
+
+// 框选
+void startSelection(Offset startPoint);
+void updateSelection(Offset currentPoint);
+void endSelection();
+```
+
 ---
 
-## 六、V2 迁移清单
+## 六、diagram_editor 框架集成
 
-### 6.1 已完成的迁移
+### 6.1 核心组件映射
 
-| 文件 | 状态 | 说明 |
-|------|:----:|------|
-| `handlers/diagram_event.dart` | ✅ | 事件定义 |
-| `handlers/diagram_context.dart` | ✅ | 上下文定义 |
-| `handlers/diagram_handler.dart` | ✅ | 处理器基类 |
-| `handlers/handler_registry.dart` | ✅ | 处理器注册表 |
-| `handlers/anchor_click_handler.dart` | ✅ | 锚点点击处理器 |
-| `handlers/node_drag_handler.dart` | ✅ | 节点拖动处理器 |
-| `handlers/selection_handler.dart` | ✅ | 框选处理器 |
-| `handlers/canvas_pan_handler.dart` | ✅ | 画布平移处理器 |
-| `spatial/spatial_index.dart` | ✅ | 空间索引接口 |
-| `spatial/simple_index.dart` | ✅ | 简单空间索引实现 |
-| `commands/diagram_command.dart` | ✅ | 命令基类 |
-| `commands/history_controller.dart` | ✅ | 历史控制器 |
-| `integration/er_interaction_manager.dart` | ✅ | ER 图交互管理器 |
-| `integration/er_interaction_provider.dart` | ✅ | Riverpod Provider |
+| ER 图组件 | diagram_editor 组件 |
+|-----------|---------------------|
+| `ERDiagramCanvas` | `GraphView` |
+| Entity | `DiagramNode` (通过 NodeModel) |
+| GraphNode (位置) | `NodeModel.position` |
+| 关系连线 | `DiagramEdge` (TODO) |
+| `ERInteractionManager` | 处理交互逻辑 |
+| `ERDiagramUIState` | `DiagramState` 的一部分 |
 
-### 6.2 待完成的工作
+### 6.2 DiagramState 构建
 
-| 任务 | 优先级 | 说明 |
-|------|:------:|------|
-| ERDiagramCanvasV2 事件集成 | 高 | 将 ERInteractionManager 集成到画布 |
-| 解决 InteractiveViewer 事件拦截问题 | 高 | V2 核心问题 |
-| 连线处理器 (ConnectionHandler) | 中 | 需要补充 |
-| 锚点命中测试集成 | 中 | 空间索引需要包含锚点 |
-| 多选拖动支持 | 中 | 当前处理器支持但画布未集成 |
-| 命令集成 | 低 | 节点移动命令等 |
-| Undo/Redo UI | 低 | 快捷键和工具栏按钮 |
-
-### 6.3 V2 已知问题
-
-1. **InteractiveViewer 拦截事件**
-   - 问题：即使 `panEnabled=false`，InteractiveViewer 仍可能拦截手势事件
-   - 影响：节点和锚点无法收到事件
-   - 解决方案：考虑完全移除 InteractiveViewer 或使用更底层的实现
-
-2. **空间索引初始化**
-   - 问题：空间索引可能未正确初始化或更新
-   - 影响：命中测试失败
-   - 解决方案：确保节点渲染后更新索引
-
-3. **事件传递链断裂**
-   - 问题：V2 移除了节点外层的 Listener 拦截器
-   - 影响：无法阻止事件传递到画布
-   - 解决方案：恢复双重 Listener 策略
+```dart
+void _updateDiagramState(Module module, ERDiagramUIState uiState) {
+  final nodes = <String, DiagramNode>{};
+  final nodeStates = <String, NodeState>{};
+  
+  for (final entity in module.entities) {
+    final node = NodeModel(
+      id: entity.id,
+      type: 'er_table',
+      title: entity.title,
+      position: Offset(graphNode.x, graphNode.y),
+      size: ERTableNodeWidget.calculateNodeSize(entity.fields.length),
+      data: entity,
+    );
+    
+    nodes[entity.id] = node;
+    nodeStates[entity.id] = NodeState(
+      isSelected: uiState.selectedNodeIds.contains(entity.id),
+      isHovered: uiState.hoveredNodeId == entity.id,
+      isDragging: uiState.draggingNodeIds.contains(entity.id),
+    );
+  }
+  
+  _diagramState = DiagramState(
+    diagramId: widget.moduleId,
+    diagramType: 'er_diagram',
+    nodes: nodes,
+    nodeStates: nodeStates,
+    ...
+  );
+}
+```
 
 ---
 
@@ -299,7 +319,6 @@ erDiagramUIProvider(moduleId)
 - [ ] 滚轮缩放画布
 - [ ] 工具栏缩放按钮
 - [ ] 适应屏幕功能
-- [ ] 自动布局功能
 - [ ] 坐标显示正确
 
 ### 7.2 节点测试
@@ -310,7 +329,7 @@ erDiagramUIProvider(moduleId)
 - [ ] 拖动单个节点
 - [ ] 多选拖动多个节点
 - [ ] 节点选中状态视觉反馈
-- [ ] 远距离节点事件响应
+- [ ] 字段列表正确显示
 
 ### 7.3 锚点测试
 
@@ -329,5 +348,19 @@ erDiagramUIProvider(moduleId)
 
 ---
 
-*文档版本: 1.0*
-*最后更新: 2025-06-26*
+## 八、待完成功能
+
+| 功能 | 优先级 | 说明 |
+|------|:------:|------|
+| 连线完成创建关系 | 高 | 点击第二个锚点后创建 Edge |
+| 关系线渲染 | 高 | ERRelationEdgeModel/Painter |
+| 自动布局 | 中 | Sugiyama 或其他算法 |
+| Undo/Redo 集成 | 中 | 历史记录功能 |
+| 键盘快捷键 | 低 | Ctrl+A 全选、Delete 删除等 |
+| 右键菜单 | 低 | 节点/画布右键菜单 |
+
+---
+
+*文档版本: 2.0*
+*基于 diagram_editor 框架*
+*最后更新: 2026-06-29*

@@ -4,13 +4,12 @@ import '../../../../core/i18n/i18n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/models/models.dart';
 
-/// Field table widget with custom table implementation
+/// Field table widget using TDTable with drag-to-reorder support
 ///
 /// Features:
 /// - Columns: Order, Primary Key, Field Name, Data Type, Chinese Name, Not Null, Auto Increment, Remark, Actions
 /// - Inline editing with checkboxes and type selector
 /// - Add/edit/delete rows
-/// - Row selection with highlight
 /// - Drag to reorder fields
 class FieldTable extends StatefulWidget {
   final List<Field> fields;
@@ -77,7 +76,7 @@ class _FieldTableState extends State<FieldTable> {
         Expanded(
           child: widget.fields.isEmpty
               ? _buildEmptyState(tdTheme, l10n)
-              : _buildTable(tdTheme, l10n),
+              : _buildTableWithReorder(tdTheme, l10n),
         ),
       ],
     );
@@ -110,143 +109,64 @@ class _FieldTableState extends State<FieldTable> {
     );
   }
 
-  Widget _buildTable(TDThemeData tdTheme, AppLocalizations l10n) {
+  Widget _buildTableWithReorder(TDThemeData tdTheme, AppLocalizations l10n) {
+    // 固定列宽总和
+    const double totalWidth = 36 + 48 + 120 + 100 + 100 + 64 + 72 + 100 + 72; // 712
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth;
-
-        // Column widths - all columns get explicit widths
-        // Fixed/narrow columns: order, pk, notNull, autoInc, actions
-        const double orderWidth = 36.0; // Drag handle column
-        const double pkWidth = 48.0;
-        const double notNullWidth = 64.0;
-        const double autoIncWidth = 72.0;
-        const double actionsWidth = 72.0;
-
-        // Total fixed columns width
-        const double fixedColumnsWidth = orderWidth + pkWidth + notNullWidth + autoIncWidth + actionsWidth;
-
-        // Calculate remaining width for flexible columns
-        final remainingWidth = availableWidth - fixedColumnsWidth;
-
-        // Minimum widths for flexible columns
-        const double minNameWidth = 80.0;
-        const double minTypeWidth = 70.0;
-        const double minChnnameWidth = 70.0;
-        const double minRemarkWidth = 50.0;
-        const double totalMinFlexible = minNameWidth + minTypeWidth + minChnnameWidth + minRemarkWidth;
-
-        // If remaining space is too small, enable horizontal scroll
-        if (remainingWidth < totalMinFlexible) {
+        // 如果容器宽度小于表格总宽度，启用水平滚动
+        if (constraints.maxWidth < totalWidth) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width: fixedColumnsWidth + totalMinFlexible,
-              child: _buildTableContent(
-                tdTheme,
-                l10n,
-                orderWidth, pkWidth,
-                minNameWidth, minTypeWidth, minChnnameWidth, minRemarkWidth,
-                notNullWidth, autoIncWidth, actionsWidth,
-              ),
+              width: totalWidth,
+              height: constraints.maxHeight,
+              child: _buildReorderableList(tdTheme, l10n),
             ),
           );
         }
 
-        // Distribute remaining width proportionally (40%, 20%, 20%, 20%)
-        final nameWidth = (remainingWidth * 0.40).clamp(minNameWidth, double.infinity);
-        final typeWidth = (remainingWidth * 0.20).clamp(minTypeWidth, double.infinity);
-        final chnnameWidth = (remainingWidth * 0.20).clamp(minChnnameWidth, double.infinity);
-        // remarkWidth takes the remaining to ensure total equals availableWidth
-        final remarkWidth = remainingWidth - nameWidth - typeWidth - chnnameWidth;
+        // 宽度足够，直接显示
+        return _buildReorderableList(tdTheme, l10n);
+      },
+    );
+  }
 
-        return _buildTableContent(
-          tdTheme,
-          l10n,
-          orderWidth, pkWidth,
-          nameWidth, typeWidth, chnnameWidth, remarkWidth,
-          notNullWidth, autoIncWidth, actionsWidth,
+  Widget _buildReorderableList(TDThemeData tdTheme, AppLocalizations l10n) {
+    // 使用 ReorderableListView 包装 TDTable 的内容
+    return ReorderableListView.builder(
+      buildDefaultDragHandles: false,
+      itemCount: widget.fields.length + 1, // +1 for header
+      onReorder: (oldIndex, newIndex) {
+        // Header can't be reordered
+        if (oldIndex == 0 || newIndex == 0) return;
+        // Adjust indices (account for header)
+        widget.onReorderFields(oldIndex - 1, newIndex - 1);
+      },
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          // Header row - not draggable
+          return _buildHeaderRow(tdTheme, l10n);
+        }
+        final fieldIndex = index - 1;
+        final field = widget.fields[fieldIndex];
+        final isSelected = _selectedFieldIds.contains(field.id);
+        return _buildDataRow(
+          key: ValueKey(field.id),
+          field: field,
+          index: fieldIndex,
+          isSelected: isSelected,
+          tdTheme: tdTheme,
+          l10n: l10n,
         );
       },
     );
   }
 
-  Widget _buildTableContent(
-    TDThemeData tdTheme,
-    AppLocalizations l10n,
-    double orderWidth,
-    double pkWidth,
-    double nameWidth,
-    double typeWidth,
-    double chnnameWidth,
-    double notNullWidth,
-    double autoIncWidth,
-    double remarkWidth,
-    double actionsWidth,
-  ) {
+  Widget _buildHeaderRow(TDThemeData tdTheme, AppLocalizations l10n) {
     return Container(
-      decoration: BoxDecoration(
-        color: tdTheme.bgColorContainer,
-        border: Border.all(color: tdTheme.componentBorderColor),
-        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-        child: Column(
-          children: [
-            // Header row
-            _buildHeaderRow(tdTheme, l10n, orderWidth, pkWidth, nameWidth, typeWidth, chnnameWidth, notNullWidth, autoIncWidth, remarkWidth, actionsWidth),
-
-            // Data rows with reorder support
-            Expanded(
-              child: ReorderableListView.builder(
-                buildDefaultDragHandles: false,
-                itemCount: widget.fields.length,
-                onReorder: (oldIndex, newIndex) {
-                  widget.onReorderFields(oldIndex, newIndex);
-                },
-                itemBuilder: (context, index) {
-                  final field = widget.fields[index];
-                  final isSelected = _selectedFieldIds.contains(field.id);
-                  return _buildDataRow(
-                    key: ValueKey(field.id),
-                    field: field,
-                    index: index,
-                    isSelected: isSelected,
-                    tdTheme: tdTheme,
-                    orderWidth: orderWidth,
-                    pkWidth: pkWidth,
-                    nameWidth: nameWidth,
-                    typeWidth: typeWidth,
-                    chnnameWidth: chnnameWidth,
-                    notNullWidth: notNullWidth,
-                    autoIncWidth: autoIncWidth,
-                    remarkWidth: remarkWidth,
-                    actionsWidth: actionsWidth,
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderRow(
-    TDThemeData tdTheme,
-    AppLocalizations l10n,
-    double orderWidth,
-    double pkWidth,
-    double nameWidth,
-    double typeWidth,
-    double chnnameWidth,
-    double notNullWidth,
-    double autoIncWidth,
-    double remarkWidth,
-    double actionsWidth,
-  ) {
-    return Container(
+      key: const ValueKey('__header__'),
       height: 44,
       decoration: BoxDecoration(
         color: tdTheme.bgColorSecondaryContainer,
@@ -256,15 +176,15 @@ class _FieldTableState extends State<FieldTable> {
       ),
       child: Row(
         children: [
-          _buildHeaderCell('#', orderWidth, tdTheme, centered: true),
-          _buildHeaderCell(l10n.pk, pkWidth, tdTheme, centered: true),
-          _buildHeaderCell(l10n.fieldName, nameWidth, tdTheme),
-          _buildHeaderCell(l10n.dataType, typeWidth, tdTheme),
-          _buildHeaderCell(l10n.chineseName, chnnameWidth, tdTheme),
-          _buildHeaderCell(l10n.notNull, notNullWidth, tdTheme, centered: true),
-          _buildHeaderCell(l10n.autoIncrement, autoIncWidth, tdTheme, centered: true),
-          _buildHeaderCell(l10n.fieldRemark, remarkWidth, tdTheme),
-          _buildHeaderCell(l10n.actions, actionsWidth, tdTheme, centered: true, isLast: true),
+          _buildHeaderCell('#', 36, tdTheme, centered: true),
+          _buildHeaderCell(l10n.pk, 48, tdTheme, centered: true),
+          _buildHeaderCell(l10n.fieldName, 120, tdTheme),
+          _buildHeaderCell(l10n.dataType, 100, tdTheme),
+          _buildHeaderCell(l10n.chineseName, 100, tdTheme),
+          _buildHeaderCell(l10n.notNull, 64, tdTheme, centered: true),
+          _buildHeaderCell(l10n.autoIncrement, 72, tdTheme, centered: true),
+          _buildHeaderCell(l10n.fieldRemark, 100, tdTheme),
+          _buildHeaderCell(l10n.actions, 72, tdTheme, centered: true, isLast: true),
         ],
       ),
     );
@@ -297,15 +217,7 @@ class _FieldTableState extends State<FieldTable> {
     required int index,
     required bool isSelected,
     required TDThemeData tdTheme,
-    required double orderWidth,
-    required double pkWidth,
-    required double nameWidth,
-    required double typeWidth,
-    required double chnnameWidth,
-    required double notNullWidth,
-    required double autoIncWidth,
-    required double remarkWidth,
-    required double actionsWidth,
+    required AppLocalizations l10n,
   }) {
     final rowColor = isSelected
         ? tdTheme.brandNormalColor.withValues(alpha: 0.08)
@@ -333,23 +245,23 @@ class _FieldTableState extends State<FieldTable> {
         child: Row(
           children: [
             // Order/drag handle
-            _buildOrderCell(index, orderWidth, tdTheme),
+            _buildOrderCell(index, 36, tdTheme),
             // PK checkbox
-            _buildCheckboxCell(field, 'pk', pkWidth, tdTheme, isSelected),
-            // Field name - clickable for edit
-            _buildEditableTextCell(field.name, nameWidth, tdTheme, isSelected, () => _showEditFieldDialog(field)),
+            _buildCheckboxCell(field, 'pk', 48, tdTheme, isSelected),
+            // Field name
+            _buildEditableTextCell(field.name, 120, tdTheme, isSelected, () => _showEditFieldDialog(field)),
             // Data type
-            _buildTypeCell(field, typeWidth, tdTheme, isSelected),
-            // Chinese name - clickable for edit
-            _buildEditableTextCell(field.chnname, chnnameWidth, tdTheme, isSelected, () => _showEditFieldDialog(field)),
-            // Not Null checkbox
-            _buildCheckboxCell(field, 'notNull', notNullWidth, tdTheme, isSelected),
-            // Auto Increment checkbox
-            _buildCheckboxCell(field, 'autoIncrement', autoIncWidth, tdTheme, isSelected),
+            _buildTypeCell(field, 100, tdTheme, isSelected),
+            // Chinese name
+            _buildEditableTextCell(field.chnname, 100, tdTheme, isSelected, () => _showEditFieldDialog(field)),
+            // Not Null
+            _buildCheckboxCell(field, 'notNull', 64, tdTheme, isSelected),
+            // Auto Increment
+            _buildCheckboxCell(field, 'autoIncrement', 72, tdTheme, isSelected),
             // Remark
-            _buildTextCell(field.remark ?? '', remarkWidth, tdTheme, isSelected),
+            _buildTextCell(field.remark ?? '', 100, tdTheme, isSelected),
             // Actions
-            // _buildActionsCell(field, actionsWidth, tdTheme),
+            _buildActionsCell(field, 72, tdTheme),
           ],
         ),
       ),
@@ -365,7 +277,7 @@ class _FieldTableState extends State<FieldTable> {
         border: Border(right: BorderSide(color: tdTheme.componentBorderColor.withValues(alpha: 0.3))),
       ),
       child: ReorderableDragStartListener(
-        index: index,
+        index: index + 1, // +1 because header is at index 0
         child: MouseRegion(
           cursor: SystemMouseCursors.grab,
           child: Padding(

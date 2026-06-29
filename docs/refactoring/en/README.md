@@ -88,4 +88,118 @@
 
 ---
 
-*最后更新: 2025-06-26*
+## 📁 当前文件结构
+
+```
+lib/shared/diagram_editor/
+├── diagram_editor.dart              # 导出文件（门面 API）
+│
+├── src/
+│   ├── diagram_editor.dart          # DiagramEditor 主入口类
+│   │
+│   ├── core/                        # 核心抽象
+│   │   ├── diagram_node.dart        # DiagramNode 抽象类
+│   │   ├── diagram_edge.dart        # DiagramEdge 抽象类
+│   │   └── diagram_state.dart       # DiagramState 状态容器
+│   │
+│   ├── model/                       # 数据模型
+│   │   ├── node_model.dart          # NodeModel 实现
+│   │   ├── edge_model.dart          # EdgeModel 实现
+│   │   ├── transform_model.dart     # 视口变换模型
+│   │   └ graph_model.dart           # 图数据模型
+│   │
+│   ├── event/                       # 事件系统
+│   │   ├── event_types.dart         # 事件类型常量
+│   │   └ event_center.dart          # 事件发射器
+│   │
+│   ├── handlers/                    # 事件处理器
+│   │   ├── diagram_event.dart       # 事件定义
+│   │   ├── diagram_context.dart     # 处理上下文
+│   │   ├── diagram_handler.dart     # 处理器基类
+│   │   ├── handler_registry.dart    # 处理器注册表
+│   │   ├── pointer_handler.dart     # 指针事件入口
+│   │   ├── anchor_click_handler.dart
+│   │   ├── node_drag_handler.dart
+│   │   ├── selection_handler.dart
+│   │   └ canvas_pan_handler.dart
+│   │
+│   ├── behavior/                    # 可复用行为
+│   │   ├── behavior.dart            # Behavior 基类
+│   │   ├── behavior_registry.dart   # Behavior 注册表
+│   │   ├── node_drag_behavior.dart
+│   │   ├── selection_behavior.dart
+│   │   ├── connection_behavior.dart
+│   │   └ pan_zoom_behavior.dart
+│   │
+│   ├── spatial/                     # 空间索引
+│   │   ├── spatial_index.dart       # 空间索引接口
+│   │   └ simple_index.dart          # 简单实现
+│   │
+│   ├── commands/                    # 命令系统
+│   │   ├── diagram_command.dart     # 命令基类
+│   │   └ history_controller.dart    # 历史控制器
+│   │
+│   ├── integration/                 # 集成管理
+│   │   ├── er_interaction_manager.dart
+│   │   └ er_interaction_provider.dart
+│   │
+│   ├── view/                        # 视图渲染
+│   │   ├── graph_view.dart          # 主视图
+│   │   ├── canvas_overlay.dart      # 画布层
+│   │   ├── modification_overlay.dart # 交互层
+│   │   ├── tool_overlay.dart        # 工具层
+│   │   └ painter/
+│   │       ├── node_painter.dart
+│   │       ├── edge_painter.dart
+│   │       └ grid_painter.dart
+│   │
+│   └── er/                          # ER 图扩展
+│       ├── er_table_node_model.dart
+│       ├── er_relation_edge_model.dart
+│       ├── er_table_painter.dart
+│       └ er_relation_painter.dart
+```
+
+---
+
+## 🚀 ER 图当前实现
+
+### ER 图模块结构
+
+```
+lib/features/modeling/er_diagram/
+├── er_diagram.dart                  # 导出文件
+│
+├── models/
+│   └── er_diagram_ui_state.dart     # UI 状态模型
+│
+├── providers/
+│   └ er_diagram_ui_provider.dart    # Riverpod Provider
+│
+└── widgets/
+    ├── er_diagram_canvas.dart       # 主画布（基于 diagram_editor）
+    ├── er_table_node_widget.dart    # 表节点 Widget
+    └── er_field_anchor_widget.dart  # 字段锚点 Widget
+```
+
+### 核心组件
+
+| 组件 | 说明 |
+|------|------|
+| `ERDiagramCanvas` | 主画布，使用 diagram_editor 的 GraphView |
+| `ERDiagramUIState` | UI 状态（选择、悬停、拖拽、连线、框选） |
+| `ERDiagramUINotifier` | Riverpod StateNotifier 管理 UI 状态 |
+| `ERInteractionManager` | diagram_editor 集成管理器 |
+| `ERTableNodeWidget` | 表节点渲染 |
+| `ERFieldAnchorWidget` | 字段锚点渲染 |
+
+### 交互模式
+
+| 模式 | 说明 | 可用操作 |
+|------|------|----------|
+| **预览模式** | 只读查看 | 左键拖动画布、滚轮缩放、双击预览实体 |
+| **编辑模式** | 可编辑 | 左键选节点/框选/拖动/连线、右键拖动画布、双击编辑实体 |
+
+---
+
+*最后更新: 2026-06-29*
