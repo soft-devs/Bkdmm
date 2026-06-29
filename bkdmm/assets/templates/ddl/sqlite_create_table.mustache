@@ -1,0 +1,12 @@
+-- SQLite CREATE TABLE Template
+-- Table: {{tableName}}
+-- Comment: {{tableComment}}
+
+CREATE TABLE {{tableName}} (
+{{#fields}}
+  {{name}} {{typeDB}}{{#pk}} PRIMARY KEY{{/pk}}{{#notNull}} NOT NULL{{/notNull}}{{#autoIncrement}} AUTOINCREMENT{{/autoIncrement}}{{#hasDefaultValue}} DEFAULT {{defaultValue}}{{/hasDefaultValue}},
+{{/fields}}
+);
+
+-- Note: SQLite does not support table comments
+-- Table description: {{tableComment}}

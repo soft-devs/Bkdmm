@@ -1,0 +1,134 @@
+{
+  "datatype": [
+    {
+      "id": "1",
+      "name": "IdOrKey",
+      "chnname": "标识键",
+      "apply": {
+        "MYSQL": "VARCHAR(32)",
+        "ORACLE": "VARCHAR2(32)",
+        "POSTGRESQL": "VARCHAR(32)",
+        "SQLSERVER": "NVARCHAR(32)",
+        "SQLITE": "TEXT"
+      },
+      "java": "String"
+    },
+    {
+      "id": "2",
+      "name": "Name",
+      "chnname": "名称",
+      "apply": {
+        "MYSQL": "VARCHAR(128)",
+        "ORACLE": "VARCHAR2(128)",
+        "POSTGRESQL": "VARCHAR(128)",
+        "SQLSERVER": "NVARCHAR(128)",
+        "SQLITE": "TEXT"
+      },
+      "java": "String"
+    },
+    {
+      "id": "3",
+      "name": "Intro",
+      "chnname": "简介",
+      "apply": {
+        "MYSQL": "VARCHAR(512)",
+        "ORACLE": "VARCHAR2(512)",
+        "POSTGRESQL": "VARCHAR(512)",
+        "SQLSERVER": "NVARCHAR(512)",
+        "SQLITE": "TEXT"
+      },
+      "java": "String"
+    },
+    {
+      "id": "4",
+      "name": "LongText",
+      "chnname": "长文本",
+      "apply": {
+        "MYSQL": "TEXT",
+        "ORACLE": "CLOB",
+        "POSTGRESQL": "TEXT",
+        "SQLSERVER": "NVARCHAR(MAX)",
+        "SQLITE": "TEXT"
+      },
+      "java": "String"
+    },
+    {
+      "id": "5",
+      "name": "Integer",
+      "chnname": "整数",
+      "apply": {
+        "MYSQL": "INT",
+        "ORACLE": "NUMBER(10)",
+        "POSTGRESQL": "INTEGER",
+        "SQLSERVER": "INT",
+        "SQLITE": "INTEGER"
+      },
+      "java": "Integer"
+    },
+    {
+      "id": "6",
+      "name": "Long",
+      "chnname": "长整数",
+      "apply": {
+        "MYSQL": "BIGINT",
+        "ORACLE": "NUMBER(19)",
+        "POSTGRESQL": "BIGINT",
+        "SQLSERVER": "BIGINT",
+        "SQLITE": "INTEGER"
+      },
+      "java": "Long"
+    },
+    {
+      "id": "7",
+      "name": "Money",
+      "chnname": "金额",
+      "apply": {
+        "MYSQL": "DECIMAL(32,8)",
+        "ORACLE": "NUMBER(32,8)",
+        "POSTGRESQL": "DECIMAL(32,8)",
+        "SQLSERVER": "DECIMAL(32,8)",
+        "SQLITE": "REAL"
+      },
+      "java": "BigDecimal"
+    },
+    {
+      "id": "8",
+      "name": "DateTime",
+      "chnname": "日期时间",
+      "apply": {
+        "MYSQL": "DATETIME",
+        "ORACLE": "DATE",
+        "POSTGRESQL": "TIMESTAMP",
+        "SQLSERVER": "DATETIME",
+        "SQLITE": "TEXT"
+      },
+      "java": "LocalDateTime"
+    },
+    {
+      "id": "9",
+      "name": "YesNo",
+      "chnname": "是否",
+      "apply": {
+        "MYSQL": "VARCHAR(1)",
+        "ORACLE": "VARCHAR2(1)",
+        "POSTGRESQL": "VARCHAR(1)",
+        "SQLSERVER": "NVARCHAR(1)",
+        "SQLITE": "TEXT"
+      },
+      "java": "String"
+    },
+    {
+      "id": "10",
+      "name": "Dict",
+      "chnname": "字典",
+      "apply": {
+        "MYSQL": "VARCHAR(32)",
+        "ORACLE": "VARCHAR2(32)",
+        "POSTGRESQL": "VARCHAR(32)",
+        "SQLSERVER": "NVARCHAR(32)",
+        "SQLITE": "TEXT"
+      },
+      "java": "String"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "id": "1782117818671",
+  "name": "New Project",
+  "description": null,
+  "version": "1.0.0",
+  "createdAt": "2026-06-22T16:43:38.671356",
+  "updatedAt": "2026-06-22T16:43:38.672361",
+  "modules": [],
+  "dataTypeDomains": {
+    "datatype": [
+      {
+        "id": "1",
+        "name": "IdOrKey",
+        "chnname": "标识键",
+        "remark": null,
+        "apply": {
+          "MYSQL": "VARCHAR(32)"
+        },
+        "java": null
+      },
+      {
+        "id": "2",
+        "name": "Name",
+        "chnname": "名称",
+        "remark": null,
+        "apply": {
+          "MYSQL": "VARCHAR(128)"
+        },
+        "java": null
+      },
+      {
+        "id": "3",
+        "name": "Intro",
+        "chnname": "简介",
+        "remark": null,
+        "apply": {
+          "MYSQL": "VARCHAR(512)"
+        },
+        "java": null
+      },
+      {
+        "id": "4",
+        "name": "LongText",
+        "chnname": "长文本",
+        "remark": null,
+        "apply": {
+          "MYSQL": "TEXT"
+        },
+        "java": null
+      },
+      {
+        "id": "5",
+        "name": "Integer",
+        "chnname": "整数",
+        "remark": null,
+        "apply": {
+          "MYSQL": "INT"
+        },
+        "java": null
+      },
+      {
+        "id": "6",
+        "name": "Long",
+        "chnname": "长整数",
+        "remark": null,
+        "apply": {
+          "MYSQL": "BIGINT"
+        },
+        "java": null
+      },
+      {
+        "id": "7",
+        "name": "Money",
+        "chnname": "金额",
+        "remark": null,
+        "apply": {
+          "MYSQL": "DECIMAL(32,8)"
+        },
+        "java": null
+      },
+      {
+        "id": "8",
+        "name": "DateTime",
+        "chnname": "日期时间",
+        "remark": null,
+        "apply": {
+          "MYSQL": "DATETIME"
+        },
+        "java": null
+      },
+      {
+        "id": "9",
+        "name": "YesNo",
+        "chnname": "是否",
+        "remark": null,
+        "apply": {
+          "MYSQL": "VARCHAR(1)"
+        },
+        "java": null
+      },
+      {
+        "id": "10",
+        "name": "Dict",
+        "chnname": "字典",
+        "remark": null,
+        "apply": {
+          "MYSQL": "VARCHAR(32)"
+        },
+        "java": null
+      }
+    ],
+    "database": []
+  },
+  "profile": {
+    "defaultFields": [],
+    "defaultFieldsType": "1",
+    "defaultDatabase": null,
+    "settings": null
+  },
+  "versionHistory": null
+}

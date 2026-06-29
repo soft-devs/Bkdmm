@@ -1,0 +1,854 @@
+{
+  "@@locale": "zh",
+
+  "appName": "Bkdmm",
+  "@appName": {"description": "应用名称"},
+
+  "appTitle": "Bkdmm - 数据建模工具",
+  "@appTitle": {"description": "应用标题"},
+
+  "welcomeTo": "欢迎使用 Bkdmm",
+  "@welcomeTo": {"description": "欢迎语"},
+
+  "appDescription": "数据库模型建模工具",
+  "@appDescription": {"description": "应用描述"},
+
+  "quickActions": "快速操作",
+  "@quickActions": {"description": "快速操作区域标题"},
+
+  "newProject": "新建项目",
+  "@newProject": {"description": "新建项目按钮"},
+
+  "createNewProject": "创建新项目",
+  "@createNewProject": {"description": "创建新项目完整文本"},
+
+  "createNewProjectHint": "创建一个新项目",
+  "@createNewProjectHint": {"description": "创建新项目描述"},
+
+  "openProject": "打开项目",
+  "@openProject": {"description": "打开项目按钮"},
+
+  "openExistingProject": "打开已有项目",
+  "@openExistingProject": {"description": "打开已有项目描述"},
+
+  "import": "导入",
+  "@import": {"description": "导入按钮"},
+
+  "importFromFile": "从文件导入",
+  "@importFromFile": {"description": "从文件导入描述"},
+
+  "recentProjects": "最近项目",
+  "@recentProjects": {"description": "最近项目标题"},
+
+  "viewAll": "查看全部",
+  "@viewAll": {"description": "查看全部按钮"},
+
+  "noRecentProjects": "暂无最近项目",
+  "@noRecentProjects": {"description": "空状态提示"},
+
+  "noRecentProjectsHint": "创建新项目或打开已有项目开始使用",
+  "@noRecentProjectsHint": {"description": "空状态提示详情"},
+
+  "allRecentProjects": "所有最近项目",
+  "@allRecentProjects": {"description": "所有最近项目对话框标题"},
+
+  "cancel": "取消",
+  "@cancel": {"description": "取消按钮"},
+
+  "confirm": "确认",
+  "@confirm": {"description": "确认按钮"},
+
+  "delete": "删除",
+  "@delete": {"description": "删除按钮"},
+
+  "edit": "编辑",
+  "@edit": {"description": "编辑按钮"},
+
+  "save": "保存",
+  "@save": {"description": "保存按钮"},
+
+  "close": "关闭",
+  "@close": {"description": "关闭按钮"},
+
+  "loading": "加载中...",
+  "@loading": {"description": "加载状态"},
+
+  "noData": "暂无数据",
+  "@noData": {"description": "空数据状态"},
+
+  "select": "请选择",
+  "@select": {"description": "选择提示"},
+
+  "browse": "浏览",
+  "@browse": {"description": "浏览按钮"},
+
+  "restoreDefaults": "恢复默认",
+  "@restoreDefaults": {"description": "恢复默认按钮"},
+
+  "restore": "恢复",
+  "@restore": {"description": "恢复按钮"},
+
+  "deleteAnyway": "仍然删除",
+  "@deleteAnyway": {"description": "仍然删除按钮"},
+
+  "copy": "复制",
+  "@copy": {"description": "复制按钮"},
+
+  "download": "下载",
+  "@download": {"description": "下载按钮"},
+
+  "add": "添加",
+  "@add": {"description": "添加按钮"},
+
+  "duplicate": "复制",
+  "@duplicate": {"description": "复制按钮"},
+
+  "retry": "重试",
+  "@retry": {"description": "重试按钮"},
+
+  "reset": "重置",
+  "@reset": {"description": "重置按钮"},
+
+  "saveChanges": "保存更改",
+  "@saveChanges": {"description": "保存更改按钮"},
+
+  "actions": "操作",
+  "@actions": {"description": "操作列"},
+
+  "settings": "设置",
+  "@settings": {"description": "设置"},
+
+  "language": "语言",
+  "@language": {"description": "语言设置"},
+
+  "theme": "主题",
+  "@theme": {"description": "主题设置"},
+
+  "lightMode": "浅色模式",
+  "@lightMode": {"description": "浅色模式"},
+
+  "darkMode": "深色模式",
+  "@darkMode": {"description": "深色模式"},
+
+  "systemDefault": "跟随系统",
+  "@systemDefault": {"description": "跟随系统"},
+
+  "projectName": "项目名称",
+  "@projectName": {"description": "项目名称"},
+
+  "projectDescription": "项目描述",
+  "@projectDescription": {"description": "项目描述"},
+
+  "projectPath": "项目路径",
+  "@projectPath": {"description": "项目路径"},
+
+  "entity": "实体",
+  "@entity": {"description": "实体"},
+
+  "entities": "实体",
+  "@entities": {"description": "实体(复数)"},
+
+  "field": "字段",
+  "@field": {"description": "字段"},
+
+  "fields": "字段",
+  "@fields": {"description": "字段(复数)"},
+
+  "index": "索引",
+  "@index": {"description": "索引"},
+
+  "indexes": "索引",
+  "@indexes": {"description": "索引(复数)"},
+
+  "relation": "关系",
+  "@relation": {"description": "关系"},
+
+  "dataType": "数据类型",
+  "@dataType": {"description": "数据类型"},
+
+  "dataTypeName": "类型名称",
+  "@dataTypeName": {"description": "数据类型名称"},
+
+  "dataTypeChnname": "中文名称",
+  "@dataTypeChnname": {"description": "数据类型中文名称"},
+
+  "dataTypeRemark": "备注",
+  "@dataTypeRemark": {"description": "数据类型备注"},
+
+  "addDataType": "添加数据类型",
+  "@addDataType": {"description": "添加数据类型标题"},
+
+  "editDataType": "编辑数据类型",
+  "@editDataType": {"description": "编辑数据类型标题"},
+
+  "deleteDataType": "删除数据类型",
+  "@deleteDataType": {"description": "删除数据类型标题"},
+
+  "dataTypeInUse": "类型正在使用",
+  "@dataTypeInUse": {"description": "类型正在使用标题"},
+
+  "addType": "添加类型",
+  "@addType": {"description": "添加类型按钮"},
+
+  "addDatabaseType": "添加数据库类型",
+  "@addDatabaseType": {"description": "添加数据库类型按钮"},
+
+  "basicInfo": "基本信息",
+  "@basicInfo": {"description": "基本信息"},
+
+  "database": "数据库",
+  "@database": {"description": "数据库"},
+
+  "ddlGeneration": "DDL 生成",
+  "@ddlGeneration": {"description": "DDL生成"},
+
+  "selectDatabase": "选择数据库",
+  "@selectDatabase": {"description": "选择数据库"},
+
+  "selectDdlType": "选择 DDL 类型",
+  "@selectDdlType": {"description": "选择DDL类型"},
+
+  "generateDdl": "生成 DDL",
+  "@generateDdl": {"description": "生成DDL按钮"},
+
+  "ddlGenerated": "DDL 已生成",
+  "@ddlGenerated": {"description": "DDL生成成功"},
+
+  "downloadSql": "下载 .sql",
+  "@downloadSql": {"description": "下载SQL按钮"},
+
+  "exportAll": "导出全部",
+  "@exportAll": {"description": "导出全部按钮"},
+
+  "summary": "概览",
+  "@summary": {"description": "概览标签页"},
+
+  "preview": "预览",
+  "@preview": {"description": "预览标签页"},
+
+  "addField": "添加字段",
+  "@addField": {"description": "添加字段按钮"},
+
+  "editField": "编辑字段",
+  "@editField": {"description": "编辑字段标题"},
+
+  "deleteField": "删除字段",
+  "@deleteField": {"description": "删除字段标题"},
+
+  "fieldName": "字段名称",
+  "@fieldName": {"description": "字段名称"},
+
+  "fieldChnname": "中文名称",
+  "@fieldChnname": {"description": "字段中文名称"},
+
+  "fieldType": "字段类型",
+  "@fieldType": {"description": "字段类型"},
+
+  "fieldLength": "长度",
+  "@fieldLength": {"description": "字段长度"},
+
+  "fieldDecimal": "小数位",
+  "@fieldDecimal": {"description": "字段小数位"},
+
+  "fieldDefault": "默认值",
+  "@fieldDefault": {"description": "字段默认值"},
+
+  "fieldRemark": "备注",
+  "@fieldRemark": {"description": "字段备注"},
+
+  "primaryKey": "主键",
+  "@primaryKey": {"description": "主键"},
+
+  "notNull": "非空",
+  "@notNull": {"description": "非空"},
+
+  "autoIncrement": "自增",
+  "@autoIncrement": {"description": "自增"},
+
+  "selectDataType": "选择数据类型",
+  "@selectDataType": {"description": "选择数据类型标题"},
+
+  "fieldNameRequired": "字段名称不能为空",
+  "@fieldNameRequired": {"description": "字段名称必填提示"},
+
+  "addIndex": "添加索引",
+  "@addIndex": {"description": "添加索引按钮"},
+
+  "editIndex": "编辑索引",
+  "@editIndex": {"description": "编辑索引标题"},
+
+  "deleteIndex": "删除索引",
+  "@deleteIndex": {"description": "删除索引标题"},
+
+  "indexName": "索引名称",
+  "@indexName": {"description": "索引名称"},
+
+  "indexType": "索引类型",
+  "@indexType": {"description": "索引类型"},
+
+  "selectIndexType": "选择索引类型",
+  "@selectIndexType": {"description": "选择索引类型标题"},
+
+  "selectFields": "选择字段",
+  "@selectFields": {"description": "选择字段提示"},
+
+  "indexNameRequired": "索引名称不能为空",
+  "@indexNameRequired": {"description": "索引名称必填提示"},
+
+  "selectAtLeastOneField": "请至少选择一个字段",
+  "@selectAtLeastOneField": {"description": "选择字段提示"},
+
+  "primaryKeys": "主键",
+  "@primaryKeys": {"description": "主键标签"},
+
+  "editFields": "编辑字段",
+  "@editFields": {"description": "编辑字段按钮"},
+
+  "entityUpdated": "实体已更新",
+  "@entityUpdated": {"description": "实体更新成功提示"},
+
+  "open": "打开",
+  "@open": {"description": "打开按钮"},
+
+  "removeFromFavorites": "取消收藏",
+  "@removeFromFavorites": {"description": "取消收藏按钮"},
+
+  "addToFavorites": "收藏",
+  "@addToFavorites": {"description": "收藏按钮"},
+
+  "removeFromList": "从列表移除",
+  "@removeFromList": {"description": "从列表移除按钮"},
+
+  "featureComingSoon": "功能即将推出",
+  "@featureComingSoon": {"description": "功能即将推出提示"},
+
+  "projectCreated": "项目已创建",
+  "@projectCreated": {"description": "项目创建成功"},
+
+  "projectOpened": "项目已打开",
+  "@projectOpened": {"description": "项目打开成功"},
+
+  "failedToCreateProject": "创建项目失败",
+  "@failedToCreateProject": {"description": "创建项目失败"},
+
+  "failedToOpenProject": "打开项目失败",
+  "@failedToOpenProject": {"description": "打开项目失败"},
+
+  "removedFromRecent": "已从最近项目中移除",
+  "@removedFromRecent": {"description": "移除成功"},
+
+  "failedToRemove": "移除失败",
+  "@failedToRemove": {"description": "移除失败"},
+
+  "ddlCopiedToClipboard": "DDL 已复制到剪贴板",
+  "@ddlCopiedToClipboard": {"description": "DDL复制成功提示"},
+
+  "readyToDownload": "准备下载: {fileName}",
+  "@readyToDownload": {
+    "description": "准备下载提示",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "test.sql"
+      }
+    }
+  },
+
+  "generatingDdlForModules": "正在为 {count} 个模块生成 DDL...",
+  "@generatingDdlForModules": {
+    "description": "生成DDL进度提示",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "ddlReadyFor": "DDL 已准备好: {fileName}",
+  "@ddlReadyFor": {
+    "description": "DDL准备完成提示",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "User.sql"
+      }
+    }
+  },
+
+  "deleteConfirmTitle": "确认删除",
+  "@deleteConfirmTitle": {"description": "删除确认标题"},
+
+  "deleteConfirmMessage": "确定要删除 \"{name}\" 吗？",
+  "@deleteConfirmMessage": {
+    "description": "删除确认消息",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "项目名称"
+      }
+    }
+  },
+
+  "restoreDefaultsConfirm": "确定要恢复默认设置吗？",
+  "@restoreDefaultsConfirm": {"description": "恢复默认确认"},
+
+  "typeInUseMessage": "该数据类型正在被以下字段使用：",
+  "@typeInUseMessage": {"description": "类型使用中消息"},
+
+  "simplifiedChinese": "简体中文",
+  "@simplifiedChinese": {"description": "简体中文"},
+
+  "english": "English",
+  "@english": {"description": "英文"},
+
+  "globalSettings": "全局设置",
+  "@globalSettings": {"description": "全局设置标签页"},
+
+  "projectSettings": "项目设置",
+  "@projectSettings": {"description": "项目设置标签页"},
+
+  "appearance": "外观",
+  "@appearance": {"description": "外观设置标题"},
+
+  "themeMode": "主题模式",
+  "@themeMode": {"description": "主题模式设置"},
+
+  "accentColor": "强调色",
+  "@accentColor": {"description": "强调色设置"},
+
+  "customizeAccentColor": "自定义应用强调色",
+  "@customizeAccentColor": {"description": "自定义强调色描述"},
+
+  "fontSize": "字体大小",
+  "@fontSize": {"description": "字体大小设置"},
+
+  "editorFontSize": "编辑器字体大小: {size}",
+  "@editorFontSize": {
+    "description": "编辑器字体大小",
+    "placeholders": {
+      "size": {
+        "type": "int",
+        "example": "14"
+      }
+    }
+  },
+
+  "editor": "编辑器",
+  "@editor": {"description": "编辑器设置标题"},
+
+  "defaultDatabaseType": "默认数据库类型",
+  "@defaultDatabaseType": {"description": "默认数据库类型设置"},
+
+  "notSet": "未设置",
+  "@notSet": {"description": "未设置"},
+
+  "autoSaveInterval": "自动保存间隔",
+  "@autoSaveInterval": {"description": "自动保存间隔设置"},
+
+  "disabled": "禁用",
+  "@disabled": {"description": "禁用"},
+
+  "seconds": "秒",
+  "@seconds": {"description": "秒"},
+
+  "minutes": "分钟",
+  "@minutes": {"description": "分钟"},
+
+  "showLineNumbers": "显示行号",
+  "@showLineNumbers": {"description": "显示行号设置"},
+
+  "displayLineNumbers": "在代码预览中显示行号",
+  "@displayLineNumbers": {"description": "显示行号描述"},
+
+  "defaultFieldsGlobal": "默认字段 (全局)",
+  "@defaultFieldsGlobal": {"description": "默认字段设置标题"},
+
+  "defaultFieldsDescription": "配置新表的默认字段（作为项目默认值）",
+  "@defaultFieldsDescription": {"description": "默认字段描述"},
+
+  "addRevisionField": "添加版本号字段",
+  "@addRevisionField": {"description": "添加版本号字段"},
+
+  "addCreatorField": "添加创建者字段",
+  "@addCreatorField": {"description": "添加创建者字段"},
+
+  "addCreationTimestampField": "添加创建时间字段",
+  "@addCreationTimestampField": {"description": "添加创建时间字段"},
+
+  "addUpdaterField": "添加更新者字段",
+  "@addUpdaterField": {"description": "添加更新者字段"},
+
+  "addUpdateTimestampField": "添加更新时间字段",
+  "@addUpdateTimestampField": {"description": "添加更新时间字段"},
+
+  "dataTypes": "数据类型",
+  "@dataTypes": {"description": "数据类型设置标题"},
+
+  "manageDataTypes": "管理数据类型",
+  "@manageDataTypes": {"description": "管理数据类型"},
+
+  "configureCustomDataTypes": "配置自定义数据类型",
+  "@configureCustomDataTypes": {"description": "配置自定义数据类型描述"},
+
+  "resetToDefaults": "恢复默认设置",
+  "@resetToDefaults": {"description": "恢复默认设置按钮"},
+
+  "restoreAllSettingsToDefault": "恢复所有设置为默认值",
+  "@restoreAllSettingsToDefault": {"description": "恢复默认设置描述"},
+
+  "resetSettings": "重置设置",
+  "@resetSettings": {"description": "重置设置标题"},
+
+  "resetSettingsConfirm": "确定要恢复所有设置为默认值吗？此操作不可撤销。",
+  "@resetSettingsConfirm": {"description": "重置设置确认消息"},
+
+  "settingsResetSuccess": "设置已恢复为默认值",
+  "@settingsResetSuccess": {"description": "设置恢复成功提示"},
+
+  "dataTypeManagementComingSoon": "数据类型管理功能即将推出",
+  "@dataTypeManagementComingSoon": {"description": "数据类型管理提示"},
+
+  "typeInUseDeleteWarning": "类型 \"{name}\" 正被以下字段使用：{usage}。确定仍要删除吗？使用此类型的字段可能会出错。",
+  "@typeInUseDeleteWarning": {
+    "description": "类型使用中删除警告消息",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "VARCHAR"
+      },
+      "usage": {
+        "type": "String",
+        "example": "User: name, email; Order: title"
+      }
+    }
+  },
+
+  "restoreDefaultsWarning": "这将恢复所有默认数据类型到原始值。自定义类型不会受影响。",
+  "@restoreDefaultsWarning": {"description": "恢复默认警告消息"},
+
+  "typeEnglishName": "类型名称（英文）",
+  "@typeEnglishName": {"description": "类型名称英文标签"},
+
+  "typeChineseName": "中文名称",
+  "@typeChineseName": {"description": "类型名称中文标签"},
+
+  "javaType": "Java 类型",
+  "@javaType": {"description": "Java类型标签"},
+
+  "databaseTypeMapping": "数据库类型映射",
+  "@databaseTypeMapping": {"description": "数据库类型映射标题"},
+
+  "databaseMappingHint": "定义此类型如何映射到各个数据库",
+  "@databaseMappingHint": {"description": "数据库映射提示"},
+
+  "dataTypeManagement": "数据类型管理",
+  "@dataTypeManagement": {"description": "数据类型管理标题"},
+
+  "typesCount": "{count} 个类型",
+  "@typesCount": {
+    "description": "类型数量",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+
+  "modified": "已修改",
+  "@modified": {"description": "已修改状态"},
+
+  "searchTypes": "搜索类型...",
+  "@searchTypes": {"description": "搜索类型提示"},
+
+  "defaultTypes": "默认类型",
+  "@defaultTypes": {"description": "默认类型标签"},
+
+  "customTypes": "自定义类型",
+  "@customTypes": {"description": "自定义类型标签"},
+
+  "noDataTypesFound": "未找到数据类型",
+  "@noDataTypesFound": {"description": "未找到数据类型提示"},
+
+  "restoreDefaultsHint": "点击\"恢复默认\"加载默认类型",
+  "@restoreDefaultsHint": {"description": "恢复默认提示"},
+
+  "databaseMappings": "数据库映射",
+  "@databaseMappings": {"description": "数据库映射标题"},
+
+  "java": "Java",
+  "@java": {"description": "Java标签"},
+
+  "tableNameEnglish": "表名（英文）",
+  "@tableNameEnglish": {"description": "表名英文标签"},
+
+  "tableChineseName": "中文名称",
+  "@tableChineseName": {"description": "表名中文标签"},
+
+  "tableRemark": "备注",
+  "@tableRemark": {"description": "表备注标签"},
+
+  "basicInformation": "基本信息",
+  "@basicInformation": {"description": "基本信息标题"},
+
+  "statistics": "统计",
+  "@statistics": {"description": "统计标题"},
+
+  "fieldsCount": "{count} 个字段",
+  "@fieldsCount": {
+    "description": "字段数量",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+
+  "indexesCount": "{count} 个索引",
+  "@indexesCount": {
+    "description": "索引数量",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "unsaved": "未保存",
+  "@unsaved": {"description": "未保存状态"},
+
+  "fieldsPreview": "字段预览",
+  "@fieldsPreview": {"description": "字段预览标题"},
+
+  "noFieldsDefined": "未定义字段",
+  "@noFieldsDefined": {"description": "未定义字段提示"},
+
+  "andMoreFields": "还有 {count} 个字段...",
+  "@andMoreFields": {
+    "description": "更多字段提示",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "pk": "PK",
+  "@pk": {"description": "主键缩写"},
+
+  "name": "名称",
+  "@name": {"description": "名称列"},
+
+  "type": "类型",
+  "@type": {"description": "类型列"},
+
+  "chineseName": "中文名",
+  "@chineseName": {"description": "中文名列"},
+
+  "noFieldsDefinedHint": "点击\"添加字段\"创建新字段",
+  "@noFieldsDefinedHint": {"description": "未定义字段提示"},
+
+  "noIndexesDefined": "未定义索引",
+  "@noIndexesDefined": {"description": "未定义索引提示"},
+
+  "addIndexHint": "点击\"添加索引\"创建新索引",
+  "@addIndexHint": {"description": "添加索引提示"},
+
+  "indexNameRequired2": "索引名称不能为空",
+  "@indexNameRequired2": {"description": "索引名称必填提示"},
+
+  "indexNameStar": "索引名称 *",
+  "@indexNameStar": {"description": "索引名称标签（必填）"},
+
+  "selectFieldsLabel": "选择字段：",
+  "@selectFieldsLabel": {"description": "选择字段标签"},
+
+  "noFieldsAvailable": "没有可用字段",
+  "@noFieldsAvailable": {"description": "没有可用字段提示"},
+
+  "optionalDescription": "可选描述",
+  "@optionalDescription": {"description": "可选描述提示"},
+
+  "deleteFieldConfirm": "确定要删除字段 \"{name}\" 吗？",
+  "@deleteFieldConfirm": {
+    "description": "删除字段确认消息",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "user_id"
+      }
+    }
+  },
+
+  "fieldNameStar": "字段名称 *",
+  "@fieldNameStar": {"description": "字段名称标签（必填）"},
+
+  "dataTypeLabel": "数据类型",
+  "@dataTypeLabel": {"description": "数据类型标签"},
+
+  "fieldDescription": "字段描述",
+  "@fieldDescription": {"description": "字段描述提示"},
+
+  "pkAutoSetNotNull": "主键自动设置为非空",
+  "@pkAutoSetNotNull": {"description": "主键自动非空提示"},
+
+  "noProjectLoaded": "未加载项目",
+  "@noProjectLoaded": {"description": "未加载项目提示"},
+
+  "openProjectToGenerateDdl": "打开项目以生成 DDL",
+  "@openProjectToGenerateDdl": {"description": "打开项目提示"},
+
+  "selectTarget": "选择目标",
+  "@selectTarget": {"description": "选择目标标题"},
+
+  "allProjectModules": "全部项目（{count} 个模块）",
+  "@allProjectModules": {
+    "description": "全部项目模块数",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "tablesCount": "{count} 个表",
+  "@tablesCount": {
+    "description": "表数量",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+
+  "selectATarget": "选择一个目标",
+  "@selectATarget": {"description": "选择目标提示"},
+
+  "chooseTableModuleProject": "选择表、模块或整个项目",
+  "@chooseTableModuleProject": {"description": "选择目标提示详情"},
+
+  "generationError": "生成错误",
+  "@generationError": {"description": "生成错误标题"},
+
+  "unknownError": "未知错误",
+  "@unknownError": {"description": "未知错误"},
+
+  "ddlReady": "DDL 已准备好: {fileName}",
+  "@ddlReady": {
+    "description": "DDL准备提示",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "User.sql"
+      }
+    }
+  },
+
+  "createNewTable": "创建新表",
+  "@createNewTable": {"description": "DDL类型：创建新表"},
+
+  "dropExistingTable": "删除现有表",
+  "@dropExistingTable": {"description": "DDL类型：删除现有表"},
+
+  "createIndexOnTable": "在表上创建索引",
+  "@createIndexOnTable": {"description": "DDL类型：创建索引"},
+
+  "dropExistingIndex": "删除现有索引",
+  "@dropExistingIndex": {"description": "DDL类型：删除索引"},
+
+  "today": "今天",
+  "@today": {"description": "今天"},
+
+  "yesterday": "昨天",
+  "@yesterday": {"description": "昨天"},
+
+  "daysAgo": "{count} 天前",
+  "@daysAgo": {
+    "description": "几天前",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "modifiedMinutesAgo": "{count} 分钟前修改",
+  "@modifiedMinutesAgo": {
+    "description": "几分钟前修改",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "modifiedHoursAgo": "{count} 小时前修改",
+  "@modifiedHoursAgo": {
+    "description": "几小时前修改",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+
+  "modifiedDaysAgo": "{count} 天前修改",
+  "@modifiedDaysAgo": {
+    "description": "几天前修改",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "modifiedOnDate": "修改于 {date}",
+  "@modifiedOnDate": {
+    "description": "修改于日期",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "1/15/2024"
+      }
+    }
+  },
+
+  "unique": "UNIQUE",
+  "@unique": {"description": "唯一索引类型"},
+
+  "fulltext": "FULLTEXT",
+  "@fulltext": {"description": "全文索引类型"},
+
+  "normal": "NORMAL",
+  "@normal": {"description": "普通索引类型"},
+
+  "unsaved": "未保存",
+  "@unsaved": {"description": "未保存状态"},
+
+  "fieldsPreview": "字段预览",
+  "@fieldsPreview": {"description": "字段预览标题"},
+
+  "noFieldsDefined": "尚未定义字段",
+  "@noFieldsDefined": {"description": "无字段提示"},
+
+  "andMoreFields": "还有 {count} 个字段...",
+  "@andMoreFields": {
+    "description": "更多字段提示",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  }
+}
