@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
 import 'package:bkdmm/shared/models/models.dart';
@@ -188,6 +189,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tdTheme = TDTheme.of(context);
 
     if (_controller == null) {
       return const Center(child: CircularProgressIndicator());
@@ -198,7 +200,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
     return Stack(
       children: [
         // 主画布
-        _buildMainCanvas(isDark, state),
+        _buildMainCanvas(isDark, state, tdTheme),
 
         // 交互覆盖层
         Positioned.fill(
@@ -223,7 +225,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   }
 
   /// 构建主画布
-  Widget _buildMainCanvas(bool isDark, DiagramState state) {
+  Widget _buildMainCanvas(bool isDark, DiagramState state, TDThemeData tdTheme) {
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: _onPointerDown,
@@ -240,7 +242,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
             // 背景网格层（在 InteractiveViewer 外部，使用屏幕坐标绘制）
             Positioned.fill(
               child: IgnorePointer(
-                child: _buildGridBackground(isDark),
+                child: _buildGridBackground(isDark, tdTheme),
               ),
             ),
 
@@ -311,19 +313,18 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   }
 
   /// 构建网格背景
-  Widget _buildGridBackground(bool isDark) {
+  Widget _buildGridBackground(bool isDark, TDThemeData tdTheme) {
     return ListenableBuilder(
       listenable: _transformationController,
       builder: (context, child) {
         return CustomPaint(
           painter: _InfiniteGridPainter(
             transformationController: _transformationController,
-            gridColor: isDark ? const Color(0x14FFFFFF) : const Color(0x14000000),
+            gridColor: tdTheme.grayColor3.withValues(alpha: isDark ? 0.3 : 0.5),
             gridSize: 20.0,
-            backgroundColor: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAFAFA),
+            backgroundColor: tdTheme.bgColorPage,
             majorGridInterval: 5,
-            majorGridColor:
-                isDark ? const Color(0x28FFFFFF) : const Color(0x28000000),
+            majorGridColor: tdTheme.grayColor4.withValues(alpha: isDark ? 0.4 : 0.6),
           ),
         );
       },
