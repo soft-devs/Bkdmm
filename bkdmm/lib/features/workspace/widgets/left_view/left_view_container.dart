@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
+
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/features/datatype/views/datatype_view.dart';
 import '../../providers/layout_provider.dart';
 import '../module_tree.dart';
-import '../../../datatype/views/datatype_view.dart';
-import '../../../../shared/providers/providers.dart';
 
 /// 左侧视图容器
 class LeftViewContainer extends ConsumerWidget {

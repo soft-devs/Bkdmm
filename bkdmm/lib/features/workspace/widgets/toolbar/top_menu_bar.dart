@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
-import '../../../../shared/providers/providers.dart';
+
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/features/settings/views/settings_view.dart';
 import 'file_menu.dart';
 import 'view_menu.dart';
-import '../../../settings/views/settings_view.dart';
 
 /// 顶部菜单栏
 class TopMenuBar extends ConsumerWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../constants/app_constants.dart';
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/constants/app_constants.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 
 /// Database type selection dialog with TDesign styling
 class DatabaseTypeDialog extends StatelessWidget {

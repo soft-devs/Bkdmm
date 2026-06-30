@@ -4,8 +4,8 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import '../../providers/layout_provider.dart';
 import '../../models/layout_state.dart';
 import '../../models/view_config.dart';
-import '../../../../shared/log_viewer/widgets/log_viewer_shell.dart';
-import '../../../../shared/terminal/widgets/terminal_shell.dart';
+import 'package:bkdmm/shared/log_viewer/widgets/log_viewer_shell.dart';
+import 'package:bkdmm/shared/terminal/widgets/terminal_shell.dart';
 
 /// 底部视图容器
 class BottomViewContainer extends ConsumerWidget {
@@ -48,11 +48,16 @@ class BottomViewContainer extends ConsumerWidget {
               color: tdTheme.componentBorderColor,
             ),
 
-            // 视图内容
+            // 视图内容 - 使用 Stack + Offstage 保持所有视图状态
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: _getViewPanel(activeView, tdTheme),
+              child: Stack(
+                children: layoutState.bottomViewConfigs.map((config) {
+                  final isActive = activeView == config.id;
+                  return Offstage(
+                    offstage: !isActive,
+                    child: _getViewPanel(config.id, tdTheme),
+                  );
+                }).toList(),
               ),
             ),
           ],

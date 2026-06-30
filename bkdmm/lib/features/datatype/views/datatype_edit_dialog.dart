@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
-import '../../../core/i18n/i18n.dart';
-import '../../../shared/models/data_type.dart';
-import '../../../shared/constants/default_data_types.dart';
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/core/i18n/i18n.dart';
+import 'package:bkdmm/shared/models/data_type.dart';
+import 'package:bkdmm/shared/constants/default_data_types.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 import '../providers/datatype_provider.dart';
 
 /// Dialog for editing a data type

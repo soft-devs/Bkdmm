@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../utils/logging/logging_service.dart';
+import 'package:bkdmm/utils/logging/logging_service.dart';
 import '../models/er_diagram_ui_state.dart';
 
 /// ER 图字段锚点组件

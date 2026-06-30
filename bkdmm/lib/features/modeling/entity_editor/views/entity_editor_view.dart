@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
-import '../../../../core/i18n/i18n.dart';
-import '../../../../shared/models/models.dart';
-import '../../../../shared/providers/providers.dart';
-import '../../../../utils/id_generator.dart';
+import 'package:bkdmm/core/i18n/i18n.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/utils/id_generator.dart';
 import '../providers/entity_provider.dart';
 import '../widgets/field_table.dart';
 import '../widgets/index_editor.dart';
@@ -240,220 +240,242 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
 
   Widget _buildSummaryTab(Entity entity, TDThemeData tdTheme) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Basic Info Card
-          Container(
-            decoration: BoxDecoration(
-              color: tdTheme.bgColorContainer,
-              borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-              border: Border.all(color: tdTheme.componentBorderColor),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                TDText(
-                  'Basic Information',
-                  font: tdTheme.fontTitleSmall,
-                  fontWeight: FontWeight.w600,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: TDInput(
-                        controller: _titleController,
-                        leftLabel: 'Table Name (English)',
-                        hintText: 'e.g., user',
-                        leftIcon: const Icon(TDIcons.code),
-                        backgroundColor: Colors.transparent,
-                        onChanged: (value) => _markDirty(),
-                        onSubmitted: (value) => _saveBasicInfo(),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TDInput(
-                        controller: _chnnameController,
-                        leftLabel: 'Chinese Name',
-                        hintText: 'e.g., 用户表',
-                        leftIcon: const Icon(TDIcons.translate),
-                        backgroundColor: Colors.transparent,
-                        onChanged: (value) => _markDirty(),
-                        onSubmitted: (value) => _saveBasicInfo(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TDInput(
-                  controller: _remarkController,
-                  leftLabel: 'Remark',
-                  hintText: 'Table description',
-                  leftIcon: const Icon(TDIcons.edit),
-                  backgroundColor: Colors.transparent,
-                  maxLines: 3,
-                  onChanged: (value) => _markDirty(),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (_hasLocalChanges)
-                      TDButton(
-                        text: context.l10n.reset,
-                        theme: TDButtonTheme.defaultTheme,
-                        type: TDButtonType.outline,
-                        onTap: _resetBasicInfo,
-                      ),
-                    if (_hasLocalChanges)
-                      const SizedBox(width: 8),
-                    TDButton(
-                      text: context.l10n.saveChanges,
-                      icon: TDIcons.save,
-                      theme: TDButtonTheme.primary,
-                      type: TDButtonType.fill,
-                      disabled: !_hasLocalChanges,
-                      onTap: _saveBasicInfo,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+      padding: const EdgeInsets.all(16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 500;
 
-          const SizedBox(height: 24),
-
-          // Statistics Card
-          Container(
-            decoration: BoxDecoration(
-              color: tdTheme.bgColorContainer,
-              borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-              border: Border.all(color: tdTheme.componentBorderColor),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                TDText(
-                  'Statistics',
-                  font: tdTheme.fontTitleSmall,
-                  fontWeight: FontWeight.w600,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Basic Info Card
+              Container(
+                decoration: BoxDecoration(
+                  color: tdTheme.bgColorContainer,
+                  borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+                  border: Border.all(color: tdTheme.componentBorderColor),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        icon: TDIcons.view_list,
-                        label: 'Fields',
-                        value: entity.fields.length.toString(),
-                        color: tdTheme.brandNormalColor,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatCard(
-                        icon: TDIcons.lock_on,
-                        label: 'Primary Keys',
-                        value: entity.primaryKeys.length.toString(),
-                        color: tdTheme.successColor5,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatCard(
-                        icon: TDIcons.filter,
-                        label: 'Indexes',
-                        value: entity.indexes.length.toString(),
-                        color: tdTheme.warningColor5,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Fields Preview Card
-          Container(
-            decoration: BoxDecoration(
-              color: tdTheme.bgColorContainer,
-              borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
-              border: Border.all(color: tdTheme.componentBorderColor),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     TDText(
-                      context.l10n.fieldsPreview,
+                      'Basic Information',
                       font: tdTheme.fontTitleSmall,
                       fontWeight: FontWeight.w600,
                     ),
-                    TDButton(
-                      text: context.l10n.editFields,
-                      icon: TDIcons.edit,
-                      theme: TDButtonTheme.defaultTheme,
-                      type: TDButtonType.text,
-                      onTap: () => _tabController.animateTo(1),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (entity.fields.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(height: 12),
+                    // 响应式布局: 宽屏时两列，窄屏时单列
+                    if (isWide)
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Icon(
-                            TDIcons.view_list,
-                            size: 48,
-                            color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
+                          Expanded(
+                            child: TDInput(
+                              controller: _titleController,
+                              leftLabel: 'Table Name',
+                              hintText: 'e.g., user',
+                              backgroundColor: Colors.transparent,
+                              onChanged: (value) => _markDirty(),
+                              onSubmitted: (value) => _saveBasicInfo(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TDInput(
+                              controller: _chnnameController,
+                              leftLabel: 'Chinese Name',
+                              hintText: 'e.g., 用户表',
+                              backgroundColor: Colors.transparent,
+                              onChanged: (value) => _markDirty(),
+                              onSubmitted: (value) => _saveBasicInfo(),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TDInput(
+                            controller: _titleController,
+                            leftLabel: 'Table Name',
+                            hintText: 'e.g., user',
+                            backgroundColor: Colors.transparent,
+                            onChanged: (value) => _markDirty(),
+                            onSubmitted: (value) => _saveBasicInfo(),
                           ),
                           const SizedBox(height: 12),
-                          TDText(
-                            context.l10n.noFieldsDefined,
-                            font: tdTheme.fontBodyMedium,
-                            textColor: tdTheme.textColorSecondary,
+                          TDInput(
+                            controller: _chnnameController,
+                            leftLabel: 'Chinese Name',
+                            hintText: 'e.g., 用户表',
+                            backgroundColor: Colors.transparent,
+                            onChanged: (value) => _markDirty(),
+                            onSubmitted: (value) => _saveBasicInfo(),
                           ),
                         ],
                       ),
+                    const SizedBox(height: 12),
+                    TDInput(
+                      controller: _remarkController,
+                      leftLabel: 'Remark',
+                      hintText: 'Table description',
+                      backgroundColor: Colors.transparent,
+                      maxLines: 3,
+                      onChanged: (value) => _markDirty(),
                     ),
-                  )
-                else
-                  _buildFieldsPreviewTable(entity, tdTheme),
-                if (entity.fields.length > 10)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: TDText(
-                      context.l10n.andMoreFields(entity.fields.length - 10),
-                      font: tdTheme.fontBodySmall,
-                      textColor: tdTheme.textColorSecondary,
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (_hasLocalChanges)
+                          TDButton(
+                            text: context.l10n.reset,
+                            theme: TDButtonTheme.defaultTheme,
+                            type: TDButtonType.outline,
+                            size: TDButtonSize.small,
+                            onTap: _resetBasicInfo,
+                          ),
+                        if (_hasLocalChanges)
+                          const SizedBox(width: 8),
+                        TDButton(
+                          text: context.l10n.saveChanges,
+                          icon: TDIcons.save,
+                          theme: TDButtonTheme.primary,
+                          type: TDButtonType.fill,
+                          size: TDButtonSize.small,
+                          disabled: !_hasLocalChanges,
+                          onTap: _saveBasicInfo,
+                        ),
+                      ],
                     ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Statistics Card
+              Container(
+                decoration: BoxDecoration(
+                  color: tdTheme.bgColorContainer,
+                  borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+                  border: Border.all(color: tdTheme.componentBorderColor),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    TDText(
+                      'Statistics',
+                      font: tdTheme.fontTitleSmall,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            icon: TDIcons.view_list,
+                            label: 'Fields',
+                            value: entity.fields.length.toString(),
+                            color: tdTheme.brandNormalColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _StatCard(
+                            icon: TDIcons.lock_on,
+                            label: 'Primary Keys',
+                            value: entity.primaryKeys.length.toString(),
+                            color: tdTheme.successColor5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _StatCard(
+                            icon: TDIcons.filter,
+                            label: 'Indexes',
+                            value: entity.indexes.length.toString(),
+                            color: tdTheme.warningColor5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Fields Preview Card
+              Container(
+                decoration: BoxDecoration(
+                  color: tdTheme.bgColorContainer,
+                  borderRadius: BorderRadius.circular(tdTheme.radiusDefault),
+                  border: Border.all(color: tdTheme.componentBorderColor),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        TDText(
+                          context.l10n.fieldsPreview,
+                          font: tdTheme.fontTitleSmall,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        TDButton(
+                          text: context.l10n.editFields,
+                          icon: TDIcons.edit,
+                          theme: TDButtonTheme.defaultTheme,
+                          type: TDButtonType.text,
+                          size: TDButtonSize.small,
+                          onTap: () => _tabController.animateTo(1),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (entity.fields.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(
+                                TDIcons.view_list,
+                                size: 48,
+                                color: tdTheme.textColorSecondary.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(height: 12),
+                              TDText(
+                                context.l10n.noFieldsDefined,
+                                font: tdTheme.fontBodyMedium,
+                                textColor: tdTheme.textColorSecondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      _buildFieldsPreviewTable(entity, tdTheme),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -546,9 +568,15 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
     );
   }
 
-  /// Build fields preview table using TDTable with flexible columns
+  /// Build fields preview table - 字段预览表格
+  ///
+  /// 布局设计遵循:
+  /// - 使用 LayoutBuilder 获取约束，响应式处理宽度
+  /// - 表格需要明确的宽度约束
+  /// - 固定宽度列使用最小宽度，弹性列自动分配剩余空间
+  /// - 行高固定为 36
   Widget _buildFieldsPreviewTable(Entity entity, TDThemeData tdTheme) {
-    // 准备表格数据 - 所有值必须是字符串类型
+    // 准备表格数据
     final data = entity.fields.take(10).toList().asMap().entries.map((entry) {
       final index = entry.key;
       final field = entry.value;
@@ -562,12 +590,14 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
       };
     }).toList();
 
-    // 弹性列配置 - 固定列和弹性列混合
+    // 列配置 - 固定宽度列使用较小宽度
+    // 固定列: # (32) + PK (40) = 72
+    // 弹性列: Name + Type + Chinese Name (自动分配剩余宽度)
     final columns = [
       TDTableCol(
         title: '#',
         colKey: 'order',
-        width: 40,
+        width: 32,
         align: TDTableColAlign.center,
       ),
       TDTableCol(
@@ -579,12 +609,12 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
           final field = data[rowIndex]['_field'] as Field;
           return Icon(
             field.pk ? TDIcons.check_rectangle_filled : TDIcons.rectangle,
-            size: 16,
+            size: 14,
             color: field.pk ? tdTheme.brandNormalColor : tdTheme.textColorPlaceholder,
           );
         },
       ),
-      // 弹性列 - 不设置 width
+      // 弹性列 - 不设置 width，让 TDTable 自动分配
       TDTableCol(
         title: 'Name',
         colKey: 'name',
@@ -596,24 +626,40 @@ class _EntityEditorViewState extends ConsumerState<EntityEditorView>
         ellipsis: true,
       ),
       TDTableCol(
-        title: 'Chinese Name',
+        title: 'Chinese',
         colKey: 'chnname',
         ellipsis: true,
       ),
     ];
 
-    // 计算表格高度：表头 + 数据行 + 边距
-    final tableHeight = 38.0 * (data.length + 1) + 16.0; // 表头 + 数据行 + 底部边距
+    // 计算表格高度: 表头 + 数据行
+    const rowHeight = 36.0;
 
-    return SizedBox(
-      height: tableHeight,
-      child: TDTable(
-        columns: columns,
-        data: data,
-        bordered: true,
-        rowHeight: 38,
-        backgroundColor: tdTheme.bgColorContainer,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 计算表格所需的最小宽度
+        // 固定列: # (32) + PK (40) = 72
+        // 弹性列最小需要 120 (三个列各 40)
+        const fixedColumnsWidth = 32 + 40;
+        const minFlexibleWidth = 120;
+        const minTableWidth = fixedColumnsWidth + minFlexibleWidth;
+
+        final availableWidth = constraints.maxWidth;
+
+        // 确保表格宽度不超过可用宽度
+        final tableWidth = availableWidth.clamp(minTableWidth.toDouble(), availableWidth);
+
+        return SizedBox(
+          child: TDTable(
+            columns: columns,
+            data: data,
+            bordered: true,
+            width: tableWidth,
+            rowHeight: rowHeight,
+            backgroundColor: tdTheme.bgColorContainer,
+          ),
+        );
+      },
     );
   }
 

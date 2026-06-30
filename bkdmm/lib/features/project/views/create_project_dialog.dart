@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 
 /// Create project dialog - Dialog for creating new projects
 ///

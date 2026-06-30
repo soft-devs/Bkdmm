@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bkdmm/shared/diagram_editor/src/commands/diagram_command.dart';
-import 'package:bkdmm/shared/diagram_editor/src/commands/history_controller.dart';
+import 'package:bkdmm/shared/diagram_editor/commands/diagram_command.dart';
+import 'package:bkdmm/shared/diagram_editor/commands/history_controller.dart';
 
 void main() {
   group('DiagramCommand', () {

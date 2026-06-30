@@ -1,4 +1,4 @@
-import '../../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 import 'template_service.dart';
 
 /// Supported database types

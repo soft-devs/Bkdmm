@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/models/models.dart';
-import '../../../shared/widgets/td_popup_menu.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/widgets/td_popup_menu.dart';
 
 /// A list tile widget for displaying project history items.
 ///

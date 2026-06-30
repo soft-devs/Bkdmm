@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:bkdmm/shared/diagram_editor/src/event/event_center.dart';
+import 'package:bkdmm/shared/diagram_editor/event/event_center.dart';
 
 void main() {
   group('EventCenter', () {

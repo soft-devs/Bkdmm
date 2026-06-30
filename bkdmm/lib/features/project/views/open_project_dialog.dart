@@ -3,8 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'dart:io';
 
-import '../../../shared/models/models.dart';
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 import '../widgets/recent_project_tile.dart';
 
 /// Open project dialog - Dialog for opening existing projects

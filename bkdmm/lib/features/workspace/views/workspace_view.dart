@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/models/models.dart';
-import '../../../shared/providers/providers.dart';
-import '../../../shared/utils/responsive_utils.dart';
-import '../../../utils/id_generator.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
+import 'package:bkdmm/utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 import '../providers/layout_provider.dart';
 import '../widgets/tab_bar.dart';
@@ -18,7 +18,7 @@ import '../widgets/property_section.dart';
 import '../widgets/property_field.dart';
 import '../widgets/stat_tile.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
-import '../../modeling/er_diagram/widgets/er_diagram_canvas.dart';
+import '../../modeling/er_diagram/er_diagram.dart';
 
 /// Workspace view - Main project editing interface with tab management
 ///
@@ -118,7 +118,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                                     ),
 
                                     // 标签内容区
-                                    Expanded(
+                                    Expanded (
                                       child: _buildTabContent(project, tdTheme),
                                     ),
                                   ],
@@ -318,7 +318,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    return ERDiagramCanvas(
+    return ERDiagramView(
       moduleId: module.id,
       onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
       onEntityPreview: (entity) => _showEntityPreviewDialog(module, entity),
@@ -364,7 +364,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   }
 
   void _showEntityEditorDialog(Module module, Entity entity) {
-    // TODO: 实现实体编辑对话框
+    // 双击节点打开实体编辑器标签页
+    ref.read(tabProvider.notifier).openEntity(entity, module.id);
   }
 
   Widget _buildRelationView(

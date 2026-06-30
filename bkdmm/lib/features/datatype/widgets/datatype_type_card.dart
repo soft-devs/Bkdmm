@@ -3,11 +3,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
-import '../../../core/i18n/i18n.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../shared/models/models.dart';
-import '../../../shared/constants/default_data_types.dart';
-import '../../../shared/widgets/td_popup_menu.dart';
+import 'package:bkdmm/core/i18n/i18n.dart';
+import 'package:bkdmm/l10n/app_localizations.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/constants/default_data_types.dart';
+import 'package:bkdmm/shared/widgets/td_popup_menu.dart';
 import '../utils/datatype_utils.dart';
 
 /// Callback for type action selection
@@ -103,16 +103,24 @@ class DataTypeCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  TDText(
-                    type.name,
-                    font: tdTheme.fontTitleSmall,
-                    fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: TDText(
+                      type.name,
+                      font: tdTheme.fontTitleSmall,
+                      fontWeight: FontWeight.w600,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  TDText(
-                    type.chnname,
-                    font: tdTheme.fontBodyMedium,
-                    textColor: tdTheme.fontGyColor2,
+                  Flexible(
+                    child: TDText(
+                      type.chnname,
+                      font: tdTheme.fontBodyMedium,
+                      textColor: tdTheme.fontGyColor2,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ],
               ),
@@ -123,6 +131,8 @@ class DataTypeCard extends StatelessWidget {
                     type.remark!,
                     font: tdTheme.fontBodySmall,
                     textColor: tdTheme.fontGyColor3,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
                 ),
             ],

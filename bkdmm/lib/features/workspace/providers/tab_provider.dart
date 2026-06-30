@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/models/models.dart';
-import '../../../shared/services/storage_service.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/services/storage_service.dart';
 
 /// Tab types supported by the workspace
 enum TabType {

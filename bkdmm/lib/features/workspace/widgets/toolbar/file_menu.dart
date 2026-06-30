@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
-import '../../../../shared/providers/providers.dart';
-import '../../../../shared/widgets/td_popup_menu.dart';
-import '../../../settings/views/settings_view.dart';
+
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/shared/widgets/widgets.dart';
+import 'package:bkdmm/features/settings/views/settings_view.dart';
 
 /// 文件管理菜单按钮
 class FileMenuButton extends ConsumerWidget {

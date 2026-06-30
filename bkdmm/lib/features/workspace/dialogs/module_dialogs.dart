@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/models/models.dart';
-import '../../../shared/providers/providers.dart';
-import '../../../shared/utils/responsive_utils.dart';
-import '../../../utils/id_generator.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
+import 'package:bkdmm/utils/id_generator.dart';
 import '../providers/tab_provider.dart';
 
 /// Shows dialog for creating a new module

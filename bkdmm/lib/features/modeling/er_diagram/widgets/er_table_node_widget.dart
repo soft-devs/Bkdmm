@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:graphview/graphview.dart';
 
-import '../../../../shared/models/models.dart';
-import '../../../../shared/theme/td_theme.dart';
-import '../../../../utils/logging/logging_service.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/theme/td_theme.dart';
+import 'package:bkdmm/utils/logging/logging_service.dart';
 import '../models/er_diagram_ui_state.dart';
 import 'er_field_anchor_widget.dart';
 

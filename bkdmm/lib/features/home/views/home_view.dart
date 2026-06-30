@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../core/i18n/i18n.dart';
-import '../../../shared/providers/providers.dart';
-import '../../../shared/models/models.dart';
-import '../../../shared/widgets/app_scaffold.dart';
+import 'package:bkdmm/core/i18n/i18n.dart';
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/widgets/app_scaffold.dart';
 import '../../project/views/create_project_dialog.dart';
 import '../../project/views/open_project_dialog.dart';
 import '../../settings/views/settings_view.dart';

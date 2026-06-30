@@ -1,10 +1,10 @@
 import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart' show Matrix4;
-import 'package:bkdmm/shared/diagram_editor/src/model/graph_model.dart';
-import 'package:bkdmm/shared/diagram_editor/src/model/transform_model.dart';
-import 'package:bkdmm/shared/diagram_editor/src/model/node_model.dart';
-import 'package:bkdmm/shared/diagram_editor/src/model/edge_model.dart';
+import 'package:bkdmm/shared/diagram_editor/model/graph_model.dart';
+import 'package:bkdmm/shared/diagram_editor/model/transform_model.dart';
+import 'package:bkdmm/shared/diagram_editor/model/node_model.dart';
+import 'package:bkdmm/shared/diagram_editor/model/edge_model.dart';
 
 void main() {
   group('GraphModel', () {

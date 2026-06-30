@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/providers/providers.dart';
+import 'package:bkdmm/shared/providers/providers.dart';
 import '../widgets/widgets.dart';
 
 /// Default fields settings panel for project settings

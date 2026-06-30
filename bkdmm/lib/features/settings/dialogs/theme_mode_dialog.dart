@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 
 /// Theme mode selection dialog with TDesign styling
 class ThemeModeDialog extends StatelessWidget {

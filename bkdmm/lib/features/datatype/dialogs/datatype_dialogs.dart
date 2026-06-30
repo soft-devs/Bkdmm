@@ -4,8 +4,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
-import '../../../core/i18n/i18n.dart';
-import '../../../shared/models/models.dart';
+import 'package:bkdmm/core/i18n/i18n.dart';
+import 'package:bkdmm/shared/models/models.dart';
 import '../providers/datatype_provider.dart';
 import '../views/datatype_edit_dialog.dart';
 

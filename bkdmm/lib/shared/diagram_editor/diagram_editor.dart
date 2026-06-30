@@ -65,48 +65,48 @@ library;
 // Main Entry - 主入口类（门面 API）
 // ============================================================================
 
-export 'src/diagram_editor.dart' show DiagramEditor;
+export 'diagram_editor_impl.dart' show DiagramEditor;
 
 // ============================================================================
 // Core 层 - 核心抽象
 // ============================================================================
 
-export 'src/core/diagram_node.dart';
-export 'src/core/diagram_edge.dart';
-export 'src/core/diagram_state.dart' hide InteractionMode;
+export 'core/diagram_node.dart';
+export 'core/diagram_edge.dart';
+export 'core/diagram_state.dart' hide InteractionMode;
 
 // ============================================================================
 // Model 层 - 数据模型
 // ============================================================================
 
-export 'src/model/node_model.dart';
-export 'src/model/edge_model.dart';
-export 'src/model/transform_model.dart';
-export 'src/model/graph_model.dart';
+export 'model/node_model.dart';
+export 'model/edge_model.dart';
+export 'model/transform_model.dart';
+export 'model/graph_model.dart';
 
 // ============================================================================
 // Event 层 - 事件系统
 // ============================================================================
 
-export 'src/event/event_types.dart';
-export 'src/event/event_center.dart';
+export 'event/event_types.dart';
+export 'event/event_center.dart';
 
 // ============================================================================
 // Handlers 层 - 事件处理
 // ============================================================================
 
 // 基础抽象
-export 'src/handlers/diagram_event.dart';
-export 'src/handlers/diagram_context.dart';
-export 'src/handlers/diagram_handler.dart';
-export 'src/handlers/handler_registry.dart';
+export 'handlers/diagram_event.dart';
+export 'handlers/diagram_context.dart';
+export 'handlers/diagram_handler.dart';
+export 'handlers/handler_registry.dart';
 
 // 具体处理器
-export 'src/handlers/anchor_click_handler.dart';
-export 'src/handlers/node_drag_handler.dart';
-export 'src/handlers/selection_handler.dart';
-export 'src/handlers/canvas_pan_handler.dart';
-export 'src/handlers/pointer_handler.dart';
+export 'handlers/anchor_click_handler.dart';
+export 'handlers/node_drag_handler.dart';
+export 'handlers/selection_handler.dart';
+export 'handlers/canvas_pan_handler.dart';
+export 'handlers/pointer_handler.dart';
 
 // ============================================================================
 // Behavior 层 - 可复用行为
@@ -116,21 +116,21 @@ export 'src/handlers/pointer_handler.dart';
 // 注意：behavior.dart 和 behavior_registry.dart 都定义了 Behavior 类
 // behavior_registry.dart 中的 Behavior 是简化版本，用于注册表管理
 // behavior.dart 中的 Behavior<T> 是泛型版本，用于具体行为实现
-export 'src/behavior/behavior.dart';
-export 'src/behavior/behavior_registry.dart' hide Behavior;
+export 'behavior/behavior.dart';
+export 'behavior/behavior_registry.dart' hide Behavior;
 
 // 具体行为
 // 注意：多个行为文件定义了 kPrimaryMouseButton 等鼠标按钮常量
 // 以及其他重复的类型定义，使用 hide 隐藏重复定义
-export 'src/behavior/node_drag_behavior.dart';
-export 'src/behavior/selection_behavior.dart';
-export 'src/behavior/connection_behavior.dart'
+export 'behavior/node_drag_behavior.dart';
+export 'behavior/selection_behavior.dart';
+export 'behavior/connection_behavior.dart'
     hide
         kPrimaryMouseButton,
         kSecondaryMouseButton,
         kTertiaryMouseButton,
         AnchorDirection;
-export 'src/behavior/pan_zoom_behavior.dart'
+export 'behavior/pan_zoom_behavior.dart'
     hide
         kPrimaryMouseButton,
         kSecondaryMouseButton,
@@ -141,41 +141,50 @@ export 'src/behavior/pan_zoom_behavior.dart'
 // Spatial 层 - 空间索引
 // ============================================================================
 
-export 'src/spatial/spatial_index.dart';
-export 'src/spatial/simple_index.dart';
+export 'spatial/spatial_index.dart';
+export 'spatial/simple_index.dart';
 
 // ============================================================================
 // Commands 层 - 命令系统
 // ============================================================================
 
-export 'src/commands/diagram_command.dart';
-export 'src/commands/history_controller.dart';
+export 'commands/diagram_command.dart';
+export 'commands/history_controller.dart';
+export 'commands/er/er_commands.dart';
 
 // ============================================================================
 // Integration 层 - 集成管理
 // ============================================================================
 
-export 'src/integration/er_interaction_manager.dart'
+export 'integration/er_interaction_manager.dart'
     show InteractionMode, ERInteractionState, ERInteractionManager;
-export 'src/integration/er_interaction_provider.dart';
+export 'integration/er_interaction_provider.dart';
 
 // ============================================================================
 // View 层 - 视图渲染
 // ============================================================================
 
-export 'src/view/graph_view.dart';
-export 'src/view/tool_overlay.dart';
-export 'src/view/modification_overlay.dart';
-export 'src/view/canvas_overlay.dart';
+export 'view/graph_view.dart' show GraphView, GraphGridConfig, ViewportConfig, GraphEdgePainter;
+export 'view/tool_overlay.dart';
+export 'view/modification_overlay.dart';
+export 'view/canvas_overlay.dart';
 
 // Painter
-export 'src/view/painter/node_painter.dart';
-export 'src/view/painter/edge_painter.dart';
-export 'src/view/painter/grid_painter.dart';
+export 'view/painter/node_painter.dart';
+export 'view/painter/edge_painter.dart';
+export 'view/painter/grid_painter.dart';
 
 // ============================================================================
 // ER 层 - ER 图扩展
 // ============================================================================
 
-export 'src/er/er_table_node_model.dart';
-export 'src/er/er_relation_edge_model.dart';
+export 'er/er_table_node_model.dart';
+export 'er/er_relation_edge_model.dart';
+export 'er/er_relation_painter.dart' show ERRelationPainter, ERRelationPainterConfig;
+
+// ============================================================================
+// Adapters 层 - 数据适配器
+// ============================================================================
+
+export 'adapters/er_node_adapter.dart';
+export 'adapters/er_edge_adapter.dart' hide AnchorDirection;

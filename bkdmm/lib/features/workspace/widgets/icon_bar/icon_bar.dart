@@ -19,7 +19,7 @@ class IconBar extends ConsumerWidget {
       decoration: BoxDecoration(
         color: tdTheme.bgColorContainer,
         border: Border(
-          right: BorderSide(color: tdTheme.grayColor13),
+          right: BorderSide(color: tdTheme.grayColor5),
         ),
       ),
       child: Column(

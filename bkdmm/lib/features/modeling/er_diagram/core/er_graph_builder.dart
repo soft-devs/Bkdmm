@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:graphview/graphview.dart';
-import '../../../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 import '../models/er_diagram_ui_state.dart';
 
 /// ER 图 Graph 构建器
