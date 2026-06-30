@@ -8,6 +8,10 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/anchor_click_handler.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/node_drag_handler.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/selection_handler.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/canvas_pan_handler.dart';
 import 'package:bkdmm/shared/models/module.dart';
 import 'package:bkdmm/features/project/providers/project_notifier.dart';
 import '../models/er_diagram_ui_state.dart';
@@ -103,6 +107,15 @@ class ERDiagramController {
   /// 从项目数据加载初始节点和边，设置事件监听。
   void initialize(Module module) {
     if (_initialized) return;
+
+    // 注册事件处理器（激活框架 Handler 系统）
+    editor.registerHandlers([
+      AnchorClickHandler(priority: 10),
+      ConnectionHandler(priority: 30),
+      NodeDragHandler(priority: 20),
+      SelectionHandler(priority: 50),
+      CanvasPanHandler(priority: 100),
+    ]);
 
     // 加载节点
     final nodes = ERNodeAdapter.fromModule(module);

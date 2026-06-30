@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
 import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/pointer_handler.dart';
 import 'package:bkdmm/shared/models/models.dart';
 import 'package:bkdmm/features/project/providers/project_notifier.dart';
 import 'package:bkdmm/utils/logging/logging_service.dart';
@@ -57,6 +58,9 @@ class ERDiagramView extends ConsumerStatefulWidget {
 class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   /// 控制器
   ERDiagramController? _controller;
+
+  /// 指针处理器（框架事件分发）
+  PointerHandler? _pointerHandler;
 
   /// 变换控制器
   late TransformationController _transformationController;
@@ -163,8 +167,159 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
     // 初始化数据
     _controller!.initialize(module);
 
+    // 创建指针处理器（使用框架事件系统）
+    _pointerHandler = PointerHandler(
+      registry: _controller!.editor.handlerRegistry,
+      spatialIndex: _controller!.editor.spatialIndex,
+      diagramId: widget.moduleId,
+      diagramType: 'er-diagram',
+      interactionMode: _controller!.interactionMode == ERInteractionMode.edit
+          ? InteractionMode.edit
+          : InteractionMode.move,
+      onStateUpdate: _handleHandlerUpdate,
+    );
+
     // 订阅状态变更
     _stateSubscription = _controller!.subscribeToStateChanges(_onStateChanged);
+  }
+
+  /// 处理 Handler 状态更新
+  void _handleHandlerUpdate(HandlerUpdate update) {
+    final controller = _controller;
+    if (controller == null) return;
+
+    logging.d('[ERDiagramView] HandlerUpdate: ${update.type}', tag: 'ERCanvas');
+
+    switch (update.type) {
+      case HandlerUpdateType.startConnection:
+        // 开始连线
+        setState(() {
+          _isConnecting = true;
+          _connectionSourceAnchorId = update.data['anchorId'];
+          _connectionSourcePosition = update.data['position'];
+        });
+        // 通知 ConnectionHandler 开始连线
+        final connectionHandler = controller.editor.handlerRegistry.handlers
+            .whereType<ConnectionHandler>()
+            .firstOrNull;
+        connectionHandler?.startConnection(
+          update.data['anchorId'],
+          update.data['position'],
+        );
+
+      case HandlerUpdateType.updateConnectionPreview:
+        // 更新连线预览
+        setState(() {
+          // 预览位置在 ERInteractionOverlay 中处理
+        });
+
+      case HandlerUpdateType.completeConnection:
+        // 完成连线
+        final targetAnchorId = update.data['targetAnchorId'] as String;
+        if (_connectionSourceAnchorId != null) {
+          controller.completeConnection(targetAnchorId, _extractNodeId(targetAnchorId));
+        }
+        setState(() {
+          _isConnecting = false;
+          _connectionSourceAnchorId = null;
+          _connectionSourcePosition = null;
+        });
+
+      case HandlerUpdateType.cancelConnection:
+        // 取消连线
+        setState(() {
+          _isConnecting = false;
+          _connectionSourceAnchorId = null;
+          _connectionSourcePosition = null;
+        });
+
+      case HandlerUpdateType.selectNode:
+        // 选中节点
+        controller.selectNode(
+          update.data['nodeId'],
+          addToSelection: update.data['addToSelection'] ?? false,
+        );
+
+      case HandlerUpdateType.startDrag:
+        // 开始拖动（记录起始位置）
+        // 框架会处理
+
+      case HandlerUpdateType.updateDrag:
+        // 更新拖动位置
+        final nodeId = update.data['nodeId'] as String;
+        final position = update.data['position'] as Offset;
+        controller.editor.updateNode(nodeId, (node) {
+          if (node is ERTableNodeModel) {
+            return node.copyWith(position: position);
+          }
+          return node;
+        });
+
+      case HandlerUpdateType.endDrag:
+        // 结束拖动，同步位置到项目
+        final nodeId = update.data['nodeId'] as String;
+        controller.editor.eventCenter.emit(DragEndedEvent(nodeId));
+
+      case HandlerUpdateType.startBoxSelection:
+        // 开始框选
+        setState(() {
+          _isSelecting = true;
+          _selectionStart = update.data['start'];
+          _selectionEnd = _selectionStart;
+        });
+
+      case HandlerUpdateType.updateBoxSelection:
+        // 更新框选区域
+        setState(() {
+          _selectionEnd = update.data['end'];
+        });
+
+      case HandlerUpdateType.completeBoxSelection:
+        // 完成框选
+        final rect = Rect.fromPoints(_selectionStart, _selectionEnd);
+        final transform = _transformationController.value;
+        final inverseTransform = Matrix4.inverted(transform);
+        final canvasStart = MatrixUtils.transformPoint(inverseTransform, rect.topLeft);
+        final canvasEnd = MatrixUtils.transformPoint(inverseTransform, rect.bottomRight);
+        final canvasRect = Rect.fromPoints(canvasStart, canvasEnd);
+
+        // 选中框选区域内的所有节点
+        for (final node in controller.state.nodes.values) {
+          if (canvasRect.overlaps(Rect.fromLTWH(
+            node.position.dx,
+            node.position.dy,
+            node.size.width,
+            node.size.height,
+          ))) {
+            controller.selectNode(node.id, addToSelection: true);
+          }
+        }
+
+        setState(() {
+          _isSelecting = false;
+        });
+
+      case HandlerUpdateType.openNodeEditor:
+        // 打开节点编辑器
+        controller.editor.eventCenter.emit(
+          NodeEditorRequestedEvent(update.data['nodeId']),
+        );
+
+      case HandlerUpdateType.showContextMenu:
+        // 显示上下文菜单
+        controller.editor.eventCenter.emit(
+          ContextMenuRequestedEvent(
+            update.data['position'],
+            update.data['nodeId'],
+          ),
+        );
+    }
+  }
+
+  /// 从锚点 ID 提取节点 ID
+  String _extractNodeId(String anchorId) {
+    final parts = anchorId.split(':');
+    return parts.first;
   }
 
   /// 状态变更处理
