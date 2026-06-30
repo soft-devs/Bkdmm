@@ -5,8 +5,6 @@
 library;
 
 import 'dart:math' as math;
-import 'dart:ui';
-
 import 'package:flutter/rendering.dart';
 
 import '../../../../shared/diagram_editor/diagram_editor.dart';

@@ -18,7 +18,7 @@ import '../widgets/property_section.dart';
 import '../widgets/property_field.dart';
 import '../widgets/stat_tile.dart';
 import '../../modeling/entity_editor/views/entity_editor_view.dart';
-import '../../modeling/er_diagram/widgets/er_diagram_canvas.dart';
+import '../../modeling/er_diagram/er_diagram.dart';
 
 /// Workspace view - Main project editing interface with tab management
 ///
@@ -118,7 +118,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
                                     ),
 
                                     // 标签内容区
-                                    Expanded(
+                                    Expanded (
                                       child: _buildTabContent(project, tdTheme),
                                     ),
                                   ],
@@ -318,7 +318,7 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
       );
     }
 
-    return ERDiagramCanvas(
+    return ERDiagramView(
       moduleId: module.id,
       onEntityEdit: (entity) => _showEntityEditorDialog(module, entity),
       onEntityPreview: (entity) => _showEntityPreviewDialog(module, entity),

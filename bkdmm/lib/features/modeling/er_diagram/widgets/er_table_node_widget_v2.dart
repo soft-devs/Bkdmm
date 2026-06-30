@@ -108,7 +108,7 @@ class ERTableNodeWidgetV2 extends StatefulWidget {
       return const SizedBox.shrink();
     }
 
-    final erNode = node as ERTableNodeModel;
+    final erNode = node;
 
     return ERTableNodeWidgetV2(
       entity: erNode.entity,

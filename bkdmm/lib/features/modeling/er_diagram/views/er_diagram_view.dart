@@ -4,9 +4,8 @@
 /// 替代旧的 ERDiagramCanvas。
 library;
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/diagram_editor/diagram_editor.dart';
@@ -70,6 +69,25 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   /// 状态变更订阅
   VoidCallback? _stateSubscription;
 
+  /// 是否正在交互（避免状态同步循环）
+  bool _isInteracting = false;
+
+  /// 节点拖动状态（GestureDetector 方式）
+  String? _draggedNodeId;
+  Offset _dragStartScreenPos = Offset.zero;
+  Offset _nodeStartCanvasPos = Offset.zero;
+
+  /// 手动节点拖动状态（Listener 方式，用于缩放后的拖动）
+  bool _isManualDraggingNode = false;
+  String? _manualDragNodeId;
+  Offset _manualDragStartScreenPos = Offset.zero;
+  Offset _manualDragStartCanvasPos = Offset.zero;
+
+  /// 右键拖动画布状态
+  bool _isRightDragging = false;
+  Offset _rightDragStart = Offset.zero;
+  Matrix4 _rightDragTransformStart = Matrix4.identity();
+
   @override
   void initState() {
     super.initState();
@@ -132,14 +150,11 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
 
   /// 状态变更处理
   void _onStateChanged() {
-    if (_controller == null) return;
+    if (_controller == null || _isInteracting) return;
 
-    // 同步变换控制器
-    final viewport = _controller!.state.viewport;
-    final matrix = Matrix4.identity()
-      ..translate(viewport.panOffset.dx, viewport.panOffset.dy)
-      ..scale(viewport.zoom);
-    _transformationController.value = matrix;
+    // 不同步变换控制器，因为 InteractiveViewer 管理自己的变换状态
+    // InteractiveViewer 的缩放和平移由用户交互直接控制
+    // DiagramEditor 的 viewport 状态用于内部计算，不需要同步到视图
 
     setState(() {});
   }
@@ -172,6 +187,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
           child: IgnorePointer(
             child: ERInteractionOverlay(
               state: state,
+              interactionExtension: _interactionExtension,
               transform: _transformationController.value,
               isDarkMode: isDark,
             ),
@@ -200,59 +216,76 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
             _mousePosition = event.localPosition;
           });
         },
-        child: InteractiveViewer(
-          transformationController: _transformationController,
-          boundaryMargin: const EdgeInsets.all(double.infinity),
-          minScale: 0.1,
-          maxScale: 5.0,
-          panEnabled: _controller?.interactionMode == ERInteractionMode.preview,
-          scaleEnabled: true,
-          clipBehavior: Clip.none,
-          onInteractionUpdate: (details) {
-            // 通知控制器视口变更
-            _controller?.zoomTo(_transformationController.value.getMaxScaleOnAxis());
-          },
-          child: SizedBox(
-            width: 50000,
-            height: 50000,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // 背景网格
-                Positioned.fill(
-                  child: _buildGridBackground(isDark),
-                ),
-
-                // 边层
-                if (state.edges.isNotEmpty)
-                  CustomPaint(
-                    painter: _buildEdgePainter(state, isDark),
-                    size: const Size(50000, 50000),
-                  ),
-
-                // 节点层
-                ...state.nodes.values.map((node) {
-                  final nodeState = state.getNodeState(node.id);
-                  return Positioned(
-                    left: node.position.dx,
-                    top: node.position.dy,
-                    child: ERTableNodeWidgetV2.builder(
-                      node,
-                      nodeState,
-                      isDarkMode: isDark,
-                      interactionMode: _getInteractionMode(),
-                      onAnchorTap: (anchor) => _onAnchorTap(node, anchor),
-                      onTap: (isCtrlPressed) => _onNodeTap(node.id, isCtrlPressed),
-                      onDoubleTap: () => _onNodeDoubleTap(node),
-                      onDragStart: (details) => _onNodeDragStart(node.id, details),
-                      onDragUpdate: (details) => _onNodeDragUpdate(node.id, details),
-                      onDragEnd: () => _onNodeDragEnd(node.id),
-                    ),
-                  );
-                }),
-              ],
+        child: Stack(
+          children: [
+            // 背景网格层（在 InteractiveViewer 外部，使用屏幕坐标绘制）
+            Positioned.fill(
+              child: IgnorePointer(
+                child: _buildGridBackground(isDark),
+              ),
             ),
-          ),
+
+            // InteractiveViewer 层（节点和边）
+            InteractiveViewer(
+              transformationController: _transformationController,
+              boundaryMargin: const EdgeInsets.all(double.infinity),
+              minScale: 0.1,
+              maxScale: 5.0,
+              panEnabled: _controller?.interactionMode == ERInteractionMode.preview,
+              scaleEnabled: true,
+              // 不设置 clipBehavior，使用默认 Clip.hardEdge
+              onInteractionStart: (details) {
+                _isInteracting = true;
+              },
+              onInteractionUpdate: (details) {
+                // 不调用 zoomTo，避免重置画布位置
+              },
+              onInteractionEnd: (details) {
+                _isInteracting = false;
+              },
+              child: SizedBox(
+                width: 50000,
+                height: 50000,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // 透明背景层（确保整个虚拟画布区域都能响应事件）
+                    Positioned.fill(
+                      child: const ColoredBox(color: Colors.transparent),
+                    ),
+
+                    // 边层
+                    if (state.edges.isNotEmpty)
+                      CustomPaint(
+                        painter: _buildEdgePainter(state, isDark),
+                        size: const Size(50000, 50000),
+                      ),
+
+                    // 节点层
+                    ...state.nodes.values.map((node) {
+                      final nodeState = state.getNodeState(node.id);
+                      return Positioned(
+                        left: node.position.dx,
+                        top: node.position.dy,
+                        child: ERTableNodeWidgetV2.builder(
+                          node,
+                          nodeState,
+                          isDarkMode: isDark,
+                          interactionMode: _getInteractionMode(),
+                          onAnchorTap: (anchor) => _onAnchorTap(node, anchor),
+                          onTap: (isCtrlPressed) => _onNodeTap(node.id, isCtrlPressed),
+                          onDoubleTap: () => _onNodeDoubleTap(node),
+                          onDragStart: (details) => _onNodeDragStart(node.id, details),
+                          onDragUpdate: (details) => _onNodeDragUpdate(node.id, details),
+                          onDragEnd: () => _onNodeDragEnd(node.id),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -348,8 +381,8 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
             IconButton(
               icon: Icon(
                 _controller?.interactionMode == ERInteractionMode.edit
-                    ? Icons.edit
-                    : Icons.visibility,
+                    ? Icons.visibility  // 编辑模式时显示预览图标（点击切换到预览）
+                    : Icons.edit,        // 预览模式时显示编辑图标（点击切换到编辑）
                 size: 20,
               ),
               onPressed: () => _controller?.toggleMode(),
@@ -401,23 +434,158 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   // ===========================================================================
 
   void _onPointerDown(PointerDownEvent event) {
-    logging.d('[ERDiagramView] onPointerDown: ${event.localPosition}', tag: 'ERCanvas');
+    logging.d('[ERDiagramView] onPointerDown: ${event.localPosition}, buttons=${event.buttons}', tag: 'ERCanvas');
 
-    // 右键在编辑模式下用于平移
+    // 右键在编辑模式下用于平移画布
     if (event.buttons == kSecondaryMouseButton &&
         _controller?.interactionMode == ERInteractionMode.edit) {
-      // 开始框选或平移
-      _startSelection(event.localPosition);
+      _isRightDragging = true;
+      _rightDragStart = event.localPosition;
+      _rightDragTransformStart = _transformationController.value.clone();
+      return;
+    }
+
+    // 左键：编辑模式下处理节点选中和框选
+    if (event.buttons == kPrimaryMouseButton &&
+        _controller?.interactionMode == ERInteractionMode.edit) {
+      // 检查是否点击在节点上
+      final clickedNodeId = _checkClickedOnNode(event.localPosition);
+
+      if (clickedNodeId != null) {
+        // 点击在节点上，手动触发节点选中
+        logging.d('[ERDiagramView] 点击在节点上: $clickedNodeId', tag: 'ERCanvas');
+        _handleNodeClick(clickedNodeId, event.localPosition);
+      } else {
+        // 点击在空白区域，启动框选
+        logging.d('[ERDiagramView] 点击在空白区域，启动框选', tag: 'ERCanvas');
+        _startSelection(event.localPosition);
+      }
+    }
+  }
+
+  /// 检查点击位置是否在某个节点上
+  /// 返回节点ID，如果不在任何节点上则返回 null
+  String? _checkClickedOnNode(Offset screenPos) {
+    final controller = _controller;
+    if (controller == null) return null;
+
+    // 将屏幕坐标转换为画布坐标
+    final transform = _transformationController.value;
+    final inverseTransform = Matrix4.inverted(transform);
+    final canvasPos = MatrixUtils.transformPoint(inverseTransform, screenPos);
+
+    logging.d('[ERDiagramView] 屏幕坐标=$screenPos, 画布坐标=$canvasPos', tag: 'ERCanvas');
+
+    // 检查每个节点
+    for (final node in controller.state.nodes.values) {
+      final nodeRect = Rect.fromLTWH(
+        node.position.dx,
+        node.position.dy,
+        node.size.width,
+        node.size.height,
+      );
+
+      // 扩大点击区域以包含锚点（如果有）
+      const anchorHitSize = 16.0;
+      final expandedRect = nodeRect.inflate(anchorHitSize);
+
+      if (expandedRect.contains(canvasPos)) {
+        logging.d('[ERDiagramView] 节点 ${node.id}: rect=$nodeRect, contains=true', tag: 'ERCanvas');
+        return node.id;
+      }
+    }
+
+    return null;
+  }
+
+  /// 处理节点点击
+  void _handleNodeClick(String nodeId, Offset screenPos) {
+    final controller = _controller;
+    if (controller == null) return;
+
+    // 检查是否按下 Ctrl 键
+    final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
+            .contains(LogicalKeyboardKey.controlLeft) ||
+        HardwareKeyboard.instance.logicalKeysPressed
+            .contains(LogicalKeyboardKey.controlRight);
+
+    logging.d('[ERDiagramView] 处理节点点击: $nodeId, ctrl=$isCtrlPressed', tag: 'ERCanvas');
+
+    // 触发节点选中
+    _onNodeTap(nodeId, isCtrlPressed);
+
+    // 启动手动节点拖动（用于处理缩放后的坐标转换）
+    if (controller != null) {
+      final node = controller.editor.getNode(nodeId);
+      if (node != null) {
+        _isManualDraggingNode = true;
+        _manualDragNodeId = nodeId;
+        _manualDragStartScreenPos = screenPos;
+        _manualDragStartCanvasPos = node.position;
+
+        logging.d('[ERDiagramView] 启动手动节点拖动: nodeId=$nodeId, screenPos=$screenPos, canvasPos=${node.position}', tag: 'ERCanvas');
+      }
     }
   }
 
   void _onPointerMove(PointerMoveEvent event) {
+    // 右键拖动画布（编辑模式）
+    if (event.buttons == kSecondaryMouseButton && _isRightDragging) {
+      final delta = event.localPosition - _rightDragStart;
+      final newMatrix = _rightDragTransformStart.clone();
+      newMatrix.translate(delta.dx, delta.dy);
+      _transformationController.value = newMatrix;
+      return;
+    }
+
+    // 左键手动节点拖动（编辑模式）
+    if (event.buttons == kPrimaryMouseButton && _isManualDraggingNode && _manualDragNodeId != null) {
+      _handleManualNodeDrag(event.localPosition);
+      return;
+    }
+
+    // 左键框选（编辑模式）
     if (_interactionExtension.isSelecting) {
       _updateSelection(event.localPosition);
     }
   }
 
+  /// 处理手动节点拖动
+  void _handleManualNodeDrag(Offset screenPos) {
+    final controller = _controller;
+    if (controller == null || _manualDragNodeId == null) return;
+
+    // 计算从起始位置到当前位置的总偏移（屏幕坐标）
+    final screenDelta = screenPos - _manualDragStartScreenPos;
+
+    // 将屏幕偏移转换为画布偏移
+    final zoom = _transformationController.value.getMaxScaleOnAxis();
+    final canvasDelta = screenDelta / zoom;
+
+    // 基于起始位置计算新位置
+    final newPosition = _manualDragStartCanvasPos + canvasDelta;
+
+    logging.d('[ERDiagramView] 手动节点拖动: delta=$canvasDelta, newPos=$newPosition', tag: 'ERCanvas');
+
+    controller.moveNode(_manualDragNodeId!, newPosition);
+  }
+
   void _onPointerUp(PointerUpEvent event) {
+    // 结束右键拖动
+    if (_isRightDragging) {
+      _isRightDragging = false;
+      return;
+    }
+
+    // 结束手动节点拖动
+    if (_isManualDraggingNode) {
+      _isManualDraggingNode = false;
+      _manualDragNodeId = null;
+      logging.d('[ERDiagramView] 结束手动节点拖动', tag: 'ERCanvas');
+      return;
+    }
+
+    // 完成框选
     if (_interactionExtension.isSelecting) {
       _completeSelection();
     }
@@ -449,7 +617,16 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   void _completeSelection() {
     final rect = _interactionExtension.selectionRect;
     if (rect != null && _controller != null) {
-      // 查询框选区域内的节点
+      // 获取当前变换矩阵
+      final transform = _transformationController.value;
+      final inverseTransform = Matrix4.inverted(transform);
+
+      // 将屏幕坐标的框选矩形转换为画布坐标
+      final canvasTopLeft = MatrixUtils.transformPoint(inverseTransform, rect.topLeft);
+      final canvasBottomRight = MatrixUtils.transformPoint(inverseTransform, rect.bottomRight);
+      final canvasSelectionRect = Rect.fromPoints(canvasTopLeft, canvasBottomRight);
+
+      // 查询框选区域内的节点（使用画布坐标）
       final selectedIds = <String>{};
       for (final node in _controller!.state.nodes.values) {
         final nodeRect = Rect.fromLTWH(
@@ -458,7 +635,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
           node.size.width,
           node.size.height,
         );
-        if (rect.overlaps(nodeRect)) {
+        if (canvasSelectionRect.overlaps(nodeRect)) {
           selectedIds.add(node.id);
         }
       }
@@ -524,28 +701,50 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
 
   void _onNodeDragStart(String nodeId, DragStartDetails details) {
     logging.d('[ERDiagramView] onNodeDragStart: $nodeId', tag: 'ERCanvas');
-    _controller?.editor.eventCenter.emit(DragStartedEvent(
-      nodeId: nodeId,
-      startPosition: _controller?.toScene(details.localPosition) ?? Offset.zero,
-    ));
-  }
 
-  void _onNodeDragUpdate(String nodeId, DragUpdateDetails details) {
     final controller = _controller;
     if (controller == null) return;
 
     final node = controller.editor.getNode(nodeId);
     if (node == null) return;
 
+    // 记录拖动起始位置
+    _draggedNodeId = nodeId;
+    _dragStartScreenPos = details.localPosition;
+    _nodeStartCanvasPos = node.position;
+
+    _controller?.editor.eventCenter.emit(DragStartedEvent(
+      nodeId: nodeId,
+      startPosition: node.position,
+    ));
+  }
+
+  void _onNodeDragUpdate(String nodeId, DragUpdateDetails details) {
+    if (_draggedNodeId != nodeId) return;
+
+    final controller = _controller;
+    if (controller == null) return;
+
+    // 计算从起始位置到当前位置的总偏移（屏幕坐标）
+    final screenDelta = details.localPosition - _dragStartScreenPos;
+
+    // 将屏幕偏移转换为画布偏移
     final zoom = _transformationController.value.getMaxScaleOnAxis();
-    final delta = details.delta / zoom;
-    final newPosition = node.position + delta;
+    final canvasDelta = screenDelta / zoom;
+
+    // 基于起始位置计算新位置
+    final newPosition = _nodeStartCanvasPos + canvasDelta;
 
     controller.moveNode(nodeId, newPosition);
   }
 
   void _onNodeDragEnd(String nodeId) {
+    if (_draggedNodeId != nodeId) return;
+
     logging.d('[ERDiagramView] onNodeDragEnd: $nodeId', tag: 'ERCanvas');
+
+    _draggedNodeId = null;
+
     final node = _controller?.editor.getNode(nodeId);
     if (node != null) {
       _controller?.editor.eventCenter.emit(DragEndedEvent(

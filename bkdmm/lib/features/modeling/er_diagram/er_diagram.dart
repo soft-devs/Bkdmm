@@ -26,19 +26,8 @@ export 'views/er_interaction_overlay.dart';
 export 'painters/er_relation_painter_adapter.dart';
 
 // Widget
-export 'widgets/er_table_node_widget.dart';
 export 'widgets/er_table_node_widget_v2.dart';
 export 'widgets/er_field_anchor_widget.dart';
 
-// 模型和状态 (保留兼容)
+// 模型和状态
 export 'models/er_diagram_ui_state.dart';
-
-// ============================================================================
-// 旧架构 (保留兼容，后续移除)
-// ============================================================================
-
-// 旧画布 (保留用于回退)
-export 'widgets/er_diagram_canvas.dart';
-
-// 旧 Provider (保留用于兼容)
-export 'providers/er_diagram_ui_provider.dart';

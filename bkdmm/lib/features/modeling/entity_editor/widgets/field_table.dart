@@ -186,13 +186,13 @@ class _FieldTableState extends State<FieldTable> {
       TDTableCol(
         title: '#',
         colKey: 'order',
-        width: 32,
+        width: 50,
         align: TDTableColAlign.center,
       ),
       TDTableCol(
         title: l10n.pk,
         colKey: 'pk',
-        width: 40,
+        width: 50,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildPkCell(rowIndex, tdTheme),
       ),
@@ -218,14 +218,14 @@ class _FieldTableState extends State<FieldTable> {
       TDTableCol(
         title: l10n.notNull,
         colKey: 'notNull',
-        width: 48,
+        // width: 100,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildBoolCell(rowIndex, 'notNull', tdTheme),
       ),
       TDTableCol(
         title: l10n.autoIncrement,
         colKey: 'autoIncrement',
-        width: 48,
+        // width: 100,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildBoolCell(rowIndex, 'autoIncrement', tdTheme),
       ),
@@ -239,7 +239,7 @@ class _FieldTableState extends State<FieldTable> {
       TDTableCol(
         title: l10n.actions,
         colKey: 'actions',
-        width: 56,
+        // width: 100,
         align: TDTableColAlign.center,
         cellBuilder: (context, rowIndex) => _buildActionsCell(rowIndex, tdTheme),
       ),
@@ -295,9 +295,14 @@ class _FieldTableState extends State<FieldTable> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: tdTheme.brandNormalColor, width: 2),
+          disabledBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(width: 2),
           ),
+          fillColor: Colors.transparent,
+          filled: false,
         ),
         onSubmitted: (newValue) => _finishEditing(field, property, newValue),
         onEditingComplete: () => _finishEditing(field, property, _editController.text),

@@ -4,10 +4,8 @@
 library;
 
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../../../shared/diagram_editor/diagram_editor.dart';
 
@@ -20,6 +18,9 @@ class ERInteractionOverlay extends StatelessWidget {
   /// 图表状态
   final DiagramState state;
 
+  /// 交互扩展状态（包含框选和连线信息）
+  final ERInteractionExtension interactionExtension;
+
   /// 变换矩阵（用于坐标转换）
   final Matrix4 transform;
 
@@ -30,6 +31,7 @@ class ERInteractionOverlay extends StatelessWidget {
   const ERInteractionOverlay({
     super.key,
     required this.state,
+    required this.interactionExtension,
     required this.transform,
     this.isDarkMode = false,
   });
@@ -61,36 +63,21 @@ class ERInteractionOverlay extends StatelessWidget {
   }
 
   /// 是否正在连线
-  bool get _isConnecting {
-    // 检查交互状态是否有连线相关信息
-    // 由于 DiagramState.interaction 可能没有直接的连线状态，
-    // 我们需要通过其他方式判断
-    return false; // TODO: 从实际状态获取
-  }
+  bool get _isConnecting => interactionExtension.isConnecting;
 
   /// 是否正在框选
-  bool get _isSelecting {
-    // 同上，需要从实际状态获取
-    return false; // TODO: 从实际状态获取
-  }
+  bool get _isSelecting => interactionExtension.isSelecting;
 
   /// 连线源位置
-  Offset get _connectionSourcePosition {
-    // TODO: 从状态获取
-    return Offset.zero;
-  }
+  Offset get _connectionSourcePosition =>
+      interactionExtension.connectionSourcePosition ?? Offset.zero;
 
   /// 连线预览终点
-  Offset get _connectionPreviewEnd {
-    // TODO: 从状态获取
-    return Offset.zero;
-  }
+  Offset get _connectionPreviewEnd =>
+      interactionExtension.connectionPreviewEnd ?? Offset.zero;
 
   /// 框选矩形
-  Rect get _selectionRect {
-    // TODO: 从状态获取
-    return Rect.zero;
-  }
+  Rect get _selectionRect => interactionExtension.selectionRect ?? Rect.zero;
 }
 
 /// 连线预览绘制器
