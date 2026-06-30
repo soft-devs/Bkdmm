@@ -3,6 +3,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'package:bkdmm/core/i18n/i18n.dart';
 import 'package:bkdmm/l10n/app_localizations.dart';
 import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/widgets/widgets.dart';
 
 /// Field table widget - 字段编辑表格
 ///
@@ -321,22 +322,52 @@ class _FieldTableState extends State<FieldTable> {
   /// 类型选择单元格
   Widget _buildTypeCell(int rowIndex, TDThemeData tdTheme) {
     final field = widget.fields[rowIndex];
-    return InkWell(
-      onTap: () => _showTypeSelector(field),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: TDText(
-              field.type,
-              font: tdTheme.fontBodySmall,
-              textColor: tdTheme.textColorPrimary,
-              overflow: TextOverflow.ellipsis,
+    return Builder(
+      builder: (cellContext) => InkWell(
+        onTap: () => _showTypeSelectorFromCell(cellContext, field),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: TDText(
+                field.type,
+                font: tdTheme.fontBodySmall,
+                textColor: tdTheme.textColorPrimary,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          Icon(TDIcons.chevron_down, size: 12, color: tdTheme.textColorSecondary),
-        ],
+            Icon(TDIcons.chevron_down, size: 12, color: tdTheme.textColorSecondary),
+          ],
+        ),
       ),
+    );
+  }
+
+  /// 从类型单元格位置显示下拉选择
+  void _showTypeSelectorFromCell(BuildContext cellContext, Field field) {
+    final renderBox = cellContext.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+
+    final options = widget.dataTypes
+        .map((dt) => TDDropdownOption(
+              value: dt.name,
+              label: dt.name,
+              selected: dt.name == field.type,
+            ))
+        .toList();
+
+    showTDDropdown(
+      context: cellContext,
+      position: Offset(offset.dx, offset.dy + size.height + 4),
+      width: 200,
+      selectedValue: field.type,
+      options: options,
+      onChanged: (value) {
+        if (value != field.type) {
+          _updateField(field, 'type', value);
+        }
+      },
     );
   }
 
@@ -451,31 +482,6 @@ class _FieldTableState extends State<FieldTable> {
         return;
     }
     widget.onUpdateField(field.id, updatedField);
-  }
-
-  void _showTypeSelector(Field field) {
-    final l10n = context.l10n;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => TDMultiPicker(
-        title: l10n.selectDataType,
-        data: [widget.dataTypes.map((dt) => dt.name).toList()],
-        initialIndexes: [
-          widget.dataTypes.indexWhere((dt) => dt.name == field.type).clamp(0, widget.dataTypes.length - 1),
-        ],
-        onConfirm: (selected) {
-          if (selected.isNotEmpty && selected[0] < widget.dataTypes.length) {
-            final newType = widget.dataTypes[selected[0]].name;
-            if (newType != field.type) {
-              _updateField(field, 'type', newType);
-            }
-          }
-          Navigator.pop(context);
-        },
-        onCancel: (_) => Navigator.pop(context),
-      ),
-    );
   }
 
   void _showFieldDialog(Field? existingField) {

@@ -1,144 +1,34 @@
 /// 终端 Shell 主组件
 ///
-/// 使用 xterm + flutter_pty 实现嵌入式终端
+/// 使用全局 TerminalService 管理 PTY 进程，Widget 只负责显示
 library;
 
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_pty/flutter_pty.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'package:xterm/xterm.dart';
+import '../providers/terminal_service_provider.dart';
 
 /// 终端 Shell 主组件
-class TerminalShell extends ConsumerStatefulWidget {
+class TerminalShell extends ConsumerWidget {
   const TerminalShell({super.key});
 
   @override
-  ConsumerState<TerminalShell> createState() => _TerminalShellState();
-}
-
-class _TerminalShellState extends ConsumerState<TerminalShell> {
-  late Terminal _terminal;
-  Pty? _pty;
-  bool _isRunning = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _terminal = Terminal(maxLines: 10000);
-    _startPty();
-  }
-
-  @override
-  void dispose() {
-    _stopPty();
-    super.dispose();
-  }
-
-  Future<void> _startPty() async {
-    try {
-      // 获取 shell 可执行文件
-      final shell = _getShell();
-
-      // 创建 PTY
-      _pty = Pty.start(
-        shell,
-        workingDirectory: Directory.current.path,
-        environment: {
-          ...Platform.environment,
-          'TERM': 'xterm-256color',
-          'LANG': 'en_US.UTF-8',
-        },
-        rows: 25,
-        columns: 80,
-      );
-
-      setState(() {
-        _isRunning = true;
-      });
-
-      // 监听 PTY 输出并写入终端
-      _pty!.output
-          .cast<List<int>>()
-          .transform(const Utf8Decoder())
-          .listen((data) {
-        if (data.isNotEmpty) {
-          _terminal.write(data);
-        }
-      });
-
-      // 监听终端输入并发送到 PTY
-      _terminal.onOutput = (data) {
-        if (_pty != null) {
-          _pty!.write(const Utf8Encoder().convert(data));
-        }
-      };
-
-      // 监听终端大小变化
-      _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-        _pty?.resize(height, width);
-      };
-
-      // 监听进程退出
-      _pty!.exitCode.then((code) {
-        if (mounted) {
-          setState(() {
-            _isRunning = false;
-          });
-          _terminal.write('\r\n[系统] 终端已退出 (退出码: $code)\r\n');
-        }
-      });
-    } catch (e) {
-      _terminal.write('\r\n[错误] 启动终端失败: $e\r\n');
-      setState(() {
-        _isRunning = false;
-      });
-    }
-  }
-
-  void _stopPty() {
-    if (_pty != null) {
-      _pty!.kill(ProcessSignal.sigterm);
-      _pty = null;
-    }
-    if (mounted) {
-      setState(() {
-        _isRunning = false;
-      });
-    }
-  }
-
-  String _getShell() {
-    if (Platform.isMacOS || Platform.isLinux) {
-      return Platform.environment['SHELL'] ?? 'bash';
-    }
-    if (Platform.isWindows) {
-      return 'cmd.exe';
-    }
-    return 'sh';
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tdTheme = TDTheme.of(context);
+    final terminalState = ref.watch(terminalServiceProvider);
+    final terminalService = ref.read(terminalServiceProvider.notifier);
 
     return Column(
       children: [
         // 工具栏
         _TerminalToolBar(
           tdTheme: tdTheme,
-          isRunning: _isRunning,
-          onClear: () {
-            _terminal.buffer.eraseDisplay();
-          },
-          onRestart: () async {
-            _stopPty();
-            _terminal.buffer.eraseDisplay();
-            await _startPty();
-          },
+          isRunning: terminalState.isRunning,
+          onClear: terminalService.clear,
+          onRestart: terminalService.restart,
         ),
 
         // 分隔线
@@ -152,7 +42,7 @@ class _TerminalShellState extends ConsumerState<TerminalShell> {
           child: Container(
             color: const Color(0xFF1E1E1E),
             child: TerminalView(
-              _terminal,
+              terminalState.terminal,
               autofocus: true,
               hardwareKeyboardOnly: true,
               textStyle: const TerminalStyle(

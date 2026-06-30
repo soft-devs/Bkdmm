@@ -4,6 +4,7 @@ import 'package:tdesign_flutter/tdesign_flutter.dart';
 import 'package:bkdmm/core/i18n/i18n.dart';
 import 'package:bkdmm/l10n/app_localizations.dart';
 import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/widgets/widgets.dart';
 
 /// Code preview widget for displaying generated DDL
 ///
@@ -432,31 +433,20 @@ class _CodePreviewState extends State<CodePreview> {
   }
 
   Widget _buildDatabaseSelector(TDThemeData tdTheme, AppLocalizations l10n) {
-    final currentDb = widget.databases.firstWhere(
-      (d) => d.code == widget.selectedDatabase,
-      orElse: () => widget.databases.first,
-    );
+    final options = widget.databases
+        .map((db) => TDDropdownOption(
+              value: db.code,
+              label: db.name,
+              selected: db.code == widget.selectedDatabase,
+            ))
+        .toList();
 
-    return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => TDMultiPicker(
-            title: l10n.selectDatabase,
-            data: [widget.databases.map((db) => db.name).toList()],
-            initialIndexes: [widget.databases.indexOf(currentDb)],
-            onConfirm: (selected) {
-              if (selected.isNotEmpty && selected[0] < widget.databases.length) {
-                widget.onDatabaseChanged(widget.databases[selected[0]].code);
-              }
-              Navigator.pop(ctx);
-            },
-            onCancel: (_) => Navigator.pop(ctx),
-          ),
-        );
-      },
-      child: Container(
+    return TDSelectDropdown(
+      width: 160,
+      selectedValue: widget.selectedDatabase,
+      options: options,
+      onChanged: widget.onDatabaseChanged,
+      triggerBuilder: (context, selectedLabel) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: tdTheme.bgColorSecondaryContainer,
@@ -469,11 +459,11 @@ class _CodePreviewState extends State<CodePreview> {
             Icon(TDIcons.data_base, size: 18, color: tdTheme.brandNormalColor),
             const SizedBox(width: 8),
             TDText(
-              currentDb.name,
+              selectedLabel,
               font: tdTheme.fontBodyMedium,
               textColor: tdTheme.textColorPrimary,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             Icon(TDIcons.chevron_down, size: 16, color: tdTheme.textColorSecondary),
           ],
         ),

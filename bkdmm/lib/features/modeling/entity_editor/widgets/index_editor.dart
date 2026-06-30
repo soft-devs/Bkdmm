@@ -4,6 +4,7 @@ import 'package:bkdmm/core/i18n/i18n.dart';
 import 'package:bkdmm/l10n/app_localizations.dart';
 import 'package:bkdmm/shared/models/models.dart';
 import 'package:bkdmm/shared/utils/responsive_utils.dart';
+import 'package:bkdmm/shared/widgets/widgets.dart';
 
 /// Index editor widget for managing table indexes
 ///
@@ -400,26 +401,25 @@ class _IndexEditorState extends State<IndexEditor> {
     final tdTheme = TDTheme.of(context);
     final l10n = context.l10n;
 
-    return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => TDMultiPicker(
-            title: l10n.selectIndexType,
-            data: [IndexType.values.map((t) => _getIndexTypeLabel(t, l10n)).toList()],
-            initialIndexes: [IndexType.values.indexOf(selectedType)],
-            onConfirm: (selected) {
-              if (selected.isNotEmpty && selected[0] < IndexType.values.length) {
-                onTypeChanged(IndexType.values[selected[0]]);
-              }
-              Navigator.pop(ctx);
-            },
-            onCancel: (_) => Navigator.pop(ctx),
-          ),
+    final options = IndexType.values
+        .map((type) => TDDropdownOption(
+              value: type.name,
+              label: _getIndexTypeLabel(type, l10n),
+              selected: type == selectedType,
+            ))
+        .toList();
+
+    return TDSelectDropdown(
+      selectedValue: selectedType.name,
+      options: options,
+      onChanged: (value) {
+        final newType = IndexType.values.firstWhere(
+          (t) => t.name == value,
+          orElse: () => IndexType.normal,
         );
+        onTypeChanged(newType);
       },
-      child: Container(
+      triggerBuilder: (ctx, selectedLabel) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: tdTheme.bgColorSecondaryContainer,
@@ -443,7 +443,7 @@ class _IndexEditorState extends State<IndexEditor> {
                   Icon(_getIndexTypeIcon(selectedType), size: 18, color: tdTheme.brandNormalColor),
                   const SizedBox(width: 8),
                   TDText(
-                    _getIndexTypeLabel(selectedType, l10n),
+                    selectedLabel,
                     font: tdTheme.fontBodyMedium,
                     textColor: tdTheme.textColorPrimary,
                   ),
