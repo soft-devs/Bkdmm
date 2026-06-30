@@ -242,23 +242,28 @@ class SelectionRectPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (rect == Rect.zero) return;
 
+    // 根据暗色模式调整颜色亮度
+    final adjustedColor = isDark
+        ? selectionColor.withBlue(255).withGreen(144)  // 暗色模式使用更亮的蓝色
+        : selectionColor;
+
     // 填充
     final fillPaint = Paint()
-      ..color = selectionColor.withValues(alpha: 0.1)
+      ..color = adjustedColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(rect, fillPaint);
 
     // 边框
     final strokePaint = Paint()
-      ..color = selectionColor.withValues(alpha: 0.5)
+      ..color = adjustedColor.withValues(alpha: 0.5)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
     canvas.drawRect(rect, strokePaint);
 
     // 绘制尺寸标签（可选）
-    _drawSizeLabel(canvas, rect, selectionColor);
+    _drawSizeLabel(canvas, rect, adjustedColor);
   }
 
   /// 绘制尺寸标签
