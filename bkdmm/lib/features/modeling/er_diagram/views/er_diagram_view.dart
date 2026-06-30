@@ -320,11 +320,11 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
         return CustomPaint(
           painter: _InfiniteGridPainter(
             transformationController: _transformationController,
-            gridColor: tdTheme.grayColor3.withValues(alpha: isDark ? 0.3 : 0.5),
+            gridColor: tdTheme.brandNormalColor.withValues(alpha: isDark ? 0.15 : 0.2),
             gridSize: 20.0,
             backgroundColor: tdTheme.bgColorPage,
             majorGridInterval: 5,
-            majorGridColor: tdTheme.grayColor4.withValues(alpha: isDark ? 0.4 : 0.6),
+            majorGridColor: tdTheme.brandNormalColor.withValues(alpha: isDark ? 0.25 : 0.3),
           ),
         );
       },
