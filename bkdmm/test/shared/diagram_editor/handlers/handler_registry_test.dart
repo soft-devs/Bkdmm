@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/gestures.dart';
-import 'package:bkdmm/shared/diagram_editor/src/handlers/handler_registry.dart';
-import 'package:bkdmm/shared/diagram_editor/src/handlers/diagram_handler.dart';
-import 'package:bkdmm/shared/diagram_editor/src/handlers/diagram_event.dart';
-import 'package:bkdmm/shared/diagram_editor/src/handlers/diagram_context.dart';
-import 'package:bkdmm/shared/diagram_editor/src/core/diagram_state.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/handler_registry.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/diagram_handler.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/diagram_event.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/diagram_context.dart';
+import 'package:bkdmm/shared/diagram_editor/core/diagram_state.dart';
 
 void main() {
   group('HandlerRegistry', () {

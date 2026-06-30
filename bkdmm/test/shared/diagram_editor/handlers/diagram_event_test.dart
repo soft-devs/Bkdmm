@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
-import 'package:bkdmm/shared/diagram_editor/src/handlers/diagram_event.dart';
+import 'package:bkdmm/shared/diagram_editor/handlers/diagram_event.dart';
 
 void main() {
   group('DiagramEvent', () {

@@ -1,14 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bkdmm/shared/diagram_editor/src/core/diagram_state.dart';
-import 'package:bkdmm/shared/diagram_editor/src/core/diagram_node.dart';
-import 'package:bkdmm/shared/diagram_editor/src/core/diagram_edge.dart';
-import 'package:bkdmm/shared/diagram_editor/src/view/canvas_overlay.dart';
-import 'package:bkdmm/shared/diagram_editor/src/view/painter/node_painter.dart';
-import 'package:bkdmm/shared/diagram_editor/src/view/painter/edge_painter.dart';
-import 'package:bkdmm/shared/diagram_editor/src/model/node_model.dart';
-import 'package:bkdmm/shared/diagram_editor/src/model/edge_model.dart';
+import 'package:bkdmm/shared/diagram_editor/core/diagram_state.dart';
+import 'package:bkdmm/shared/diagram_editor/core/diagram_node.dart';
+import 'package:bkdmm/shared/diagram_editor/core/diagram_edge.dart';
+import 'package:bkdmm/shared/diagram_editor/view/canvas_overlay.dart';
+import 'package:bkdmm/shared/diagram_editor/view/painter/node_painter.dart';
+import 'package:bkdmm/shared/diagram_editor/view/painter/edge_painter.dart';
+import 'package:bkdmm/shared/diagram_editor/model/node_model.dart';
+import 'package:bkdmm/shared/diagram_editor/model/edge_model.dart';
 
 void main() {
   group('View Layer Tests', () {

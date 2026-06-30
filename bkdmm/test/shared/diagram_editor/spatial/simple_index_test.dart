@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bkdmm/shared/diagram_editor/src/spatial/spatial_index.dart';
-import 'package:bkdmm/shared/diagram_editor/src/spatial/simple_index.dart';
+import 'package:bkdmm/shared/diagram_editor/spatial/spatial_index.dart';
+import 'package:bkdmm/shared/diagram_editor/spatial/simple_index.dart';
 
 void main() {
   group('SimpleSpatialIndex', () {
