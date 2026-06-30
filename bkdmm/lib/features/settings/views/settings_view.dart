@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../core/i18n/i18n.dart';
-import '../../../shared/providers/providers.dart';
-import '../../../shared/widgets/app_scaffold.dart';
+import 'package:bkdmm/core/i18n/i18n.dart';
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/shared/widgets/app_scaffold.dart';
 import 'global_settings_view.dart';
 import 'project_settings_view.dart';
 

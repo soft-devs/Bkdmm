@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../../l10n/app_localizations.dart';
+import 'package:bkdmm/l10n/app_localizations.dart';
 
 /// AppLocalizations 扩展方法
 ///

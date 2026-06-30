@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 
 /// Font size selection dialog with TDesign styling
 class FontSizeDialog extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../l10n/app_localizations.dart';
+import 'package:bkdmm/l10n/app_localizations.dart';
 
 /// TDesign 国际化资源代理
 ///

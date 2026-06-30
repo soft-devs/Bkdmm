@@ -1,13 +1,14 @@
 /// ER 图交互覆盖层
 ///
 /// 处理连线预览和框选矩形的渲染。
+/// V3 改造：直接从 DiagramState 读取状态，不再需要 ERInteractionExtension。
 library;
 
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../shared/diagram_editor/diagram_editor.dart';
+import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
 
 /// ER 图交互覆盖层 Widget
 ///
@@ -18,22 +19,26 @@ class ERInteractionOverlay extends StatelessWidget {
   /// 图表状态
   final DiagramState state;
 
-  /// 交互扩展状态（包含框选和连线信息）
-  final ERInteractionExtension interactionExtension;
-
   /// 变换矩阵（用于坐标转换）
   final Matrix4 transform;
 
   /// 是否暗色模式
   final bool isDarkMode;
 
+  /// 框选矩形（屏幕坐标）- 由 View 临时维护
+  final Rect? selectionRectScreen;
+
+  /// 连线预览终点（屏幕坐标）- 由 View 临时维护
+  final Offset? connectionPreviewEndScreen;
+
   /// 创建交互覆盖层
   const ERInteractionOverlay({
     super.key,
     required this.state,
-    required this.interactionExtension,
     required this.transform,
     this.isDarkMode = false,
+    this.selectionRectScreen,
+    this.connectionPreviewEndScreen,
   });
 
   @override
@@ -41,20 +46,20 @@ class ERInteractionOverlay extends StatelessWidget {
     return Stack(
       children: [
         // 连线预览
-        if (_isConnecting)
+        if (_isConnecting && connectionPreviewEndScreen != null)
           CustomPaint(
             painter: ConnectionPreviewPainter(
               sourcePosition: _connectionSourcePosition,
-              targetPosition: _connectionPreviewEnd,
+              targetPosition: connectionPreviewEndScreen!,
               transform: transform,
               isDark: isDarkMode,
             ),
           ),
         // 框选矩形
-        if (_isSelecting)
+        if (_isSelecting && selectionRectScreen != null)
           CustomPaint(
             painter: SelectionRectPainter(
-              rect: _selectionRect,
+              rect: selectionRectScreen!,
               isDark: isDarkMode,
             ),
           ),
@@ -63,21 +68,18 @@ class ERInteractionOverlay extends StatelessWidget {
   }
 
   /// 是否正在连线
-  bool get _isConnecting => interactionExtension.isConnecting;
+  bool get _isConnecting => state.interaction.isConnecting;
 
   /// 是否正在框选
-  bool get _isSelecting => interactionExtension.isSelecting;
+  bool get _isSelecting => state.selection.boxSelectRect != null;
 
   /// 连线源位置
-  Offset get _connectionSourcePosition =>
-      interactionExtension.connectionSourcePosition ?? Offset.zero;
-
-  /// 连线预览终点
-  Offset get _connectionPreviewEnd =>
-      interactionExtension.connectionPreviewEnd ?? Offset.zero;
-
-  /// 框选矩形
-  Rect get _selectionRect => interactionExtension.selectionRect ?? Rect.zero;
+  Offset get _connectionSourcePosition {
+    final anchorId = state.interaction.connectionSourceAnchorId;
+    if (anchorId == null) return Offset.zero;
+    final anchor = state.getAnchor(anchorId);
+    return anchor?.position ?? Offset.zero;
+  }
 }
 
 /// 连线预览绘制器
@@ -310,78 +312,3 @@ class SelectionRectPainter extends CustomPainter {
   }
 }
 
-/// ER 交互状态扩展
-///
-/// 用于存储连线预览和框选的临时状态。
-class ERInteractionExtension {
-  /// 是否正在连线
-  final bool isConnecting;
-
-  /// 连线源锚点 ID
-  final String? connectionSourceAnchorId;
-
-  /// 连线源位置（场景坐标）
-  final Offset? connectionSourcePosition;
-
-  /// 连线预览终点（场景坐标）
-  final Offset? connectionPreviewEnd;
-
-  /// 是否正在框选
-  final bool isSelecting;
-
-  /// 框选起点（屏幕坐标）
-  final Offset? selectionStartPoint;
-
-  /// 框选终点（屏幕坐标）
-  final Offset? selectionEndPoint;
-
-  /// 框选矩形（屏幕坐标）
-  final Rect? selectionRect;
-
-  const ERInteractionExtension({
-    this.isConnecting = false,
-    this.connectionSourceAnchorId,
-    this.connectionSourcePosition,
-    this.connectionPreviewEnd,
-    this.isSelecting = false,
-    this.selectionStartPoint,
-    this.selectionEndPoint,
-    this.selectionRect,
-  });
-
-  /// 复制并修改
-  ERInteractionExtension copyWith({
-    bool? isConnecting,
-    String? connectionSourceAnchorId,
-    Offset? connectionSourcePosition,
-    Offset? connectionPreviewEnd,
-    bool? isSelecting,
-    Offset? selectionStartPoint,
-    Offset? selectionEndPoint,
-    Rect? selectionRect,
-    bool clearConnection = false,
-    bool clearSelection = false,
-  }) {
-    return ERInteractionExtension(
-      isConnecting: clearConnection ? false : (isConnecting ?? this.isConnecting),
-      connectionSourceAnchorId:
-          clearConnection ? null : (connectionSourceAnchorId ?? this.connectionSourceAnchorId),
-      connectionSourcePosition:
-          clearConnection ? null : (connectionSourcePosition ?? this.connectionSourcePosition),
-      connectionPreviewEnd:
-          clearConnection ? null : (connectionPreviewEnd ?? this.connectionPreviewEnd),
-      isSelecting: clearSelection ? false : (isSelecting ?? this.isSelecting),
-      selectionStartPoint: clearSelection ? null : (selectionStartPoint ?? this.selectionStartPoint),
-      selectionEndPoint: clearSelection ? null : (selectionEndPoint ?? this.selectionEndPoint),
-      selectionRect: clearSelection ? null : (selectionRect ?? this.selectionRect),
-    );
-  }
-
-  /// 计算框选矩形
-  static Rect calculateSelectionRect(Offset start, Offset end) {
-    return Rect.fromPoints(start, end);
-  }
-
-  /// 空状态
-  static const empty = ERInteractionExtension();
-}

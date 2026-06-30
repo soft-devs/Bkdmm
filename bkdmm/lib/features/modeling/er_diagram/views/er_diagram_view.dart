@@ -8,12 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/diagram_editor/diagram_editor.dart';
-import '../../../../shared/models/models.dart';
-import '../../../../utils/logging/logging_service.dart';
-import '../../../project/providers/project_notifier.dart';
+import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/features/project/providers/project_notifier.dart';
+import 'package:bkdmm/utils/logging/logging_service.dart';
 import '../controllers/er_diagram_controller.dart';
-import '../models/er_diagram_ui_state.dart';
+import '../models/er_diagram_ui_state.dart' show ERInteractionMode, ERFieldAnchor, ERAnchorDirection;
 import '../painters/er_relation_painter_adapter.dart';
 import 'er_interaction_overlay.dart';
 import '../widgets/er_table_node_widget_v2.dart';
@@ -63,8 +63,15 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   /// 鼠标位置
   Offset _mousePosition = Offset.zero;
 
-  /// 交互扩展状态
-  ERInteractionExtension _interactionExtension = ERInteractionExtension.empty;
+  /// 是否正在框选
+  bool _isSelecting = false;
+  Offset _selectionStart = Offset.zero;
+  Offset _selectionEnd = Offset.zero;
+
+  /// 是否正在连线
+  bool _isConnecting = false;
+  String? _connectionSourceAnchorId;
+  Offset? _connectionSourcePosition;
 
   /// 状态变更订阅
   VoidCallback? _stateSubscription;
@@ -198,9 +205,10 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
           child: IgnorePointer(
             child: ERInteractionOverlay(
               state: state,
-              interactionExtension: _interactionExtension,
               transform: _transformationController.value,
               isDarkMode: isDark,
+              selectionRectScreen: _isSelecting ? Rect.fromPoints(_selectionStart, _selectionEnd) : null,
+              connectionPreviewEndScreen: null, // TODO: 连线预览位置
             ),
           ),
         ),
@@ -544,7 +552,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
       }
 
       // 处理框选更新
-      if (_interactionExtension.isSelecting) {
+      if (_isSelecting) {
         _updateSelection(event.localPosition);
       }
     }
@@ -634,7 +642,7 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
     }
 
     // 完成框选
-    if (_interactionExtension.isSelecting) {
+    if (_isSelecting) {
       _completeSelection();
       _isLeftButtonDown = false;
       return;
@@ -694,87 +702,87 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
 
   void _startSelection(Offset position) {
     setState(() {
-      _interactionExtension = ERInteractionExtension(
-        isSelecting: true,
-        selectionStartPoint: position,
-        selectionEndPoint: position,
-        selectionRect: Rect.fromPoints(position, position),
-      );
+      _isSelecting = true;
+      _selectionStart = position;
+      _selectionEnd = position;
     });
   }
 
   void _updateSelection(Offset position) {
-    if (!_interactionExtension.isSelecting) return;
+    if (!_isSelecting) return;
 
-    final start = _interactionExtension.selectionStartPoint ?? position;
     setState(() {
-      _interactionExtension = _interactionExtension.copyWith(
-        selectionEndPoint: position,
-        selectionRect: ERInteractionExtension.calculateSelectionRect(start, position),
-      );
+      _selectionEnd = position;
     });
   }
 
   void _completeSelection() {
-    final rect = _interactionExtension.selectionRect;
-    if (rect != null && _controller != null) {
-      // 获取当前变换矩阵
-      final transform = _transformationController.value;
-      final inverseTransform = Matrix4.inverted(transform);
+    if (_controller == null) {
+      setState(() {
+        _isSelecting = false;
+      });
+      return;
+    }
 
-      // 将屏幕坐标的框选矩形转换为画布坐标
-      final canvasTopLeft = MatrixUtils.transformPoint(inverseTransform, rect.topLeft);
-      final canvasBottomRight = MatrixUtils.transformPoint(inverseTransform, rect.bottomRight);
-      final canvasSelectionRect = Rect.fromPoints(canvasTopLeft, canvasBottomRight);
+    // 计算框选矩形
+    final rect = Rect.fromPoints(_selectionStart, _selectionEnd);
 
-      // 查询框选区域内的节点（使用画布坐标）
-      final selectedIds = <String>{};
-      for (final node in _controller!.state.nodes.values) {
-        final nodeRect = Rect.fromLTWH(
-          node.position.dx,
-          node.position.dy,
-          node.size.width,
-          node.size.height,
-        );
-        if (canvasSelectionRect.overlaps(nodeRect)) {
-          selectedIds.add(node.id);
-        }
+    // 获取当前变换矩阵
+    final transform = _transformationController.value;
+    final inverseTransform = Matrix4.inverted(transform);
+
+    // 将屏幕坐标的框选矩形转换为画布坐标
+    final canvasTopLeft = MatrixUtils.transformPoint(inverseTransform, rect.topLeft);
+    final canvasBottomRight = MatrixUtils.transformPoint(inverseTransform, rect.bottomRight);
+    final canvasSelectionRect = Rect.fromPoints(canvasTopLeft, canvasBottomRight);
+
+    // 查询框选区域内的节点（使用画布坐标）
+    final selectedIds = <String>{};
+    for (final node in _controller!.state.nodes.values) {
+      final nodeRect = Rect.fromLTWH(
+        node.position.dx,
+        node.position.dy,
+        node.size.width,
+        node.size.height,
+      );
+      if (canvasSelectionRect.overlaps(nodeRect)) {
+        selectedIds.add(node.id);
       }
+    }
 
-      // 选择节点
-      if (selectedIds.isNotEmpty) {
-        _controller!.selectNode(selectedIds.first);
-        for (final id in selectedIds.skip(1)) {
-          _controller!.selectNode(id, addToSelection: true);
-        }
+    // 选择节点
+    if (selectedIds.isNotEmpty) {
+      _controller!.selectNode(selectedIds.first);
+      for (final id in selectedIds.skip(1)) {
+        _controller!.selectNode(id, addToSelection: true);
       }
     }
 
     setState(() {
-      _interactionExtension = ERInteractionExtension.empty;
+      _isSelecting = false;
     });
   }
 
   void _onAnchorTap(DiagramNode node, ERFieldAnchor anchor) {
     logging.d('[ERDiagramView] onAnchorTap: ${anchor.nodeId}, field=${anchor.fieldIndex}', tag: 'ERCanvas');
 
-    if (_interactionExtension.isConnecting) {
+    if (_isConnecting) {
       // 完成连线
       _controller?.completeConnection(
         _buildAnchorId(node.id, anchor.fieldIndex, anchor.direction),
         node.id,
       );
       setState(() {
-        _interactionExtension = ERInteractionExtension.empty;
+        _isConnecting = false;
+        _connectionSourceAnchorId = null;
+        _connectionSourcePosition = null;
       });
     } else {
       // 开始连线
       setState(() {
-        _interactionExtension = ERInteractionExtension(
-          isConnecting: true,
-          connectionSourceAnchorId: _buildAnchorId(node.id, anchor.fieldIndex, anchor.direction),
-          connectionSourcePosition: node.position,
-        );
+        _isConnecting = true;
+        _connectionSourceAnchorId = _buildAnchorId(node.id, anchor.fieldIndex, anchor.direction);
+        _connectionSourcePosition = node.position;
       });
     }
   }

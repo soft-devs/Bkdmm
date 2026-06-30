@@ -5,8 +5,9 @@
 library;
 
 import 'dart:ui';
-import '../../../models/entity.dart';
-import '../../../models/module.dart';
+
+import 'package:bkdmm/shared/models/entity.dart';
+import 'package:bkdmm/shared/models/module.dart';
 import '../er/er_table_node_model.dart';
 
 /// ER 节点适配器

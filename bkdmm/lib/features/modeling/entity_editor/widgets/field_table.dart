@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
-import '../../../../core/i18n/i18n.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../shared/models/models.dart';
+import 'package:bkdmm/core/i18n/i18n.dart';
+import 'package:bkdmm/l10n/app_localizations.dart';
+import 'package:bkdmm/shared/models/models.dart';
 
 /// Field table widget - 字段编辑表格
 ///

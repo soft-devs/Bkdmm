@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 
 /// Recent projects list widget
 class RecentProjectsList extends StatelessWidget {

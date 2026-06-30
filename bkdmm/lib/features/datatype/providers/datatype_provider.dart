@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/models/models.dart';
-import '../../../shared/constants/default_data_types.dart';
-import '../../../utils/id_generator.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/constants/default_data_types.dart';
+import 'package:bkdmm/utils/id_generator.dart';
 
 /// Data type management state
 class DataTypeState {

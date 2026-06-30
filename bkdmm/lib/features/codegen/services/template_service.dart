@@ -1,5 +1,5 @@
 import 'package:mustache_template/mustache_template.dart';
-import '../../../shared/models/models.dart';
+import 'package:bkdmm/shared/models/models.dart';
 
 /// Template service for rendering DDL and code templates using Mustache
 class TemplateService {

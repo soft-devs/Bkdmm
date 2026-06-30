@@ -4,10 +4,10 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../../../shared/models/models.dart';
-import '../../../shared/services/services.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/services/services.dart';
 import '../services/project_file_service.dart';
-import '../../../utils/id_generator.dart';
+import 'package:bkdmm/utils/id_generator.dart';
 
 /// Project state - Represents the current state of the project
 class ProjectState {

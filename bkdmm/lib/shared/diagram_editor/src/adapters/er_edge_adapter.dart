@@ -4,7 +4,7 @@
 /// 用于 diagram_editor 框架的 ER 图连线渲染。
 library;
 
-import '../../../models/module.dart';
+import 'package:bkdmm/shared/models/module.dart';
 import '../er/er_relation_edge_model.dart';
 
 /// ER 边适配器

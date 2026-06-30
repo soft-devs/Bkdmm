@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/providers/providers.dart';
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/shared/providers/providers.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 import '../panels/panels.dart';
 
 /// Settings dialog with left tree navigation and right content panel

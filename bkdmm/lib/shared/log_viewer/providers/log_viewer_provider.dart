@@ -7,7 +7,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../utils/logging/logging_service.dart';
+import 'package:bkdmm/utils/logging/logging_service.dart';
 import '../models/log_entry.dart';
 import '../models/log_filter.dart';
 import '../services/log_buffer.dart';

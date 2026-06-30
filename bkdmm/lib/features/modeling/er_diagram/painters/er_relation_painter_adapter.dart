@@ -7,7 +7,7 @@ library;
 import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
 
-import '../../../../shared/diagram_editor/diagram_editor.dart';
+import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
 
 /// ER 关系绘制器适配器
 ///

@@ -1,7 +1,7 @@
 import 'dart:io';
-import '../../../shared/models/models.dart';
-import '../../../shared/services/file_service.dart';
-import '../../../utils/id_generator.dart';
+import 'package:bkdmm/shared/models/models.dart';
+import 'package:bkdmm/shared/services/file_service.dart';
+import 'package:bkdmm/utils/id_generator.dart';
 
 /// Project file service - Handles project file read/write operations
 ///

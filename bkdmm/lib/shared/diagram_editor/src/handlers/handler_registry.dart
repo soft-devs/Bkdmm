@@ -7,6 +7,10 @@ import 'package:flutter/material.dart';
 import 'diagram_event.dart';
 import 'diagram_context.dart';
 import 'diagram_handler.dart';
+import 'anchor_click_handler.dart';
+import 'node_drag_handler.dart';
+import 'selection_handler.dart';
+import 'canvas_pan_handler.dart';
 
 /// 事件处理器注册表
 ///
@@ -170,20 +174,19 @@ class HandlerRegistryFactory {
   }) {
     final registry = HandlerRegistry();
 
-    // TODO: 在 Phase 2 添加具体处理器
-    // if (enableConnection) {
-    //   registry.register(ERAnchorClickHandler(priority: 10));
-    //   registry.register(ERConnectionHandler(priority: 30));
-    // }
-    // if (enableDrag) {
-    //   registry.register(ERNodeDragHandler(priority: 20));
-    // }
-    // if (enableSelection) {
-    //   registry.register(SelectionHandler(priority: 50));
-    // }
-    // if (enablePan) {
-    //   registry.register(CanvasPanHandler(priority: 100));
-    // }
+    if (enableConnection) {
+      registry.register(AnchorClickHandler(priority: 10));
+      registry.register(ConnectionHandler(priority: 30));
+    }
+    if (enableDrag) {
+      registry.register(NodeDragHandler(priority: 20));
+    }
+    if (enableSelection) {
+      registry.register(SelectionHandler(priority: 50));
+    }
+    if (enablePan) {
+      registry.register(CanvasPanHandler(priority: 100));
+    }
 
     return registry;
   }

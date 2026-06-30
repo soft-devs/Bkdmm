@@ -7,9 +7,9 @@ library;
 import 'dart:async';
 import 'dart:ui';
 
-import '../../../../shared/diagram_editor/diagram_editor.dart';
-import '../../../../shared/models/module.dart';
-import '../../../project/providers/project_notifier.dart';
+import 'package:bkdmm/shared/diagram_editor/diagram_editor.dart';
+import 'package:bkdmm/shared/models/module.dart';
+import 'package:bkdmm/features/project/providers/project_notifier.dart';
 import '../models/er_diagram_ui_state.dart';
 
 /// ER 图控制器

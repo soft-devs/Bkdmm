@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
 
-import '../../../shared/utils/responsive_utils.dart';
+import 'package:bkdmm/shared/utils/responsive_utils.dart';
 
 /// Auto-save interval selection dialog with TDesign styling
 class AutoSaveDialog extends StatelessWidget {

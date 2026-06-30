@@ -1,7 +1,8 @@
 import 'dart:ui';
+
+import 'package:bkdmm/shared/models/entity.dart';
 import '../model/node_model.dart';
 import '../core/diagram_node.dart';
-import '../../../models/entity.dart';
 
 /// ER 表节点模型
 ///
