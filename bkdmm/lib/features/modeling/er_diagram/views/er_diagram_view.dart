@@ -95,6 +95,10 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   String? _leftButtonDownNodeId;  // 按下时点击的节点ID
   bool _isPotentialSelection = false;  // 是否可能启动框选（拖动距离超过阈值）
 
+  /// 双击检测状态
+  String? _lastTapNodeId;  // 上次点击的节点ID
+  DateTime? _lastTapTime;  // 上次点击的时间
+
   @override
   void initState() {
     super.initState();
@@ -647,13 +651,38 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
                 .contains(LogicalKeyboardKey.controlRight);
 
         if (_leftButtonDownNodeId != null) {
-          // 单击节点：选中或取消选中
-          _onNodeTap(_leftButtonDownNodeId!, isCtrlPressed);
+          // 检测双击：同一节点、间隔小于300ms
+          const doubleTapInterval = Duration(milliseconds: 300);
+          final now = DateTime.now();
+          final isDoubleTap = _lastTapNodeId == _leftButtonDownNodeId &&
+              _lastTapTime != null &&
+              now.difference(_lastTapTime!) < doubleTapInterval;
+
+          if (isDoubleTap) {
+            // 双击节点：打开编辑弹窗
+            logging.d('[ERDiagramView] 双击节点: ${_leftButtonDownNodeId}', tag: 'ERCanvas');
+            final node = controller.editor.getNode(_leftButtonDownNodeId!);
+            if (node != null) {
+              _onNodeDoubleTap(node);
+            }
+            // 清除双击状态
+            _lastTapNodeId = null;
+            _lastTapTime = null;
+          } else {
+            // 单击节点：选中或取消选中
+            _onNodeTap(_leftButtonDownNodeId!, isCtrlPressed);
+            // 记录单击状态（用于下次检测双击）
+            _lastTapNodeId = _leftButtonDownNodeId;
+            _lastTapTime = now;
+          }
         } else {
           // 单击空白区域：取消所有选中
           if (!isCtrlPressed && controller.state.selection.selectedNodeIds.isNotEmpty) {
             controller.clearSelection();
           }
+          // 清除双击状态
+          _lastTapNodeId = null;
+          _lastTapTime = null;
         }
       }
     }
