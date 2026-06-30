@@ -113,31 +113,31 @@ class ImportAnalyzer:
     def print_report(self):
         """打印分析报告"""
         print("=" * 70)
-        print("📊 Bkdmm Import Analysis Report")
+        print("Bkdmm Import Analysis Report")
         print("=" * 70)
-        print(f"\n📁 Total Files: {self.stats['total_files']}")
-        print(f"📦 Total Imports: {self.stats['total_imports']}")
+        print(f"\nTotal Files: {self.stats['total_files']}")
+        print(f"Total Imports: {self.stats['total_imports']}")
 
-        print(f"\n📋 Import Type Distribution:")
-        print(f"   • dart: SDK imports:      {self.stats['dart_imports']:4d}")
-        print(f"   • package: imports:       {self.stats['package_imports']:4d}")
-        print(f"   • Relative path imports:  {self.stats['relative_imports']:4d}")
+        print(f"\nImport Type Distribution:")
+        print(f"   * dart: SDK imports:      {self.stats['dart_imports']:4d}")
+        print(f"   * package: imports:       {self.stats['package_imports']:4d}")
+        print(f"   * Relative path imports:  {self.stats['relative_imports']:4d}")
 
-        print(f"\n📏 Relative Path Depth Distribution:")
+        print(f"\nRelative Path Depth Distribution:")
         for depth in sorted(self.stats['depth_distribution'].keys()):
             count = self.stats['depth_distribution'][depth]
             pct = count / self.stats['relative_imports'] * 100 if self.stats['relative_imports'] > 0 else 0
-            status = "✅" if depth <= 2 else "⚠️" if depth == 3 else "🔴"
+            status = "[OK]" if depth <= 2 else "[WARN]" if depth == 3 else "[ERROR]"
             print(f"   {status} {depth} layers: {count:4d} ({pct:5.1f}%)")
 
         deep_count = len(self.stats['deep_import_files'])
         cross_count = len(self.stats['cross_module_imports'])
-        print(f"\n⚠️  Issues Found:")
-        print(f"   • Deep relative paths (≥3):  {deep_count:4d} files")
-        print(f"   • Cross-module imports:       {cross_count:4d} files")
+        print(f"\nIssues Found:")
+        print(f"   * Deep relative paths (>=3):  {deep_count:4d} files")
+        print(f"   * Cross-module imports:       {cross_count:4d} files")
 
         if deep_count > 0:
-            print(f"\n🔴 Files Needing Refactor:")
+            print(f"\nFiles Needing Refactor:")
             for filepath in self.stats['deep_import_files'][:10]:  # 只显示前10个
                 print(f"   - {filepath}")
             if len(self.stats['deep_import_files']) > 10:
@@ -186,16 +186,16 @@ class ImportRefactorer:
     def print_changes(self):
         """打印变更预览"""
         print("\n" + "=" * 70)
-        print("🔧 Import Refactor Preview" + (" (DRY RUN)" if self.dry_run else ""))
+        print("Import Refactor Preview" + (" (DRY RUN)" if self.dry_run else ""))
         print("=" * 70)
 
         if not self.changes:
-            print("\n✅ No changes needed!")
+            print("\nNo changes needed!")
             return
 
-        print(f"\n📝 Files to Change: {len(self.changes)}")
+        print(f"\nFiles to Change: {len(self.changes)}")
         for filepath, changes in self.changes:
-            print(f"\n📄 {filepath}")
+            print(f"\n{filepath}")
             for change in changes:
                 print(f"   - {change}")
 
@@ -233,18 +233,18 @@ def main():
         refactorer.print_changes()
 
     elif args.execute:
-        print("🚀 Executing Import Refactoring...")
+        print("Executing Import Refactoring...")
 
         # 执行重构
         refactorer = ImportRefactorer(dry_run=False)
         changes = refactorer.refactor_all()
         refactorer.print_changes()
 
-        print("\n✅ Refactoring completed!")
-        print("💡 Run 'flutter analyze' to verify the changes.")
+        print("\nRefactoring completed!")
+        print("Run 'flutter analyze' to verify the changes.")
 
     elif args.verify:
-        print("🔍 Verifying Refactoring Results...")
+        print("Verifying Refactoring Results...")
 
         analyzer = ImportAnalyzer()
         analyzer.analyze_all()
@@ -253,9 +253,9 @@ def main():
         deep_count = len(analyzer.stats['deep_import_files'])
 
         if deep_count == 0:
-            print("\n✅ All deep relative paths have been refactored!")
+            print("\nAll deep relative paths have been refactored!")
         else:
-            print(f"\n⚠️  Still have {deep_count} files with deep relative paths:")
+            print(f"\nStill have {deep_count} files with deep relative paths:")
             for filepath in analyzer.stats['deep_import_files']:
                 print(f"   - {filepath}")
 

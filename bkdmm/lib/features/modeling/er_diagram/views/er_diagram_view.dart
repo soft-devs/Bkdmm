@@ -82,11 +82,18 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
   String? _manualDragNodeId;
   Offset _manualDragStartScreenPos = Offset.zero;
   Offset _manualDragStartCanvasPos = Offset.zero;
+  Map<String, Offset> _multiDragStartPositions = {};  // 多选拖动时其他节点的起始位置
 
   /// 右键拖动画布状态
   bool _isRightDragging = false;
   Offset _rightDragStart = Offset.zero;
   Matrix4 _rightDragTransformStart = Matrix4.identity();
+
+  /// 左键按下状态（用于区分单击和拖动）
+  bool _isLeftButtonDown = false;
+  Offset _leftButtonDownPos = Offset.zero;
+  String? _leftButtonDownNodeId;  // 按下时点击的节点ID
+  bool _isPotentialSelection = false;  // 是否可能启动框选（拖动距离超过阈值）
 
   @override
   void initState() {
@@ -445,20 +452,20 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
       return;
     }
 
-    // 左键：编辑模式下处理节点选中和框选
+    // 左键：编辑模式下记录按下状态，等待拖动或释放
     if (event.buttons == kPrimaryMouseButton &&
         _controller?.interactionMode == ERInteractionMode.edit) {
-      // 检查是否点击在节点上
-      final clickedNodeId = _checkClickedOnNode(event.localPosition);
+      _isLeftButtonDown = true;
+      _leftButtonDownPos = event.localPosition;
+      _isPotentialSelection = false;
 
-      if (clickedNodeId != null) {
-        // 点击在节点上，手动触发节点选中
-        logging.d('[ERDiagramView] 点击在节点上: $clickedNodeId', tag: 'ERCanvas');
-        _handleNodeClick(clickedNodeId, event.localPosition);
+      // 检查是否点击在节点上
+      _leftButtonDownNodeId = _checkClickedOnNode(event.localPosition);
+
+      if (_leftButtonDownNodeId != null) {
+        logging.d('[ERDiagramView] 左键按下在节点上: ${_leftButtonDownNodeId}', tag: 'ERCanvas');
       } else {
-        // 点击在空白区域，启动框选
-        logging.d('[ERDiagramView] 点击在空白区域，启动框选', tag: 'ERCanvas');
-        _startSelection(event.localPosition);
+        logging.d('[ERDiagramView] 左键按下在空白区域', tag: 'ERCanvas');
       }
     }
   }
@@ -498,36 +505,6 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
     return null;
   }
 
-  /// 处理节点点击
-  void _handleNodeClick(String nodeId, Offset screenPos) {
-    final controller = _controller;
-    if (controller == null) return;
-
-    // 检查是否按下 Ctrl 键
-    final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
-            .contains(LogicalKeyboardKey.controlLeft) ||
-        HardwareKeyboard.instance.logicalKeysPressed
-            .contains(LogicalKeyboardKey.controlRight);
-
-    logging.d('[ERDiagramView] 处理节点点击: $nodeId, ctrl=$isCtrlPressed', tag: 'ERCanvas');
-
-    // 触发节点选中
-    _onNodeTap(nodeId, isCtrlPressed);
-
-    // 启动手动节点拖动（用于处理缩放后的坐标转换）
-    if (controller != null) {
-      final node = controller.editor.getNode(nodeId);
-      if (node != null) {
-        _isManualDraggingNode = true;
-        _manualDragNodeId = nodeId;
-        _manualDragStartScreenPos = screenPos;
-        _manualDragStartCanvasPos = node.position;
-
-        logging.d('[ERDiagramView] 启动手动节点拖动: nodeId=$nodeId, screenPos=$screenPos, canvasPos=${node.position}', tag: 'ERCanvas');
-      }
-    }
-  }
-
   void _onPointerMove(PointerMoveEvent event) {
     // 右键拖动画布（编辑模式）
     if (event.buttons == kSecondaryMouseButton && _isRightDragging) {
@@ -538,22 +515,81 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
       return;
     }
 
-    // 左键手动节点拖动（编辑模式）
-    if (event.buttons == kPrimaryMouseButton && _isManualDraggingNode && _manualDragNodeId != null) {
-      _handleManualNodeDrag(event.localPosition);
-      return;
+    // 左键拖动（编辑模式）
+    if (event.buttons == kPrimaryMouseButton && _isLeftButtonDown) {
+      final delta = event.localPosition - _leftButtonDownPos;
+
+      // 检查是否超过拖动阈值（启动拖动或框选）
+      const dragThreshold = 5.0;  // 5像素阈值
+      if (delta.distance > dragThreshold && !_isPotentialSelection && !_isManualDraggingNode) {
+        // 超过阈值，判断是节点拖动还是框选
+        if (_leftButtonDownNodeId != null) {
+          // 拖动节点
+          _startNodeDrag(_leftButtonDownNodeId!, _leftButtonDownPos);
+        } else {
+          // 启动框选
+          _startSelection(_leftButtonDownPos);
+          _isPotentialSelection = true;
+        }
+      }
+
+      // 处理节点拖动更新
+      if (_isManualDraggingNode && _manualDragNodeId != null) {
+        _handleManualNodeDrag(event.localPosition);
+        return;
+      }
+
+      // 处理框选更新
+      if (_interactionExtension.isSelecting) {
+        _updateSelection(event.localPosition);
+      }
+    }
+  }
+
+  /// 启动节点拖动
+  void _startNodeDrag(String nodeId, Offset screenPos) {
+    final controller = _controller;
+    if (controller == null) return;
+
+    final node = controller.editor.getNode(nodeId);
+    if (node == null) return;
+
+    // 检查是否按下 Ctrl 键
+    final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
+            .contains(LogicalKeyboardKey.controlLeft) ||
+        HardwareKeyboard.instance.logicalKeysPressed
+            .contains(LogicalKeyboardKey.controlRight);
+
+    // 如果节点未被选中，先选中它
+    final selectedNodes = controller.state.selection.selectedNodeIds;
+    if (!selectedNodes.contains(nodeId)) {
+      _onNodeTap(nodeId, isCtrlPressed);
     }
 
-    // 左键框选（编辑模式）
-    if (_interactionExtension.isSelecting) {
-      _updateSelection(event.localPosition);
+    // 启动拖动
+    _isManualDraggingNode = true;
+    _manualDragNodeId = nodeId;
+    _manualDragStartScreenPos = screenPos;
+    _manualDragStartCanvasPos = node.position;
+
+    // 如果有多个选中节点，记录它们的起始位置
+    _multiDragStartPositions = {};
+    final currentSelectedNodes = controller.state.selection.selectedNodeIds;
+    if (currentSelectedNodes.length > 1) {
+      for (final n in controller.state.nodes.values) {
+        if (currentSelectedNodes.contains(n.id)) {
+          _multiDragStartPositions[n.id] = n.position;
+        }
+      }
     }
+
+    logging.d('[ERDiagramView] 启动节点拖动: nodeId=$nodeId, selectedCount=${currentSelectedNodes.length}', tag: 'ERCanvas');
   }
 
   /// 处理手动节点拖动
   void _handleManualNodeDrag(Offset screenPos) {
     final controller = _controller;
-    if (controller == null || _manualDragNodeId == null) return;
+    if (controller == null) return;
 
     // 计算从起始位置到当前位置的总偏移（屏幕坐标）
     final screenDelta = screenPos - _manualDragStartScreenPos;
@@ -562,12 +598,18 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
     final zoom = _transformationController.value.getMaxScaleOnAxis();
     final canvasDelta = screenDelta / zoom;
 
-    // 基于起始位置计算新位置
-    final newPosition = _manualDragStartCanvasPos + canvasDelta;
-
-    logging.d('[ERDiagramView] 手动节点拖动: delta=$canvasDelta, newPos=$newPosition', tag: 'ERCanvas');
-
-    controller.moveNode(_manualDragNodeId!, newPosition);
+    // 移动所有选中的节点
+    if (_multiDragStartPositions.isNotEmpty) {
+      // 多选拖动：移动所有选中节点
+      for (final entry in _multiDragStartPositions.entries) {
+        final newPosition = entry.value + canvasDelta;
+        controller.moveNode(entry.key, newPosition);
+      }
+    } else if (_manualDragNodeId != null) {
+      // 单节点拖动
+      final newPosition = _manualDragStartCanvasPos + canvasDelta;
+      controller.moveNode(_manualDragNodeId!, newPosition);
+    }
   }
 
   void _onPointerUp(PointerUpEvent event) {
@@ -581,14 +623,44 @@ class _ERDiagramViewState extends ConsumerState<ERDiagramView> {
     if (_isManualDraggingNode) {
       _isManualDraggingNode = false;
       _manualDragNodeId = null;
+      _multiDragStartPositions = {};
       logging.d('[ERDiagramView] 结束手动节点拖动', tag: 'ERCanvas');
+      _isLeftButtonDown = false;
       return;
     }
 
     // 完成框选
     if (_interactionExtension.isSelecting) {
       _completeSelection();
+      _isLeftButtonDown = false;
+      return;
     }
+
+    // 处理左键单击（未拖动）
+    if (_isLeftButtonDown && !_isPotentialSelection) {
+      final controller = _controller;
+      if (controller != null) {
+        // 检查是否按下 Ctrl 键
+        final isCtrlPressed = HardwareKeyboard.instance.logicalKeysPressed
+                .contains(LogicalKeyboardKey.controlLeft) ||
+            HardwareKeyboard.instance.logicalKeysPressed
+                .contains(LogicalKeyboardKey.controlRight);
+
+        if (_leftButtonDownNodeId != null) {
+          // 单击节点：选中或取消选中
+          _onNodeTap(_leftButtonDownNodeId!, isCtrlPressed);
+        } else {
+          // 单击空白区域：取消所有选中
+          if (!isCtrlPressed && controller.state.selection.selectedNodeIds.isNotEmpty) {
+            controller.clearSelection();
+          }
+        }
+      }
+    }
+
+    _isLeftButtonDown = false;
+    _leftButtonDownNodeId = null;
+    _isPotentialSelection = false;
   }
 
   void _startSelection(Offset position) {
