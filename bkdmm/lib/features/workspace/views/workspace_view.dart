@@ -364,7 +364,8 @@ class _WorkspaceViewState extends ConsumerState<WorkspaceView> {
   }
 
   void _showEntityEditorDialog(Module module, Entity entity) {
-    // TODO: 实现实体编辑对话框
+    // 双击节点打开实体编辑器标签页
+    ref.read(tabProvider.notifier).openEntity(entity, module.id);
   }
 
   Widget _buildRelationView(
